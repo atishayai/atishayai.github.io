@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>atishay jain — writer &amp; photographer</title>
+<title>Atishay Jain — Writer &amp; Photographer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="styles.css">
@@ -12,10 +12,10 @@
 
 <nav class="nav">
   <div class="container row">
-    <a href="index.html" class="brand">atishay jain<span class="dot">.</span></a>
+    <a href="index.html" class="brand">Atishay Jain<span class="dot">.</span></a>
     <div class="links">
-      <a href="writing.html">writing</a>
-      <a href="misc.html">miscellaneous</a>
+      <a href="writing.html">Writing</a>
+      <a href="sidequests.html">Sidequests</a>
     </div>
   </div>
 </nav>
@@ -23,17 +23,18 @@
 <main class="container">
 
   <section class="hero">
-    <h1 class="hero-name">atishay<br>jain<span class="accent">.</span></h1>
-    <p class="tag">writer &amp; photographer.<span class="ink">essays and short fiction on diaspora, identity, and the small ethics of the technologies we keep agreeing to.</span></p>
+    <h1 class="hero-name">Atishay<br>Jain<span class="accent">.</span></h1>
+    <p class="tag">Writer &amp; photographer.<span class="ink">Essays and short fiction on diaspora, identity, and the small ethics of the technologies we keep agreeing to.</span></p>
+    <p class="hero-scroll">Scroll</p>
   </section>
 
   <section class="about" id="about">
     <div class="about-grid">
-      <div class="label reveal">about</div>
+      <div class="label reveal">About</div>
       <div class="copy">
-        <p class="reveal d1">i write essays and short fiction about the south asian diaspora, the architecture of personal identity, and the slow moral arithmetic of the machines that watch us.</p>
-        <p class="reveal d2">my photographs are quieter than my sentences — kitchens at six o'clock, weeknight cities, strangers becoming briefly composed. most of what i publish begins as a frame i couldn't <span class="accent">explain</span> to myself; most of what i photograph begins as a sentence that wouldn't sit still.</p>
-        <p class="reveal d3">i'm at work on my first collection.</p>
+        <p class="reveal d1">I write essays and short fiction about the South Asian diaspora, the architecture of personal identity, and the slow moral arithmetic of the machines that watch us.</p>
+        <p class="reveal d2">My photographs are quieter than my sentences — kitchens at six o'clock, weeknight cities, strangers becoming briefly composed. Most of what I publish begins as a frame I couldn't <span class="accent">explain</span> to myself; most of what I photograph begins as a sentence that wouldn't sit still.</p>
+        <p class="reveal d3">I'm at work on my first collection.</p>
 
         <p class="contact reveal d3"><a href="mailto:atishayjus@gmail.com">atishayjus@gmail.com</a></p>
       </div>
@@ -42,16 +43,16 @@
 
   <section class="explore reveal d3">
     <div class="explore-inner">
-      <div class="label">continue reading</div>
+      <div class="label">Continue reading</div>
       <div class="explore-links">
         <a href="writing.html" class="explore-card">
-          <span class="explore-title">writing</span>
-          <span class="explore-desc">fiction &amp; non-fiction — essays, short stories, and columns.</span>
+          <span class="explore-title">Writing</span>
+          <span class="explore-desc">Fiction &amp; non-fiction — essays, short stories, and columns.</span>
           <span class="explore-arrow">→</span>
         </a>
-        <a href="misc.html" class="explore-card">
-          <span class="explore-title">miscellaneous</span>
-          <span class="explore-desc">photographs, zines, and side projects that don't fit elsewhere.</span>
+        <a href="sidequests.html" class="explore-card">
+          <span class="explore-title">Sidequests</span>
+          <span class="explore-desc">Photographs, zines, and experiments off the main path.</span>
           <span class="explore-arrow">→</span>
         </a>
       </div>
@@ -64,25 +65,20 @@
   <div class="container">
     <div class="frow footer-simple">
       <div class="right">
-        <div class="label">elsewhere</div>
+        <div class="label">Elsewhere</div>
         <div class="links">
-          <a href="#">instagram</a>
-          <a href="#">substack</a>
-          <a href="#">twitter</a>
+          <a href="#">Instagram</a>
+          <a href="#">Substack</a>
+          <a href="#">Twitter</a>
         </div>
       </div>
     </div>
     <div class="colophon">
-      <span>© 2026 atishay jain</span>
+      <span>© 2026 Atishay Jain</span>
     </div>
   </div>
 </footer>
 
-<script>
-  const io = new IntersectionObserver((entries) => {
-    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
-  }, { threshold: .15 });
-  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
-</script>
+<script src="scripts/reveal.js"></script>
 </body>
 </html>
