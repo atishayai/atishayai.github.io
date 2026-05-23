@@ -32,6 +32,8 @@ html {
   background: var(--bg);
   scroll-behavior: smooth;
   overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
@@ -52,12 +54,15 @@ body {
   display: flex;
   flex-direction: column;
   position: relative;
-  overflow-x: hidden;
+  overflow: visible;
 }
 
 main {
+  flex: 1 0 auto;
+  flex-shrink: 0;
   width: 100%;
-  overflow-x: hidden;
+  max-width: 100%;
+  overflow: visible;
 }
 
 img, video, svg {
@@ -874,8 +879,9 @@ a { color: inherit; text-decoration: none; }
    FOOTER
    ============================================ */
 footer {
+  flex-shrink: 0;
   margin-top: auto;
-  padding: 100px 0 32px;
+  padding: 100px 0 max(32px, calc(32px + var(--safe-bottom)));
   border-top: 1px solid var(--rule);
 }
 footer .frow {
@@ -1034,7 +1040,7 @@ html:not(.js-ready) .reveal {
   .nav .links { gap: 20px; }
   .nav .links .em { display: none; }
   .hero {
-    min-height: min(75dvh, 720px);
+    min-height: auto;
     padding: 48px 0 36px;
   }
   .hero h1.hero-name { font-size: clamp(48px, 12vw, 96px); }
@@ -1050,7 +1056,7 @@ html:not(.js-ready) .reveal {
   }
   .about-grid .copy { padding: 28px 24px; }
   .about-grid .copy .meta { grid-template-columns: 1fr; gap: 20px; }
-  .explore { padding: 48px 0 80px; }
+  .explore { padding: 48px 0 max(80px, calc(80px + var(--safe-bottom))); }
   .explore-links { grid-template-columns: 1fr; }
   .explore-card { padding: 32px 28px 52px; }
   .explore-arrow { right: 28px; bottom: 32px; }
@@ -1117,7 +1123,8 @@ html:not(.js-ready) .reveal {
   }
   .hero .tag { font-size: 18px; margin-top: 20px; }
   .hero .tag .ink { font-size: 15px; margin-top: 12px; }
-  .hero-scroll { padding-top: 32px; font-size: 10px; }
+  .hero-scroll { padding-top: 32px; font-size: 10px; margin-top: 0; }
+  .explore { padding-bottom: max(96px, calc(96px + var(--safe-bottom))); }
   .page-head { padding: 40px 0 24px; }
   .page-head .eyebrow { margin-bottom: 16px; }
   .page-head h1 { font-size: clamp(36px, 11vw, 52px); line-height: 1; }
