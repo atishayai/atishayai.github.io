@@ -3,81 +3,104 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#070B12">
-<title>Atishay Jain — Writer &amp; Photographer</title>
+<meta name="theme-color" content="#0C0C0C">
+<title>Atishay Jain</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-<nav class="nav">
-  <div class="container row">
-    <a href="index.html" class="brand">Atishay Jain<span class="dot">.</span></a>
-    <div class="links">
-      <a href="writing.html">Writing</a>
-      <a href="sidequests.html">Sidequests</a>
-    </div>
-  </div>
+<nav class="v2-nav" id="nav">
+  <a class="v2-nav-logo" href="index.html">Atishay Jain</a>
+  <ul class="v2-nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#work">Work</a></li>
+    <li><a href="writing.html">Writing</a></li>
+    <li><a href="sidequests.html">Sidequests</a></li>
+  </ul>
 </nav>
 
-<main class="container">
-
-  <section class="hero">
-    <h1 class="hero-name">Atishay<br>Jain<span class="accent">.</span></h1>
-    <p class="tag">Writer &amp; photographer.<span class="ink">Essays and short fiction on diaspora, identity, and the small ethics of the technologies we keep agreeing to.</span></p>
-    <p class="hero-scroll">Scroll</p>
+<main>
+  <section class="v2-hero">
+    <div class="v2-hero-overline">Writing · Photography</div>
+    <h1>Atishay Jain<span class="v2-dot">.</span></h1>
+    <p class="v2-hero-subtitle">Essays and short fiction on diaspora, identity, and the small ethics of the technologies we keep agreeing to.</p>
+    <div class="v2-hero-divider"></div>
+    <div class="v2-hero-scroll-hint">Scroll</div>
   </section>
 
-  <section class="about" id="about">
-    <div class="about-grid">
-      <div class="label reveal">About</div>
-      <div class="copy">
-        <p class="reveal d1">I write essays and short fiction about the South Asian diaspora, the architecture of personal identity, and the slow moral arithmetic of the machines that watch us.</p>
-        <p class="reveal d2">My photographs are quieter than my sentences — kitchens at six o'clock, weeknight cities, strangers becoming briefly composed. Most of what I publish begins as a frame I couldn't <span class="accent">explain</span> to myself; most of what I photograph begins as a sentence that wouldn't sit still.</p>
-        <p class="reveal d3">I'm at work on my first collection.</p>
-
-        <p class="contact reveal d3"><a href="mailto:atishayjus@gmail.com">atishayjus@gmail.com</a></p>
-      </div>
-    </div>
-  </section>
-
-  <section class="explore reveal d3">
-    <div class="explore-inner">
-      <div class="label">Continue reading</div>
-      <div class="explore-links">
-        <a href="writing.html" class="explore-card">
-          <span class="explore-title">Writing</span>
-          <span class="explore-desc">Fiction &amp; non-fiction — essays, short stories, and columns.</span>
-          <span class="explore-arrow">→</span>
-        </a>
-        <a href="sidequests.html" class="explore-card">
-          <span class="explore-title">Sidequests</span>
-          <span class="explore-desc">Photographs, zines, and experiments off the main path.</span>
-          <span class="explore-arrow">→</span>
-        </a>
-      </div>
-    </div>
-  </section>
-
-</main>
-
-<footer>
-  <div class="container">
-    <div class="frow footer-simple">
-      <div class="right">
-        <div class="label">Elsewhere</div>
-        <div class="links">
-          <a href="#">Instagram</a>
-          <a href="#">Substack</a>
-          <a href="#">Twitter</a>
+  <section class="v2-section v2-about" id="about">
+    <div class="v2-inner">
+      <div class="v2-about-layout">
+        <div>
+          <div class="v2-overline reveal">About</div>
+          <h2 class="v2-headline reveal d1">The short version.</h2>
+          <div class="v2-body reveal d2">
+            <p>I write essays and short fiction about the South Asian diaspora, the architecture of personal identity, and the slow moral arithmetic of the machines that watch us.</p>
+            <p>My photographs are quieter than my sentences — kitchens at six o'clock, weeknight cities, strangers becoming briefly composed. Most of what I publish begins as a frame I couldn't <span class="accent">explain</span> to myself; most of what I photograph begins as a sentence that wouldn't sit still.</p>
+            <p>I'm at work on my first collection.</p>
+          </div>
+        </div>
+        <div class="v2-about-facts reveal d3">
+          <div class="v2-fact">
+            <div class="v2-fact-label">Email</div>
+            <div class="v2-fact-value"><a href="mailto:atishayjus@gmail.com">atishayjus@gmail.com</a></div>
+          </div>
+          <div class="v2-fact">
+            <div class="v2-fact-label">Elsewhere</div>
+            <div class="v2-fact-value">Instagram · Substack · Twitter</div>
+          </div>
+          <div class="v2-fact">
+            <div class="v2-fact-label">Based</div>
+            <div class="v2-fact-value">US / India — between cities</div>
+          </div>
         </div>
       </div>
     </div>
-    <div class="colophon">
-      <span>© 2026 Atishay Jain</span>
+  </section>
+
+  <section class="v2-section v2-work" id="work">
+    <div class="v2-inner">
+      <div class="v2-overline reveal">Start here</div>
+      <h2 class="v2-headline reveal d1">Selected work.</h2>
+      <div class="v2-cards">
+        <a class="v2-card reveal d2" href="articles/a-system-so-perfect.html">
+          <div class="v2-card-type">Zine</div>
+          <div class="v2-card-title">A System So Perfect</div>
+          <div class="v2-card-excerpt">Tabla, chai rituals, Zakir at McCarter, and a system so fucked up it's perfect. An autoethnographic zine on the South Asian diaspora.</div>
+        </a>
+        <a class="v2-card reveal d3" href="writing.html#nonfiction">
+          <div class="v2-card-type">Non-fiction</div>
+          <div class="v2-card-title">Writing</div>
+          <div class="v2-card-excerpt">Essays, columns, and reportage — a working bibliography, updated as the year permits.</div>
+        </a>
+        <a class="v2-card reveal d2" href="writing.html#fiction">
+          <div class="v2-card-type">Fiction</div>
+          <div class="v2-card-title">Short fiction</div>
+          <div class="v2-card-excerpt">Short stories and flash — mostly about attention, language, and what we inherit.</div>
+        </a>
+        <a class="v2-card reveal d3" href="sidequests.html">
+          <div class="v2-card-type">Sidequests</div>
+          <div class="v2-card-title">Photographs & experiments</div>
+          <div class="v2-card-excerpt">A room for what doesn’t fit anywhere else: photographs, zines, and small projects off the main path.</div>
+        </a>
+      </div>
     </div>
+  </section>
+</main>
+
+<footer class="v2-footer">
+  <div>
+    <div class="v2-footer-name">Atishay Jain</div>
+    <div class="v2-footer-email"><a href="mailto:atishayjus@gmail.com">atishayjus@gmail.com</a></div>
   </div>
+  <div class="v2-footer-socials">
+    <a href="#">Instagram</a>
+    <a href="#">Substack</a>
+    <a href="#">Twitter</a>
+  </div>
+  <div class="v2-footer-copy">© 2026</div>
 </footer>
 
 <script src="scripts/site.js" defer></script>

@@ -64,6 +64,7 @@
         entries.forEach(function (e) {
           if (e.isIntersecting) {
             e.target.classList.add('in');
+            e.target.classList.add('visible');
             revealObserver.unobserve(e.target);
           }
         });
@@ -86,6 +87,14 @@
     requestAnimationFrame(function () {
       requestAnimationFrame(scanRevealsInView);
     });
+  }
+
+  function initNavScrolled() {
+    var nav = document.getElementById('nav');
+    if (!nav) return;
+    window.addEventListener('scroll', function () {
+      nav.classList.toggle('scrolled', window.scrollY > 60);
+    }, { passive: true });
   }
 
   function initHero() {
@@ -148,6 +157,7 @@
   function boot() {
     applyViewport();
     initReveals();
+    initNavScrolled();
     initHero();
   }
 
