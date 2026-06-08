@@ -897,6 +897,25 @@ a { color: inherit; text-decoration: none; }
   font-style: normal;
 }
 
+.article-figure {
+  margin: 36px 0;
+  padding: 0;
+}
+.article-figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 3px;
+  border: 1px solid var(--rule);
+}
+.article-figure figcaption {
+  margin-top: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink-faint);
+  text-align: center;
+}
+
 .article-subtitle {
   font-size: 15px;
   font-weight: 500;

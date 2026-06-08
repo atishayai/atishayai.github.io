@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0C0C0C">
+  <title>Writing Studio — Atishay Jain</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/admin.css">
+</head>
+<body class="studio-body">
+
+<nav class="nav studio-nav">
+  <div class="container row">
+    <a href="/" class="brand" data-view="dashboard">Writing Studio<span class="dot">.</span></a>
+    <div class="links">
+      <a href="#" data-view="dashboard" class="active">Dashboard</a>
+      <a href="#" data-view="upload">New post</a>
+      <a href="/writing.html" target="_blank" rel="noopener">View site</a>
+    </div>
+  </div>
+</nav>
+
+<main class="container studio-main">
+
+  <!-- Dashboard -->
+  <section id="view-dashboard" class="studio-view active">
+    <section class="page-head studio-head">
+      <div class="eyebrow">Local CMS</div>
+      <h1><span class="accent">Writing</span> Studio</h1>
+      <p class="blurb">Upload a document, review the draft, publish static pages, then push to GitHub Pages.</p>
+    </section>
+
+    <div class="studio-actions reveal">
+      <button type="button" class="studio-btn studio-btn-primary" data-view="upload">+ New post from file</button>
+    </div>
+
+    <div class="studio-grid">
+      <div class="studio-panel">
+        <h2 class="studio-panel-title">Drafts</h2>
+        <div id="drafts-list" class="studio-list">
+          <p class="studio-empty">Loading drafts…</p>
+        </div>
+      </div>
+      <div class="studio-panel">
+        <h2 class="studio-panel-title">Published</h2>
+        <div id="published-list" class="studio-list">
+          <p class="studio-empty">Loading posts…</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="studio-panel studio-git-panel" id="git-panel">
+      <h2 class="studio-panel-title">Git status</h2>
+      <div id="git-status-content">
+        <p class="studio-empty">Checking repository…</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Upload -->
+  <section id="view-upload" class="studio-view">
+    <section class="page-head studio-head">
+      <div class="eyebrow">Step 1</div>
+      <h1>Upload a <span class="accent">document</span></h1>
+      <p class="blurb">Supported: .txt, .md, .docx, .pdf (max 25 MB)</p>
+    </section>
+
+    <div class="studio-dropzone" id="dropzone">
+      <input type="file" id="file-input" accept=".txt,.md,.docx,.pdf" hidden>
+      <div class="studio-dropzone-inner">
+        <p class="studio-dropzone-title">Drop your file here</p>
+        <p class="studio-dropzone-hint">or click to browse</p>
+      </div>
+    </div>
+
+    <div class="studio-progress-wrap hidden" id="upload-progress-wrap">
+      <div class="studio-progress-label" id="upload-progress-label">Uploading…</div>
+      <div class="studio-progress-track">
+        <div class="studio-progress-bar" id="upload-progress-bar"></div>
+      </div>
+    </div>
+
+    <p class="studio-error hidden" id="upload-error"></p>
+  </section>
+
+  <!-- Editor -->
+  <section id="view-editor" class="studio-view">
+    <section class="page-head studio-head">
+      <div class="eyebrow">Step 2</div>
+      <h1>Review <span class="accent">draft</span></h1>
+      <p class="blurb" id="editor-source">From uploaded file</p>
+    </section>
+
+    <form id="draft-form" class="studio-form">
+      <div class="studio-form-row">
+        <label for="field-title">Title</label>
+        <input type="text" id="field-title" name="title" required>
+      </div>
+      <div class="studio-form-row studio-form-row-split">
+        <div>
+          <label for="field-slug">URL slug</label>
+          <input type="text" id="field-slug" name="slug" required>
+          <span class="studio-hint">articles/<span id="slug-preview">your-slug</span>.html</span>
+        </div>
+        <div>
+          <label for="field-category">Category</label>
+          <select id="field-category" name="category">
+            <option value="nonfiction">Non-fiction</option>
+            <option value="fiction">Fiction</option>
+          </select>
+        </div>
+      </div>
+      <div class="studio-form-row studio-form-row-split">
+        <div>
+          <label for="field-tag">Tag</label>
+          <input type="text" id="field-tag" name="tag" placeholder="Essay, Short story, Flash…">
+        </div>
+        <div>
+          <label for="field-publication">Publication</label>
+          <input type="text" id="field-publication" name="publication" placeholder="The Margins">
+        </div>
+      </div>
+      <div class="studio-form-row">
+        <label for="field-date">Date</label>
+        <input type="text" id="field-date" name="date" placeholder="Nov 2025">
+      </div>
+      <div class="studio-form-row">
+        <label for="field-excerpt">Excerpt</label>
+        <textarea id="field-excerpt" name="excerpt" rows="3" placeholder="Short blurb for the writing index"></textarea>
+      </div>
+      <div class="studio-form-row">
+        <label>Body content <span class="studio-wordcount" id="word-count"></span></label>
+        <p class="studio-hint">Drag the handle on each block to reorder. Drop images between paragraphs to place them.</p>
+        <div id="body-composer" class="body-composer"></div>
+        <div class="composer-toolbar">
+          <button type="button" class="studio-btn" id="btn-add-paragraph">+ Paragraph</button>
+          <button type="button" class="studio-btn" id="btn-add-image">+ Image</button>
+          <input type="file" id="image-input" accept="image/jpeg,image/png,image/gif,image/webp" hidden multiple>
+        </div>
+      </div>
+
+      <div class="studio-form-actions">
+        <button type="button" class="studio-btn" id="btn-back-dashboard">← Dashboard</button>
+        <button type="button" class="studio-btn" id="btn-preview">Preview</button>
+        <button type="button" class="studio-btn studio-btn-primary" id="btn-save">Save draft</button>
+        <button type="button" class="studio-btn studio-btn-accent" id="btn-publish">Publish</button>
+      </div>
+    </form>
+
+    <p class="studio-error hidden" id="editor-error"></p>
+    <p class="studio-success hidden" id="editor-success"></p>
+  </section>
+
+  <!-- Publish success -->
+  <section id="view-success" class="studio-view">
+    <section class="page-head studio-head">
+      <div class="eyebrow">Step 3</div>
+      <h1>Ready to <span class="accent">push</span></h1>
+      <p class="blurb">Your post has been generated as static HTML. Push to GitHub to put it live.</p>
+    </section>
+
+    <div class="studio-panel studio-success-panel">
+      <h2 class="studio-panel-title">Changed files</h2>
+      <ul id="changed-files" class="studio-file-list"></ul>
+    </div>
+
+    <div class="studio-panel">
+      <h2 class="studio-panel-title">Push to GitHub Pages</h2>
+      <ol id="push-steps" class="studio-steps"></ol>
+      <div class="studio-code-block" id="push-commands"></div>
+      <div class="studio-form-actions">
+        <button type="button" class="studio-btn" data-view="dashboard">← Dashboard</button>
+        <button type="button" class="studio-btn studio-btn-primary" id="btn-copy-commands">Copy commands</button>
+      </div>
+      <p class="studio-hint studio-push-hint">Or run <code>npm run push</code> in Terminal for guided push.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="studio-footer">
+  <div class="container">
+    <div class="colophon"><span>Writing Studio · local only · localhost:3333</span></div>
+  </div>
+</footer>
+
+<script src="/composer.js"></script>
+<script src="/admin.js"></script>
+</body>
+</html>

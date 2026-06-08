@@ -1,0 +1,8 @@
+node_modules/
+cms/drafts/*.json
+cms/drafts/media/**
+cms/uploads/*
+!cms/drafts/.gitkeep
+!cms/drafts/media/.gitkeep
+!cms/uploads/.gitkeep
+.DS_Store
