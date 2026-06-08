@@ -10,7 +10,6 @@
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
 <nav class="nav">
   <div class="container row">
     <a href="index.html" class="brand">atishay<span class="dot">.</span></a>
@@ -20,26 +19,20 @@
     </div>
   </div>
 </nav>
-
 <main class="container">
-
   <section class="page-head">
     <div class="eyebrow reveal">no. II — writing</div>
     <h1 class="reveal d1"><span class="accent">fiction</span><br>&amp; non-fiction.</h1>
     <p class="blurb reveal d2">essays, short fiction, zines, and the occasional column. <span class="ink">a working bibliography, updated as the year permits.</span></p>
   </section>
-
   <div class="tabs-bar reveal">
     <span class="label">Read as</span>
     <button class="tab active" data-pane="fiction">Fiction</button>
     <span class="sep">·</span>
     <button class="tab" data-pane="nonfiction">Non-fiction</button>
   </div>
-
   <section class="writing-list">
-
     <div class="wpane active" id="paneFiction">
-
       <a href="articles/the-bombay-switchboard.html" class="wrow">
         <span class="num">i.</span>
         <div>
@@ -49,7 +42,6 @@
         <span class="pub"><b>Joyland</b> · Sep 2025</span>
         <span class="tag">Short story</span>
       </a>
-
       <a href="articles/last-train-from-khar-road.html" class="wrow">
         <span class="num">ii.</span>
         <div>
@@ -59,7 +51,6 @@
         <span class="pub"><b>Wigleaf</b> · Aug 2025</span>
         <span class="tag">Flash</span>
       </a>
-
       <a href="articles/the-cartographers-daughter.html" class="wrow">
         <span class="num">iii.</span>
         <div>
@@ -69,7 +60,6 @@
         <span class="pub"><b>The Margins</b> · Apr 2025</span>
         <span class="tag">Short story</span>
       </a>
-
       <a href="articles/a-night-in-three-languages.html" class="wrow">
         <span class="num">iv.</span>
         <div>
@@ -79,11 +69,8 @@
         <span class="pub"><b>SmokeLong Quarterly</b> · Jan 2025</span>
         <span class="tag">Flash</span>
       </a>
-
     </div>
-
     <div class="wpane" id="paneNonfiction">
-
       <a href="articles/house-made-of-vowels.html" class="wrow">
         <span class="num">i.</span>
         <div>
@@ -93,7 +80,6 @@
         <span class="pub"><b>The Margins</b> · Nov 2025</span>
         <span class="tag">Essay</span>
       </a>
-
       <a href="articles/the-model-has-read-your-mothers-letters.html" class="wrow">
         <span class="num">ii.</span>
         <div>
@@ -103,7 +89,6 @@
         <span class="pub"><b>Dirt</b> · Mar 2025</span>
         <span class="tag">Column</span>
       </a>
-
       <a href="articles/a-small-theory-of-belonging.html" class="wrow">
         <span class="num">iii.</span>
         <div>
@@ -113,7 +98,6 @@
         <span class="pub"><b>Catapult</b> · Jul 2025</span>
         <span class="tag">Personal essay</span>
       </a>
-
       <a href="articles/what-the-recommender-cannot-recommend.html" class="wrow">
         <span class="num">iv.</span>
         <div>
@@ -123,7 +107,6 @@
         <span class="pub"><b>Real Life</b> · Feb 2025</span>
         <span class="tag">Essay</span>
       </a>
-
       <a href="articles/letters-from-a-patel-motel.html" class="wrow">
         <span class="num">v.</span>
         <div>
@@ -133,7 +116,6 @@
         <span class="pub"><b>Guernica</b> · Oct 2024</span>
         <span class="tag">Reportage</span>
       </a>
-
       <a href="articles/an-inventory-of-almost-languages.html" class="wrow">
         <span class="num">vi.</span>
         <div>
@@ -143,7 +125,6 @@
         <span class="pub"><b>Off Assignment</b> · Jun 2024</span>
         <span class="tag">Essay</span>
       </a>
-
       <a href="articles/a-system-so-perfect.html" class="wrow">
         <span class="num">vii.</span>
         <div>
@@ -153,13 +134,9 @@
         <span class="pub"><b>Writing &amp; Culture</b> · Fall 2025</span>
         <span class="tag">Zine</span>
       </a>
-
     </div>
-
   </section>
-
 </main>
-
 <footer>
   <div class="container">
     <div class="frow footer-simple">
@@ -177,7 +154,6 @@
     </div>
   </div>
 </footer>
-
 <script src="scripts/site.js" defer></script>
 <script>
   document.querySelectorAll('.tabs-bar .tab').forEach(btn => {
@@ -187,7 +163,6 @@
       document.querySelectorAll('.wpane').forEach(p => p.classList.toggle('active', p.id === 'pane' + pane.charAt(0).toUpperCase() + pane.slice(1)));
     });
   });
-
   if (location.hash) {
     const target = location.hash.replace('#', '');
     const btn = document.querySelector(`.tab[data-pane="${target}"]`);
