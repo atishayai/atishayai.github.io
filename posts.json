@@ -47,6 +47,17 @@
   ],
   "nonfiction": [
     {
+      "slug": "pl11-arthropod-annotated-bibliography",
+      "title": "PL11 Arthropod Annotated Bibliography",
+      "excerpt": "Atishay Jain",
+      "publication": "off. fadf",
+      "date": "Jun 2026",
+      "tag": "Essay",
+      "metaAccent": "essay",
+      "metaVenue": "off. fadf",
+      "metaDate": "jun 2026"
+    },
+    {
       "slug": "house-made-of-vowels",
       "title": "House Made of Vowels",
       "excerpt": "An essay on Hindi, English, and the words a family chooses to lose. The diaspora as a grammar, not a geography.",
