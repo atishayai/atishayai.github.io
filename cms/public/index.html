@@ -89,21 +89,28 @@
   <!-- Editor -->
   <section id="view-editor" class="studio-view">
     <section class="page-head studio-head">
-      <div class="eyebrow">Step 2</div>
-      <h1>Review <span class="accent">draft</span></h1>
+      <div class="eyebrow" id="editor-eyebrow">Step 2</div>
+      <h1 id="editor-heading">Review <span class="accent">draft</span></h1>
       <p class="blurb" id="editor-source">From uploaded file</p>
     </section>
 
     <form id="draft-form" class="studio-form">
       <div class="studio-form-row">
         <label for="field-title">Title</label>
-        <input type="text" id="field-title" name="title" required>
+        <div class="studio-title-row">
+          <input type="text" id="field-title" name="title" required>
+          <button type="button" class="studio-btn studio-btn-sm" id="btn-sync-slug">Sync URL from title</button>
+        </div>
+        <span class="studio-hint">Title is what readers see. URL slug becomes the web address.</span>
       </div>
       <div class="studio-form-row studio-form-row-split">
         <div>
           <label for="field-slug">URL slug</label>
           <input type="text" id="field-slug" name="slug" required>
           <span class="studio-hint">articles/<span id="slug-preview">your-slug</span>.html</span>
+          <div class="studio-slug-warning hidden" id="slug-warning">
+            Changing the URL will break existing links to this article.
+          </div>
         </div>
         <div>
           <label for="field-category">Category</label>
@@ -120,7 +127,14 @@
         </div>
         <div>
           <label for="field-publication">Publication</label>
-          <input type="text" id="field-publication" name="publication" placeholder="The Margins">
+          <select id="field-publication" name="publication">
+            <option value="">— Select publication —</option>
+          </select>
+          <label class="studio-checkbox-label">
+            <input type="checkbox" id="field-publication-new-toggle">
+            Add new publication
+          </label>
+          <input type="text" id="field-publication-custom" class="hidden" placeholder="Magazine or outlet name">
         </div>
       </div>
       <div class="studio-form-row">
@@ -133,7 +147,7 @@
       </div>
       <div class="studio-form-row">
         <label>Body content <span class="studio-wordcount" id="word-count"></span></label>
-        <p class="studio-hint">Drag the handle on each block to reorder. Drop images between paragraphs to place them.</p>
+        <p class="studio-hint">Use the format bar for bold, italic, color, and alignment. Drag ⋮⋮ to reorder blocks.</p>
         <div id="body-composer" class="body-composer"></div>
         <div class="composer-toolbar">
           <button type="button" class="studio-btn" id="btn-add-paragraph">+ Paragraph</button>
@@ -144,9 +158,12 @@
 
       <div class="studio-form-actions">
         <button type="button" class="studio-btn" id="btn-back-dashboard">← Dashboard</button>
+        <button type="button" class="studio-btn studio-btn-danger hidden" id="btn-delete-draft">Delete draft</button>
+        <button type="button" class="studio-btn studio-btn-danger hidden" id="btn-delete-published">Delete published</button>
         <button type="button" class="studio-btn" id="btn-preview">Preview</button>
-        <button type="button" class="studio-btn studio-btn-primary" id="btn-save">Save draft</button>
+        <button type="button" class="studio-btn studio-btn-primary hidden" id="btn-save">Save draft</button>
         <button type="button" class="studio-btn studio-btn-accent" id="btn-publish">Publish</button>
+        <button type="button" class="studio-btn studio-btn-accent hidden" id="btn-update-published">Update published</button>
       </div>
     </form>
 

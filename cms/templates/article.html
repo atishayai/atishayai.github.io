@@ -3,25 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#070B12">
-<title>{{TITLE_PLAIN}} — Atishay Jain</title>
+<meta name="theme-color" content="#0C0C0C">
+<title>{{TITLE_PLAIN}} — atishay</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="{{STYLES_HREF}}">
 </head>
 <body>
 
-<nav class="nav">
-  <div class="container row">
-    <a href="{{INDEX_HREF}}" class="brand">Atishay Jain<span class="dot">.</span></a>
-    <div class="links">
-      <a href="{{WRITING_HREF}}" class="active">Writing</a>
-      <a href="{{SIDEQUESTS_HREF}}">Sidequests</a>
-    </div>
-  </div>
-</nav>
+{{SITE_NAV}}
 
-<main class="container">
+<main class="container v2-page-main">
   <article class="article">
     <a href="{{BACK_HREF}}" class="article-back">← Back to writing</a>
     <div class="article-meta">{{META_LINE}}</div>
@@ -32,22 +24,7 @@
   </article>
 </main>
 
-<footer>
-  <div class="container">
-    <div class="frow footer-simple">
-      <div class="right">
-        <div class="label">Elsewhere</div>
-        <div class="links">
-          <a href="#">Instagram</a>
-          <a href="#">Substack</a>
-          <a href="#">Twitter</a>
-        </div>
-      </div>
-    </div>
-    <div class="colophon">
-      <span>© 2026 Atishay Jain</span>
-    </div>
-  </div>
-</footer>
+{{SITE_FOOTER}}
+{{SCRIPTS_TAG}}
 </body>
 </html>

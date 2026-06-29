@@ -153,8 +153,31 @@ The **Dashboard** shows:
 |------|---------|
 | Start studio | `npm run studio` or double-click `Start Writing Studio.command` |
 | Validate posts | `npm run import-posts` |
+| Rebuild article nav/footer | `npm run rebuild-articles` |
+| Run studio tests | `npm run verify-studio` |
 | Guided git push | `npm run push` |
 | Studio URL | http://localhost:3333 |
+
+---
+
+## Live deployment checklist
+
+1. Work locally: `npm run studio`
+2. Publish or update in the studio (generates static files)
+3. `git status` — verify only intended files changed
+4. `git add` relevant files (NOT `cms/drafts/`, `cms/uploads/`, or `node_modules/`)
+5. `git commit -m "Add: Article Title"` or run `npm run push`
+6. Wait 1–2 minutes, then verify on the live site: writing index, article URL, nav/footer
+
+### Title vs URL slug
+
+| Field | Purpose |
+|-------|---------|
+| **Title** | Display name on the page and writing index |
+| **URL slug** | Permanent file path: `articles/your-slug.html` |
+
+- **New drafts:** slug auto-syncs from title as you type; use **Sync URL from title** to re-sync manually.
+- **Published posts:** changing the title alone is safe (URL stays the same). Changing the slug requires confirmation and creates a redirect stub at the old URL.
 
 ---
 

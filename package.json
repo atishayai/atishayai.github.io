@@ -6,6 +6,8 @@
   "scripts": {
     "studio": "node cms/server.js",
     "import-posts": "node cms/lib/import-existing.js",
+    "rebuild-articles": "node cms/lib/rebuild-articles.js",
+    "verify-studio": "node cms/lib/verify-studio.js",
     "push": "node scripts/push.js"
   },
   "dependencies": {

@@ -3,7 +3,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
-const { ROOT, STUDIO_PORT } = require('./lib/paths');
+const { ROOT, STUDIO_PORT, IMAGES_DIR } = require('./lib/paths');
 const { extractWithProgress, cleanupUpload, ensureUploadsDir } = require('./lib/extract');
 const {
   listDrafts,
@@ -13,7 +13,15 @@ const {
   deleteDraft,
   draftMediaDir,
 } = require('./lib/drafts');
-const { publishDraft, buildPreviewHtml, readPosts } = require('./lib/publish');
+const {
+  publishDraft,
+  buildPreviewHtml,
+  readPosts,
+  deletePost,
+  loadPostForEdit,
+  republishPost,
+} = require('./lib/publish');
+const { listPublications, addPublication } = require('./lib/publications');
 const { getGitStatus, getPushInstructions } = require('./lib/git');
 
 ensureUploadsDir();
@@ -51,6 +59,19 @@ app.get('/api/posts', (_req, res) => {
   res.json(readPosts());
 });
 
+app.get('/api/publications', (_req, res) => {
+  res.json({ publications: listPublications() });
+});
+
+app.post('/api/publications', (req, res) => {
+  try {
+    const publications = addPublication(req.body?.name);
+    res.json({ publications });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 app.get('/api/drafts/:id', (req, res) => {
   const draft = getDraft(req.params.id);
   if (!draft) return res.status(404).json({ error: 'Draft not found' });
@@ -75,10 +96,34 @@ app.get('/api/drafts/:id/preview', (req, res) => {
   res.type('html').send(buildPreviewHtml(draft));
 });
 
+function publishedMediaDir(id) {
+  const slug = id.replace(/^published-/, '');
+  return path.join(IMAGES_DIR, slug);
+}
+
+function resolveMediaDir(id) {
+  if (String(id).startsWith('published-')) {
+    return publishedMediaDir(id);
+  }
+  return draftMediaDir(id);
+}
+
 app.get('/api/drafts/:id/media/:filename', (req, res) => {
-  const draft = getDraft(req.params.id);
-  if (!draft) return res.status(404).send('Draft not found');
-  const file = path.join(draftMediaDir(req.params.id), req.params.filename);
+  const { id, filename } = req.params;
+  const isPublished = String(id).startsWith('published-');
+
+  if (!isPublished) {
+    const draft = getDraft(id);
+    if (!draft) return res.status(404).send('Draft not found');
+  } else {
+    try {
+      loadPostForEdit(id.replace(/^published-/, ''));
+    } catch {
+      return res.status(404).send('Post not found');
+    }
+  }
+
+  const file = path.join(resolveMediaDir(id), filename);
   if (!fs.existsSync(file)) return res.status(404).send('Image not found');
   res.sendFile(file);
 });
@@ -86,7 +131,7 @@ app.get('/api/drafts/:id/media/:filename', (req, res) => {
 const imageUpload = multer({
   storage: multer.diskStorage({
     destination: (req, _file, cb) => {
-      const dir = draftMediaDir(req.params.id);
+      const dir = resolveMediaDir(req.params.id);
       fs.mkdirSync(dir, { recursive: true });
       cb(null, dir);
     },
@@ -103,9 +148,25 @@ const imageUpload = multer({
 });
 
 app.post('/api/drafts/:id/images', imageUpload.single('image'), (req, res) => {
-  const draft = getDraft(req.params.id);
-  if (!draft) return res.status(404).json({ error: 'Draft not found' });
+  const { id } = req.params;
+  const isPublished = String(id).startsWith('published-');
+
+  if (!isPublished) {
+    const draft = getDraft(id);
+    if (!draft) return res.status(404).json({ error: 'Draft not found' });
+  } else {
+    try {
+      loadPostForEdit(id.replace(/^published-/, ''));
+    } catch (err) {
+      return res.status(404).json({ error: err.message });
+    }
+  }
+
   if (!req.file) return res.status(400).json({ error: 'No image uploaded' });
+
+  const url = isPublished
+    ? `/images/posts/${id.replace(/^published-/, '')}/${encodeURIComponent(req.file.filename)}`
+    : `/api/drafts/${id}/media/${encodeURIComponent(req.file.filename)}`;
 
   res.json({
     block: {
@@ -115,7 +176,7 @@ app.post('/api/drafts/:id/images', imageUpload.single('image'), (req, res) => {
       alt: path.basename(req.file.originalname, path.extname(req.file.originalname)),
       caption: '',
     },
-    url: `/api/drafts/${req.params.id}/media/${encodeURIComponent(req.file.filename)}`,
+    url,
   });
 });
 
@@ -131,6 +192,49 @@ app.post('/api/drafts/:id/publish', (req, res) => {
     res.json({ ...result, git, push });
   } catch (err) {
     res.status(400).json({ error: err.message });
+  }
+});
+
+app.get('/api/posts/:slug/edit', (req, res) => {
+  try {
+    const post = loadPostForEdit(req.params.slug);
+    res.json(post);
+  } catch (err) {
+    res.status(404).json({ error: err.message });
+  }
+});
+
+app.put('/api/posts/:slug', (req, res) => {
+  try {
+    const createRedirect = req.body?.createRedirect !== false;
+    const result = republishPost(req.params.slug, req.body, { createRedirect });
+    const git = getGitStatus();
+    const push = getPushInstructions(req.body.title);
+    res.json({ ...result, git, push });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post('/api/posts/:slug/preview', (req, res) => {
+  try {
+    const draft = {
+      ...req.body,
+      id: `published-${req.params.slug}`,
+      publishedSlug: req.params.slug,
+    };
+    res.type('html').send(buildPreviewHtml(draft));
+  } catch (err) {
+    res.status(400).send(err.message);
+  }
+});
+
+app.delete('/api/posts/:slug', (req, res) => {
+  try {
+    const result = deletePost(req.params.slug);
+    res.json(result);
+  } catch (err) {
+    res.status(404).json({ error: err.message });
   }
 });
 

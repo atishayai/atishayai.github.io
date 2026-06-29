@@ -1,5 +1,9 @@
 (function () {
   let currentDraftId = null;
+  let publishedSlug = null;
+  let originalPublishedSlug = null;
+  let isPublishedEdit = false;
+  let publications = [];
   let lastPushCommands = [];
 
   const views = {
@@ -38,8 +42,27 @@
     return data;
   }
 
+  async function loadPublications() {
+    try {
+      const { publications: list } = await api('/api/publications');
+      publications = list || [];
+      populatePublicationSelect();
+    } catch {
+      publications = [];
+    }
+  }
+
+  function populatePublicationSelect() {
+    const select = document.getElementById('field-publication');
+    const current = select.value;
+    select.innerHTML =
+      '<option value="">— Select publication —</option>' +
+      publications.map((p) => `<option value="${escapeAttr(p)}">${escapeHtml(p)}</option>`).join('');
+    if (current) select.value = current;
+  }
+
   async function loadDashboard() {
-    await Promise.all([loadDrafts(), loadPublished(), loadGitStatus()]);
+    await Promise.all([loadDrafts(), loadPublished(), loadGitStatus(), loadPublications()]);
   }
 
   async function loadDrafts() {
@@ -58,12 +81,30 @@
             <div class="studio-list-item-title">${escapeHtml(d.title || 'Untitled')}</div>
             <div class="studio-list-item-meta">${escapeHtml(d.sourceFile || 'Draft')} · ${formatDate(d.updatedAt)}</div>
           </div>
-          <span class="studio-list-item-tag">${escapeHtml(d.category || 'draft')}</span>
+          <div class="studio-list-item-actions">
+            <span class="studio-list-item-tag">${escapeHtml(d.category || 'draft')}</span>
+            <button type="button" class="studio-btn-icon" data-delete-draft="${d.id}" title="Delete draft">×</button>
+          </div>
         </div>`
         )
         .join('');
       el.querySelectorAll('[data-draft-id]').forEach((item) => {
-        item.addEventListener('click', () => openDraft(item.dataset.draftId));
+        item.addEventListener('click', (e) => {
+          if (e.target.closest('[data-delete-draft]')) return;
+          openDraft(item.dataset.draftId);
+        });
+      });
+      el.querySelectorAll('[data-delete-draft]').forEach((btn) => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          if (!confirm('Delete this draft? This cannot be undone.')) return;
+          try {
+            await api(`/api/drafts/${btn.dataset.deleteDraft}`, { method: 'DELETE' });
+            loadDrafts();
+          } catch (err) {
+            alert(err.message);
+          }
+        });
       });
     } catch (err) {
       el.innerHTML = `<p class="studio-empty">${escapeHtml(err.message)}</p>`;
@@ -85,15 +126,36 @@
       el.innerHTML = all
         .map(
           (p) => `
-        <a class="studio-list-item" href="/articles/${p.slug}.html" target="_blank" rel="noopener">
-          <div>
-            <div class="studio-list-item-title">${escapeHtml(p.title)}</div>
-            <div class="studio-list-item-meta">${escapeHtml(p.publication)} · ${escapeHtml(p.date)}</div>
+        <div class="studio-list-item">
+          <a class="studio-list-item-link" href="/articles/${p.slug}.html" target="_blank" rel="noopener">
+            <div>
+              <div class="studio-list-item-title">${escapeHtml(p.title)}</div>
+              <div class="studio-list-item-meta">${escapeHtml(p.publication)} · ${escapeHtml(p.date)}</div>
+            </div>
+          </a>
+          <div class="studio-list-item-actions">
+            <span class="studio-list-item-tag">${escapeHtml(p.category)}</span>
+            <button type="button" class="studio-btn studio-btn-sm" data-edit-published="${p.slug}">Edit</button>
+            <button type="button" class="studio-btn-icon" data-delete-published="${p.slug}" title="Delete post">×</button>
           </div>
-          <span class="studio-list-item-tag">${escapeHtml(p.category)}</span>
-        </a>`
+        </div>`
         )
         .join('');
+      el.querySelectorAll('[data-edit-published]').forEach((btn) => {
+        btn.addEventListener('click', () => openPublished(btn.dataset.editPublished));
+      });
+      el.querySelectorAll('[data-delete-published]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          if (!confirm(`Delete "${btn.dataset.deletePublished}" from the live site files? You must push to GitHub to remove it from the web.`)) return;
+          try {
+            await api(`/api/posts/${btn.dataset.deletePublished}`, { method: 'DELETE' });
+            loadPublished();
+            loadGitStatus();
+          } catch (err) {
+            alert(err.message);
+          }
+        });
+      });
     } catch (err) {
       el.innerHTML = `<p class="studio-empty">${escapeHtml(err.message)}</p>`;
     }
@@ -130,21 +192,17 @@
   const uploadError = document.getElementById('upload-error');
 
   dropzone.addEventListener('click', () => fileInput.click());
-
   dropzone.addEventListener('dragover', (e) => {
     e.preventDefault();
     dropzone.classList.add('dragover');
   });
-
   dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
-
   dropzone.addEventListener('drop', (e) => {
     e.preventDefault();
     dropzone.classList.remove('dragover');
     const file = e.dataTransfer.files[0];
     if (file) uploadFile(file);
   });
-
   fileInput.addEventListener('change', () => {
     const file = fileInput.files[0];
     if (file) uploadFile(file);
@@ -163,15 +221,6 @@
 
     const formData = new FormData();
     formData.append('file', file);
-
-    let jobId = null;
-    const progressInterval = setInterval(() => {
-      if (jobId) {
-        fetch(`/api/upload/progress/${jobId}`)
-          .then(() => {})
-          .catch(() => {});
-      }
-    }, 300);
 
     try {
       setProgress('Uploading…', 25);
@@ -203,25 +252,26 @@
       setProgress('Creating draft…', 90);
       await delay(300);
       setProgress('Done', 100);
-
       openDraft(result.draftId, result.draft);
     } catch (err) {
       uploadError.textContent = err.message;
       uploadError.classList.remove('hidden');
       progressWrap.classList.add('hidden');
-    } finally {
-      clearInterval(progressInterval);
     }
   }
 
-  // Editor
+  // Editor fields
   const fieldTitle = document.getElementById('field-title');
   const fieldSlug = document.getElementById('field-slug');
   const slugPreview = document.getElementById('slug-preview');
+  const slugWarning = document.getElementById('slug-warning');
   const wordCount = document.getElementById('word-count');
   const editorError = document.getElementById('editor-error');
   const editorSuccess = document.getElementById('editor-success');
   const editorSource = document.getElementById('editor-source');
+  const pubSelect = document.getElementById('field-publication');
+  const pubNewToggle = document.getElementById('field-publication-new-toggle');
+  const pubCustom = document.getElementById('field-publication-custom');
 
   BodyComposer.init({
     onChange: (_blocks, count) => {
@@ -230,20 +280,105 @@
   });
 
   fieldTitle.addEventListener('input', () => {
-    if (!fieldSlug.dataset.manual) {
+    if (!isPublishedEdit && !fieldSlug.dataset.manual) {
       fieldSlug.value = slugify(fieldTitle.value);
       slugPreview.textContent = fieldSlug.value || 'your-slug';
     }
+    updateSlugWarning();
   });
 
   fieldSlug.addEventListener('input', () => {
     fieldSlug.dataset.manual = '1';
     slugPreview.textContent = fieldSlug.value || 'your-slug';
+    updateSlugWarning();
   });
 
-  function updateWordCount() {
-    const count = BodyComposer.getWordCount();
-    wordCount.textContent = count ? `(${count} words)` : '';
+  function updateSlugWarning() {
+    if (!isPublishedEdit) {
+      slugWarning.classList.add('hidden');
+      return;
+    }
+    const changed = fieldSlug.value.trim() !== originalPublishedSlug;
+    slugWarning.classList.toggle('hidden', !changed);
+  }
+
+  document.getElementById('btn-sync-slug').addEventListener('click', () => {
+    if (isPublishedEdit) {
+      if (
+        !confirm(
+          'This will change the live URL and may break shared links. A redirect stub will be created at the old URL. Continue?'
+        )
+      ) {
+        return;
+      }
+    }
+    delete fieldSlug.dataset.manual;
+    fieldSlug.value = slugify(fieldTitle.value);
+    slugPreview.textContent = fieldSlug.value || 'your-slug';
+    updateSlugWarning();
+  });
+
+  pubNewToggle.addEventListener('change', () => {
+    pubCustom.classList.toggle('hidden', !pubNewToggle.checked);
+    if (pubNewToggle.checked) {
+      pubSelect.value = '';
+      pubCustom.focus();
+    }
+  });
+
+  pubCustom.addEventListener('blur', async () => {
+    const name = pubCustom.value.trim();
+    if (!name || !pubNewToggle.checked) return;
+    try {
+      const { publications: list } = await api('/api/publications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      publications = list;
+      populatePublicationSelect();
+      pubSelect.value = name;
+      pubNewToggle.checked = false;
+      pubCustom.classList.add('hidden');
+      pubCustom.value = '';
+    } catch (err) {
+      editorError.textContent = err.message;
+      editorError.classList.remove('hidden');
+    }
+  });
+
+  function setPublicationValue(value) {
+    populatePublicationSelect();
+    if (value && publications.includes(value)) {
+      pubSelect.value = value;
+      pubNewToggle.checked = false;
+      pubCustom.classList.add('hidden');
+    } else if (value) {
+      pubNewToggle.checked = true;
+      pubCustom.classList.remove('hidden');
+      pubCustom.value = value;
+    }
+  }
+
+  function getPublicationValue() {
+    if (pubNewToggle.checked && pubCustom.value.trim()) {
+      return pubCustom.value.trim();
+    }
+    return pubSelect.value.trim();
+  }
+
+  function updateEditorMode() {
+    const draftMode = !isPublishedEdit;
+    document.getElementById('editor-eyebrow').textContent = isPublishedEdit ? 'Edit published' : 'Step 2';
+    document.getElementById('editor-heading').innerHTML = isPublishedEdit
+      ? 'Edit <span class="accent">published</span>'
+      : 'Review <span class="accent">draft</span>';
+    document.getElementById('btn-save').classList.toggle('hidden', !draftMode);
+    document.getElementById('btn-publish').classList.toggle('hidden', !draftMode);
+    document.getElementById('btn-update-published').classList.toggle('hidden', draftMode);
+    document.getElementById('btn-delete-draft').classList.toggle('hidden', !draftMode);
+    document.getElementById('btn-delete-published').classList.toggle('hidden', draftMode);
+    updateSlugWarning();
   }
 
   function blocksFromDraft(draft) {
@@ -270,28 +405,38 @@
     return [];
   }
 
-  function fillEditor(draft) {
+  function fillEditor(draft, { published = false } = {}) {
+    isPublishedEdit = published;
     currentDraftId = draft.id;
+    publishedSlug = published ? draft.publishedSlug || draft.slug : null;
+    originalPublishedSlug = published ? draft.publishedSlug || draft.slug : null;
+
     fieldTitle.value = draft.title || '';
     fieldSlug.value = draft.slug || '';
-    fieldSlug.dataset.manual = draft.slug ? '1' : '';
+    fieldSlug.dataset.manual = published || draft.slug ? '1' : '';
     slugPreview.textContent = draft.slug || 'your-slug';
     document.getElementById('field-category').value = draft.category || 'nonfiction';
     document.getElementById('field-tag').value = draft.tag || '';
-    document.getElementById('field-publication').value = draft.publication || '';
+    setPublicationValue(draft.publication || '');
     document.getElementById('field-date').value = draft.date || '';
     document.getElementById('field-excerpt').value = draft.excerpt || '';
     BodyComposer.setBlocks(blocksFromDraft(draft), draft.id);
-    editorSource.textContent = draft.sourceFile
-      ? `From ${draft.sourceFile}`
-      : 'Edit your draft';
+    editorSource.textContent = published
+      ? `Editing published post · ${draft.slug}`
+      : draft.sourceFile
+        ? `From ${draft.sourceFile}`
+        : 'Edit your draft';
     updateWordCount();
+    updateEditorMode();
     editorError.classList.add('hidden');
     editorSuccess.classList.add('hidden');
     showView('editor');
   }
 
   async function openDraft(id, draftData) {
+    isPublishedEdit = false;
+    publishedSlug = null;
+    originalPublishedSlug = null;
     if (draftData) {
       fillEditor(draftData);
       return;
@@ -304,20 +449,38 @@
     }
   }
 
+  async function openPublished(slug) {
+    try {
+      const post = await api(`/api/posts/${slug}/edit`);
+      fillEditor(post, { published: true });
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
   function collectFormData() {
     return {
       title: fieldTitle.value.trim(),
       slug: fieldSlug.value.trim(),
       category: document.getElementById('field-category').value,
       tag: document.getElementById('field-tag').value.trim(),
-      publication: document.getElementById('field-publication').value.trim(),
+      publication: getPublicationValue(),
       date: document.getElementById('field-date').value.trim(),
       excerpt: document.getElementById('field-excerpt').value.trim(),
       bodyBlocks: BodyComposer.getBlocks(),
     };
   }
 
-  document.getElementById('btn-back-dashboard').addEventListener('click', () => showView('dashboard'));
+  function updateWordCount() {
+    const count = BodyComposer.getWordCount();
+    wordCount.textContent = count ? `(${count} words)` : '';
+  }
+
+  document.getElementById('btn-back-dashboard').addEventListener('click', () => {
+    isPublishedEdit = false;
+    publishedSlug = null;
+    showView('dashboard');
+  });
 
   document.getElementById('btn-save').addEventListener('click', async () => {
     editorError.classList.add('hidden');
@@ -339,12 +502,26 @@
   document.getElementById('btn-preview').addEventListener('click', async () => {
     editorError.classList.add('hidden');
     try {
-      await api(`/api/drafts/${currentDraftId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(collectFormData()),
-      });
-      window.open(`/api/drafts/${currentDraftId}/preview`, '_blank');
+      const data = collectFormData();
+      if (isPublishedEdit) {
+        const res = await fetch(`/api/posts/${publishedSlug}/preview`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        if (!res.ok) throw new Error(await res.text());
+        const html = await res.text();
+        const w = window.open();
+        w.document.write(html);
+        w.document.close();
+      } else {
+        await api(`/api/drafts/${currentDraftId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        window.open(`/api/drafts/${currentDraftId}/preview`, '_blank');
+      }
     } catch (err) {
       editorError.textContent = err.message;
       editorError.classList.remove('hidden');
@@ -371,6 +548,63 @@
     }
   });
 
+  document.getElementById('btn-update-published').addEventListener('click', async () => {
+    editorError.classList.add('hidden');
+    editorSuccess.classList.add('hidden');
+
+    const data = collectFormData();
+    const slugChanged = data.slug !== originalPublishedSlug;
+
+    if (slugChanged) {
+      if (
+        !confirm(
+          'You changed the URL slug. Existing links may break unless a redirect stub is created. Update anyway?'
+        )
+      ) {
+        return;
+      }
+    } else if (!confirm('Update this published post on disk? Push to GitHub to go live.')) {
+      return;
+    }
+
+    try {
+      const result = await api(`/api/posts/${publishedSlug}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...data, createRedirect: slugChanged }),
+      });
+      showSuccess(result);
+    } catch (err) {
+      editorError.textContent = err.message;
+      editorError.classList.remove('hidden');
+    }
+  });
+
+  document.getElementById('btn-delete-draft').addEventListener('click', async () => {
+    if (!confirm('Delete this draft? This cannot be undone.')) return;
+    try {
+      await api(`/api/drafts/${currentDraftId}`, { method: 'DELETE' });
+      currentDraftId = null;
+      showView('dashboard');
+    } catch (err) {
+      editorError.textContent = err.message;
+      editorError.classList.remove('hidden');
+    }
+  });
+
+  document.getElementById('btn-delete-published').addEventListener('click', async () => {
+    if (!confirm('Delete this published post from local files? Push to GitHub to remove from the web.')) return;
+    try {
+      await api(`/api/posts/${publishedSlug}`, { method: 'DELETE' });
+      publishedSlug = null;
+      isPublishedEdit = false;
+      showSuccess({ changedFiles: [`articles/${originalPublishedSlug}.html`, 'writing.html', 'posts.json'] });
+    } catch (err) {
+      editorError.textContent = err.message;
+      editorError.classList.remove('hidden');
+    }
+  });
+
   function showSuccess(result) {
     const filesEl = document.getElementById('changed-files');
     filesEl.innerHTML = (result.changedFiles || [])
@@ -378,24 +612,33 @@
       .join('');
 
     const stepsEl = document.getElementById('push-steps');
-    stepsEl.innerHTML = (result.push?.steps || [])
+    stepsEl.innerHTML = (result.push?.steps || [
+      'Review changed files with git status',
+      'git add the listed files (not cms/drafts/)',
+      'git commit and git push',
+      'Wait 1–2 minutes, then verify on atishay.io',
+    ])
       .map((s) => `<li>${escapeHtml(s)}</li>`)
       .join('');
 
     lastPushCommands = result.push?.commands || [];
-    document.getElementById('push-commands').textContent = lastPushCommands.join('\n');
+    document.getElementById('push-commands').textContent = lastPushCommands.join('\n') || 'npm run push';
 
     currentDraftId = null;
+    isPublishedEdit = false;
+    publishedSlug = null;
     showView('success');
   }
 
   document.getElementById('btn-copy-commands').addEventListener('click', () => {
-    const text = lastPushCommands.join('\n');
+    const text = lastPushCommands.join('\n') || 'npm run push';
     navigator.clipboard.writeText(text).then(() => {
       const btn = document.getElementById('btn-copy-commands');
       const orig = btn.textContent;
       btn.textContent = 'Copied!';
-      setTimeout(() => { btn.textContent = orig; }, 2000);
+      setTimeout(() => {
+        btn.textContent = orig;
+      }, 2000);
     });
   });
 
@@ -405,6 +648,10 @@
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
+  }
+
+  function escapeAttr(str) {
+    return escapeHtml(str);
   }
 
   function slugify(title) {

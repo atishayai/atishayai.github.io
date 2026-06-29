@@ -372,6 +372,27 @@ a { color: inherit; text-decoration: none; }
 .v2-footer-socials a:hover { color: var(--ink); }
 .v2-footer-copy { font-size: 0.65rem; color: var(--ink-faint); }
 
+.v2-footer-x a {
+  display: inline-block;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+}
+
+.v2-page-main {
+  padding-top: calc(5rem + var(--safe-top));
+}
+
+.article-p-center { text-align: center; }
+.article-p-right { text-align: right; }
+
+.article-body b,
+.article-body strong { font-weight: 600; }
+.article-body i,
+.article-body em { font-style: italic; }
+
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(25px); }
   to { opacity: 1; transform: translateY(0); }

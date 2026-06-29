@@ -5,6 +5,8 @@
   let dropIndex = null;
   let onChange = null;
 
+  const FORMAT_COLORS = ['#F5F2ED', '#C4A97D', '#5B8A8A', '#E8A87C', '#C97B7B'];
+
   const container = () => document.getElementById('body-composer');
 
   function uid() {
@@ -58,13 +60,57 @@
   }
 
   function getBlocks() {
-    return blocks.map((b) => ({ ...b }));
+    syncParagraphBlocksFromDom();
+    return blocks.map((b) => {
+      const copy = { ...b };
+      if (copy.type === 'paragraph') {
+        if (copy.html) {
+          delete copy.text;
+        } else {
+          delete copy.html;
+        }
+        if (!copy.align) delete copy.align;
+      }
+      return copy;
+    });
+  }
+
+  function syncParagraphBlocksFromDom() {
+    const root = container();
+    if (!root) return;
+    root.querySelectorAll('.composer-block[data-block-id]').forEach((blockEl) => {
+      const id = blockEl.dataset.blockId;
+      const block = blocks.find((b) => b.id === id);
+      if (!block || block.type !== 'paragraph') return;
+      const editor = blockEl.querySelector('.composer-richtext');
+      if (!editor) return;
+      const html = editor.innerHTML.trim();
+      const plain = editor.textContent.trim();
+      if (!plain) {
+        block.text = '';
+        delete block.html;
+      } else if (html !== plain && /<[a-z]/i.test(html)) {
+        block.html = html;
+        block.text = '';
+      } else {
+        block.text = plain;
+        delete block.html;
+      }
+      const alignBtn = blockEl.querySelector('.composer-align-btn.active');
+      const align = alignBtn?.dataset.align;
+      if (align && align !== 'left') block.align = align;
+      else delete block.align;
+    });
   }
 
   function getWordCount() {
+    syncParagraphBlocksFromDom();
     return blocks
       .filter((b) => b.type === 'paragraph')
-      .flatMap((b) => (b.text || '').trim().split(/\s+/).filter(Boolean))
+      .flatMap((b) => {
+        const text = b.html ? b.html.replace(/<[^>]+>/g, ' ') : b.text || '';
+        return text.trim().split(/\s+/).filter(Boolean);
+      })
       .length;
   }
 
@@ -73,8 +119,8 @@
   }
 
   function focusLastParagraph() {
-    const areas = container()?.querySelectorAll('.composer-paragraph');
-    const last = areas?.[areas.length - 1];
+    const editors = container()?.querySelectorAll('.composer-richtext');
+    const last = editors?.[editors.length - 1];
     last?.focus();
   }
 
@@ -125,12 +171,33 @@
     notifyChange();
   }
 
+  function renderFormatBar(block) {
+    const align = block.align || 'left';
+    const colors = FORMAT_COLORS.map(
+      (c) =>
+        `<button type="button" class="composer-color-swatch" data-color="${c}" style="background:${c}" title="Color"></button>`
+    ).join('');
+
+    return `
+      <div class="composer-format-bar">
+        <button type="button" class="composer-fmt-btn" data-cmd="bold" title="Bold"><b>B</b></button>
+        <button type="button" class="composer-fmt-btn" data-cmd="italic" title="Italic"><i>I</i></button>
+        <span class="composer-fmt-sep"></span>
+        ${colors}
+        <span class="composer-fmt-sep"></span>
+        <button type="button" class="composer-align-btn${align === 'left' ? ' active' : ''}" data-align="left" title="Align left">←</button>
+        <button type="button" class="composer-align-btn${align === 'center' ? ' active' : ''}" data-align="center" title="Align center">↔</button>
+        <button type="button" class="composer-align-btn${align === 'right' ? ' active' : ''}" data-align="right" title="Align right">→</button>
+      </div>`;
+  }
+
   function render() {
     const root = container();
     if (!root) return;
 
     if (!blocks.length) {
-      root.innerHTML = '<div class="composer-empty">Add a paragraph or drop an image to start building your post.</div>';
+      root.innerHTML =
+        '<div class="composer-empty">Add a paragraph or drop an image to start building your post.</div>';
       return;
     }
 
@@ -145,8 +212,12 @@
 
   function renderBlock(block, index) {
     if (block.type === 'image') {
+      const isPublished = String(draftId || '').startsWith('published-');
+      const slug = isPublished ? draftId.replace(/^published-/, '') : '';
       const src = draftId
-        ? `/api/drafts/${draftId}/media/${encodeURIComponent(block.filename)}`
+        ? isPublished
+          ? `/images/posts/${slug}/${encodeURIComponent(block.filename)}`
+          : `/api/drafts/${draftId}/media/${encodeURIComponent(block.filename)}`
         : '';
       return `
         <div class="composer-block" data-block-id="${block.id}" data-block-index="${index}" draggable="true">
@@ -162,23 +233,80 @@
         </div>`;
     }
 
+    const inner = block.html || escapeHtml(block.text || '');
+    const alignStyle =
+      block.align === 'center'
+        ? 'text-align:center'
+        : block.align === 'right'
+          ? 'text-align:right'
+          : '';
+
     return `
       <div class="composer-block" data-block-id="${block.id}" data-block-index="${index}" draggable="true">
         <div class="composer-drag-handle" title="Drag to reorder">⋮⋮</div>
         <div class="composer-block-body">
-          <textarea class="composer-paragraph" placeholder="Write a paragraph…">${escapeHtml(block.text || '')}</textarea>
+          ${renderFormatBar(block)}
+          <div class="composer-richtext" contenteditable="true" data-placeholder="Write a paragraph…" style="${alignStyle}">${inner}</div>
         </div>
         <button type="button" class="composer-block-remove" title="Remove paragraph">×</button>
       </div>`;
   }
 
   function bindBlockEvents(root) {
-    root.querySelectorAll('.composer-paragraph').forEach((el) => {
+    root.querySelectorAll('.composer-richtext').forEach((el) => {
       const blockEl = el.closest('.composer-block');
       const id = blockEl?.dataset.blockId;
+
       el.addEventListener('input', () => {
+        notifyChange();
+      });
+
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+        }
+      });
+    });
+
+    root.querySelectorAll('.composer-fmt-btn').forEach((btn) => {
+      btn.addEventListener('mousedown', (e) => e.preventDefault());
+      btn.addEventListener('click', () => {
+        const blockEl = btn.closest('.composer-block');
+        const editor = blockEl?.querySelector('.composer-richtext');
+        if (!editor) return;
+        editor.focus();
+        const cmd = btn.dataset.cmd;
+        if (cmd === 'bold') document.execCommand('bold', false, null);
+        if (cmd === 'italic') document.execCommand('italic', false, null);
+        notifyChange();
+      });
+    });
+
+    root.querySelectorAll('.composer-color-swatch').forEach((btn) => {
+      btn.addEventListener('mousedown', (e) => e.preventDefault());
+      btn.addEventListener('click', () => {
+        const blockEl = btn.closest('.composer-block');
+        const editor = blockEl?.querySelector('.composer-richtext');
+        if (!editor) return;
+        editor.focus();
+        document.execCommand('foreColor', false, btn.dataset.color);
+        notifyChange();
+      });
+    });
+
+    root.querySelectorAll('.composer-align-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const blockEl = btn.closest('.composer-block');
+        const id = blockEl?.dataset.blockId;
         const block = blocks.find((b) => b.id === id);
-        if (block) block.text = el.value;
+        const editor = blockEl?.querySelector('.composer-richtext');
+        if (!block || !editor) return;
+        const align = btn.dataset.align;
+        block.align = align === 'left' ? undefined : align;
+        editor.style.textAlign = align;
+        blockEl.querySelectorAll('.composer-align-btn').forEach((b) => {
+          b.classList.toggle('active', b.dataset.align === align);
+        });
         notifyChange();
       });
     });
@@ -239,6 +367,7 @@
         e.preventDefault();
         blockEl.classList.remove('drag-over');
         if (!dragBlockId) return;
+        syncParagraphBlocksFromDom();
         moveBlock(dragBlockId, Number(blockEl.dataset.blockIndex));
       });
     });
@@ -259,6 +388,7 @@
         e.preventDefault();
         slot.classList.remove('active');
         if (dragBlockId) {
+          syncParagraphBlocksFromDom();
           moveBlock(dragBlockId, Number(slot.dataset.dropIndex));
           return;
         }

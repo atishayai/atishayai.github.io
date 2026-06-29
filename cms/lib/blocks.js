@@ -1,5 +1,5 @@
 const { v4: uuidv4 } = require('uuid');
-const { escapeHtml } = require('./utils');
+const { escapeHtml, sanitizeInlineHtml, alignClass } = require('./utils');
 
 function paragraphsToBlocks(paragraphs) {
   return (paragraphs || [])
@@ -30,26 +30,45 @@ function ensureBodyBlocks(draft) {
 
 function blocksToParagraphs(blocks) {
   return (blocks || [])
-    .filter((b) => b.type === 'paragraph' && b.text?.trim())
-    .map((b) => b.text.trim());
+    .filter((b) => b.type === 'paragraph')
+    .map((b) => {
+      if (b.html?.trim()) {
+        return b.html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      }
+      return (b.text || '').trim();
+    })
+    .filter(Boolean);
 }
 
 function blocksToBodyText(blocks) {
   return blocksToParagraphs(blocks).join('\n\n');
 }
 
+function paragraphInnerHtml(block) {
+  if (block.html?.trim()) return sanitizeInlineHtml(block.html);
+  return escapeHtml(block.text || '');
+}
+
+function renderParagraph(block) {
+  const inner = paragraphInnerHtml(block);
+  if (!inner) return '';
+  const cls = alignClass(block.align);
+  const classAttr = cls ? ` class="${cls}"` : '';
+  return `      <p${classAttr}>${inner}</p>`;
+}
+
 function blocksToHtml(blocks, { preview = false, slug = '', draftId = '' } = {}) {
   return (blocks || [])
     .map((block) => {
       if (block.type === 'paragraph') {
-        const text = String(block.text || '').trim();
-        if (!text) return '';
-        return `      <p>${escapeHtml(text)}</p>`;
+        return renderParagraph(block);
       }
 
       if (block.type === 'image' && block.filename) {
         const src = preview
-          ? `/api/drafts/${draftId}/media/${encodeURIComponent(block.filename)}`
+          ? draftId.startsWith('published-')
+            ? `/images/posts/${slug}/${encodeURIComponent(block.filename)}`
+            : `/api/drafts/${draftId}/media/${encodeURIComponent(block.filename)}`
           : `../images/posts/${slug}/${encodeURIComponent(block.filename)}`;
         const alt = escapeHtml(block.alt || '');
         const caption = block.caption
@@ -69,7 +88,7 @@ function hasBodyContent(draft) {
   if (
     blocks.some(
       (b) =>
-        (b.type === 'paragraph' && b.text?.trim()) ||
+        (b.type === 'paragraph' && (b.text?.trim() || b.html?.trim())) ||
         (b.type === 'image' && b.filename)
     )
   ) {
@@ -86,4 +105,6 @@ module.exports = {
   blocksToBodyText,
   blocksToHtml,
   hasBodyContent,
+  paragraphInnerHtml,
+  renderParagraph,
 };
