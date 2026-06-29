@@ -3,23 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#070B12">
+<meta name="theme-color" content="#0C0C0C">
 <title>paan shots — atishay</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
-<nav class="nav">
-  <div class="container row">
-    <a href="../index.html" class="brand">atishay<span class="dot">.</span></a>
-    <div class="links">
-      <a href="../writing.html" class="active">writing</a>
-      <a href="../sidequests.html">side quests</a>
-    </div>
-  </div>
+<nav class="v2-nav" id="nav">
+  <a class="v2-nav-logo" href="../index.html">atishay</a>
+  <ul class="v2-nav-links">
+    <li><a href="../index.html#about">about</a></li>
+    <li><a href="../writing.html" class="active">writing</a></li>
+  </ul>
 </nav>
-<main class="container">
+<main class="container v2-page-main">
   <article class="article">
     <a href="../writing.html" class="article-back">← Back to writing</a>
     <div class="article-meta"><span class="accent">personal essay</span> · diasporic complaints · 2026</div>
@@ -30,20 +28,15 @@
     </div>
   </article>
 </main>
-<footer>
-  <div class="container">
-    <div class="frow footer-simple">
-      <div class="right">
-        <div class="label">Elsewhere</div>
-        <div class="links">
-          <a href="#">search me up on x @atishayai</a>
-        </div>
-      </div>
-    </div>
-    <div class="colophon">
-      <span>© 2026 atishay.io</span>
-    </div>
+<footer class="v2-footer">
+  <div>
+    <div class="v2-footer-email"><a href="mailto:atishayioai@gmail.com">atishayioai@gmail.com</a></div>
   </div>
+  <div class="v2-footer-socials v2-footer-x">
+    <a href="https://x.com/atishayai" target="_blank" rel="noopener noreferrer">@atishayai</a>
+  </div>
+  <div class="v2-footer-copy">© atishay.io 2026</div>
 </footer>
+<script src="../scripts/site.js" defer></script>
 </body>
 </html>

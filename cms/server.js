@@ -46,9 +46,6 @@ app.get('/writing.html', (_req, res) => {
 app.get('/index.html', (_req, res) => {
   res.sendFile(path.join(ROOT, 'index.html'));
 });
-app.get('/sidequests.html', (_req, res) => {
-  res.sendFile(path.join(ROOT, 'sidequests.html'));
-});
 app.use(express.static(path.join(ROOT, 'cms/public')));
 
 app.get('/api/drafts', (_req, res) => {

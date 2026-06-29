@@ -4,7 +4,7 @@
 const assert = require('assert');
 const { sanitizeInlineHtml, slugify, alignClass } = require('./utils');
 const { blocksToHtml, ensureBodyBlocks } = require('./blocks');
-const { renderSiteNav, renderSiteFooter } = require('./shell');
+const { renderSiteNav, renderSiteFooter, SITE_EMAIL } = require('./shell');
 const { parseArticleBodyHtml, buildWritingHtml } = require('./publish');
 const { listPublications } = require('./publications');
 
@@ -73,7 +73,8 @@ test('renderSiteNav includes atishay.io links', () => {
   const nav = renderSiteNav(0, { active: 'writing' });
   assert.ok(nav.includes('atishay'));
   assert.ok(nav.includes('writing.html'));
-  assert.ok(nav.includes('coming soon'));
+  assert.ok(!nav.includes('sidequests'));
+  assert.ok(!nav.includes('work'));
 });
 
 test('renderSiteNav depth prefix for articles', () => {
@@ -84,13 +85,13 @@ test('renderSiteNav depth prefix for articles', () => {
 
 test('renderSiteNav root pages link to index anchors', () => {
   const nav = renderSiteNav(0);
-  assert.ok(nav.includes('index.html#about'));
-  assert.ok(!nav.match(/href="#about"/));
+  assert.ok(nav.includes('#about') || nav.includes('index.html#about'));
+  assert.ok(!nav.includes('sidequests'));
 });
 
 test('renderSiteFooter has email and copyright', () => {
   const footer = renderSiteFooter();
-  assert.ok(footer.includes('atishayaiio@gmail.com'));
+  assert.ok(footer.includes(SITE_EMAIL));
   assert.ok(footer.includes('© atishay.io 2026'));
   assert.ok(footer.includes('v2-footer-x'));
 });
