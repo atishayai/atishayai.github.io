@@ -12,6 +12,7 @@ function renderSiteNav(depth = 0, { active = '' } = {}) {
   const p = prefix(depth);
   const aboutHref = `${p}index.html#about`;
   const writingHref = `${p}writing.html`;
+  const aiHref = `${p}atishay-ai.html`;
 
   const link = (href, label, key) => {
     const cls = active === key ? ' class="active"' : '';
@@ -23,6 +24,7 @@ function renderSiteNav(depth = 0, { active = '' } = {}) {
   <ul class="v2-nav-links">
     ${link(aboutHref, 'about', 'about')}
     ${link(writingHref, 'writing', 'writing')}
+    ${link(aiHref, 'atishay.ai', 'ai')}
   </ul>
 </nav>`;
 }

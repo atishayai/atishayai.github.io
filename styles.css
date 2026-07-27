@@ -159,6 +159,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 .v2-nav-links a:hover { color: var(--ink); }
+.v2-nav-links a.active { color: var(--ink); }
 
 .v2-hero {
   min-height: 100vh;
