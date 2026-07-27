@@ -152,7 +152,7 @@ a { color: inherit; text-decoration: none; }
 .v2-nav-links a {
   font-size: 0.72rem;
   font-weight: 400;
-  color: var(--ink-faint);
+  color: var(--ink-dim);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   transition: color 0.3s ease;
