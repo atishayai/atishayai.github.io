@@ -1,16 +1,4 @@
 {
   "fiction": [],
-  "nonfiction": [
-    {
-      "slug": "disconnect-to-reconnect-cyborg-anthropology-paper-1",
-      "title": "Disconnect To Reconnect Cyborg Anthropology Paper #1",
-      "excerpt": "Atishay Jain",
-      "publication": "Joyland",
-      "date": "Jul 2026",
-      "tag": "Essay",
-      "metaAccent": "essay",
-      "metaVenue": "joyland",
-      "metaDate": "jul 2026"
-    }
-  ]
+  "nonfiction": []
 }
