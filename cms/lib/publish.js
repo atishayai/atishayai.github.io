@@ -95,7 +95,6 @@ function buildWritingRow(post) {
   const words = Number(post.words || 0).toLocaleString('en-US');
 
   const chips = [
-    `<span class="wchip">age ${escapeHtml(String(post.age ?? '—'))}</span>`,
     `<span class="wchip">${escapeHtml(kind)}</span>`,
     ...(post.tags || []).map((t) => `<span class="wchip wchip-live">${escapeHtml(t)}</span>`),
   ].join('');
@@ -108,20 +107,22 @@ function buildWritingRow(post) {
     : '';
   const arrow = post.slug ? '<span class="warrow">→</span>' : '';
 
-  return `        <${tag} class="wentry${post.featured ? ' wentry-featured' : ''}"${href} data-kind="${kind}">
-          <div class="wmeta">${escapeHtml(post.date || '')}<i>${escapeHtml(post.form || '')} · ${words} w</i></div>
-          <div class="wbody">
-            <h3 class="wtitle">${escapeHtml(post.title)}${arrow}</h3>${note}${quote}
-            <div class="wchips">${chips}</div>
-          </div>
-        </${tag}>`;
+  const cta = post.slug
+    ? `\n            <a class="wmore" href="articles/${post.slug}.html">Read More</a>`
+    : '';
+
+  return `        <div class="wentry${post.featured ? ' wentry-featured' : ''}" data-kind="${kind}">
+          <div class="wmeta">${escapeHtml(post.date || '')} · ${escapeHtml(post.form || '')} · ${words} words</div>
+          <h3 class="wtitle">${post.slug ? `<a href="articles/${post.slug}.html">${escapeHtml(post.title)}</a>` : escapeHtml(post.title)}</h3>${note}${quote}
+          <div class="wchips">${chips}</div>${cta}
+        </div>`;
 }
 
 /** Group into year sections so a year heading never renders without entries. */
 function buildWritingSections(posts) {
-  const list = sortedPosts(posts);
+  const list = sortedPosts(posts).filter((p) => !p.featured);
   if (!list.length) {
-    return '      <p class="wempty">The archive is being rebuilt. Nothing here yet.</p>';
+    return '';
   }
 
   const byYear = new Map();
@@ -148,12 +149,23 @@ ${entries.map((p) => buildWritingRow(p)).join('\n')}
   return sections.join('\n\n');
 }
 
+/** Featured pieces, ungrouped, shown before the dated archive. */
+function buildSelected(posts) {
+  const picks = sortedPosts(posts).filter((p) => p.featured);
+  if (!picks.length) return '';
+  return `      <section class="wselected">
+        <div class="wyear-head"><b>Selected</b><span>${picks.length} pieces</span></div>
+${picks.map((p) => buildWritingRow(p)).join('\n')}
+      </section>`;
+}
+
 function buildWritingHtml(posts) {
   const template = readTemplate('writing.html');
   const list = sortedPosts(posts);
   const readable = list.filter((p) => p.slug).length;
 
   return renderTemplate(template, {
+    SELECTED_SECTION: buildSelected(posts),
     ARCHIVE_SECTIONS: buildWritingSections(posts),
     TOTAL_COUNT: String(list.length),
     READABLE_COUNT: String(readable),
@@ -294,6 +306,16 @@ function buildRedirectStub(oldSlug, newSlug) {
 `;
 }
 
+/** Entities must be decoded on the way in, or each rebuild re-escapes them. */
+function decodeEntities(s) {
+  return String(s)
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&');
+}
+
 function parseParagraphBlock(pHtml) {
   const alignMatch = pHtml.match(/class="[^"]*\barticle-p-(center|right)\b/);
   const align = alignMatch ? alignMatch[1] : 'left';
@@ -304,7 +326,7 @@ function parseParagraphBlock(pHtml) {
   const block = {
     id: uuidv4(),
     type: 'paragraph',
-    text: hasTags ? '' : inner.replace(/<[^>]+>/g, '').trim(),
+    text: hasTags ? '' : decodeEntities(inner.replace(/<[^>]+>/g, '')).trim(),
     html: hasTags ? inner : '',
     align: align === 'left' ? undefined : align,
   };

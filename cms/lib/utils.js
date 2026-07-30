@@ -8,6 +8,8 @@ function escapeHtml(text) {
 
 function slugify(title) {
   return String(title)
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
     .toLowerCase()
     .trim()
     .replace(/['']/g, '')
@@ -47,9 +49,6 @@ function buildMetaLine(draft) {
   const form = draft.form || draft.tag?.toLowerCase() || 'essay';
   const date = draft.date?.toLowerCase() || 'undated';
   const parts = [`<span class="accent">${escapeHtml(form)}</span>`, escapeHtml(date)];
-  if (draft.age !== null && draft.age !== undefined && draft.age !== '') {
-    parts.push(`written at ${escapeHtml(String(draft.age))}`);
-  }
   if (draft.words) {
     parts.push(`${Number(draft.words).toLocaleString('en-US')} words`);
   }

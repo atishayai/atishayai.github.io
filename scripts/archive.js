@@ -8,7 +8,7 @@
 
   var buttons = [].slice.call(bar.querySelectorAll('.wfilter'));
   var entries = [].slice.call(archive.querySelectorAll('.wentry'));
-  var years = [].slice.call(archive.querySelectorAll('.wyear'));
+  var years = [].slice.call(archive.querySelectorAll('.wyear, .wselected'));
 
   function apply(kind) {
     entries.forEach(function (el) {
