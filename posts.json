@@ -1,6 +1,148 @@
 {
  "posts": [
   {
+   "slug": "transcendence-and-what-death-is-for",
+   "title": "Transcendence, and What Death Is For",
+   "year": 2026,
+   "date": "Apr 2026",
+   "age": null,
+   "form": "reflection",
+   "kind": "analytical",
+   "words": 634,
+   "tags": [
+    "reflection"
+   ],
+   "featured": false,
+   "note": null,
+   "quote": "One of my favorite shows growing up was Lab Rats on Disney XD."
+  },
+  {
+   "slug": "on-artificial-intimacy",
+   "title": "On Artificial Intimacy",
+   "year": 2026,
+   "date": "Feb 2026",
+   "age": null,
+   "form": "reflection",
+   "kind": "analytical",
+   "words": 493,
+   "tags": [
+    "reflection"
+   ],
+   "featured": false,
+   "note": null,
+   "quote": "life, and the importance of downtime and intentional solitude."
+  },
+  {
+   "slug": "six-prompts-before-a-crunchwrap",
+   "title": "Six Prompts Before a Crunchwrap",
+   "year": 2026,
+   "date": "Mar 2026",
+   "age": null,
+   "form": "reflection",
+   "kind": "analytical",
+   "words": 463,
+   "tags": [
+    "reflection"
+   ],
+   "featured": false,
+   "note": null,
+   "quote": "My friend recently told me to download the Taco Bell mobile app to collect rewards and score free points, and as such it is“very useful”"
+  },
+  {
+   "slug": "when-illness-crosses-languages",
+   "title": "When Illness Crosses Languages",
+   "year": 2025,
+   "date": "Dec 2025",
+   "age": null,
+   "form": "reported feature",
+   "kind": "analytical",
+   "words": 1663,
+   "tags": [
+    "journalism"
+   ],
+   "featured": true,
+   "note": null,
+   "quote": "On a humid morning inside a small clinic just outside DC, a middle-aged woman sat across from a physician and tried to describe a feeling she had carried for months."
+  },
+  {
+   "slug": "disconnect-to-reconnect",
+   "title": "Disconnect to Reconnect",
+   "year": 2026,
+   "date": "Feb 2026",
+   "age": null,
+   "form": "autoethnography",
+   "kind": "analytical",
+   "words": 1537,
+   "tags": [
+    "technology"
+   ],
+   "featured": false,
+   "note": null,
+   "quote": "I am a self-proclaimed victim of PVS (phantom vibration syndrome)."
+  },
+  {
+   "slug": "a-16-year-olds-obsession-of-poisoned-snails",
+   "title": "A 16-Year-Old's Obsession of Poisoned Snails",
+   "year": 2026,
+   "date": "May 2026",
+   "age": null,
+   "form": "portfolio essay",
+   "kind": "analytical",
+   "words": 1578,
+   "tags": [
+    "technology"
+   ],
+   "featured": true,
+   "note": null,
+   "quote": "I still remember the very first day I learned about ChatGPT."
+  },
+  {
+   "slug": "the-ultimate-comfort-food",
+   "title": "The Ultimate Comfort Food",
+   "year": 2026,
+   "date": "Jan 2026",
+   "age": null,
+   "form": "short essay",
+   "kind": "narrative",
+   "words": 447,
+   "tags": [],
+   "featured": true,
+   "note": null,
+   "quote": "Ghee bleeds through the paper plate and the turmeric stains Babaji’s fingers."
+  },
+  {
+   "slug": "the-rotisserie-keeps-turning",
+   "title": "The Rotisserie Keeps Turning",
+   "year": 2026,
+   "date": "May 2026",
+   "age": null,
+   "form": "ethnography",
+   "kind": "narrative",
+   "words": 1346,
+   "tags": [
+    "fieldwork"
+   ],
+   "featured": true,
+   "note": null,
+   "quote": "It is not the tasteful sage or muted beige of the wealthy boutique hotels and streets lining Wisconsin."
+  },
+  {
+   "slug": "hamesha-mere-haath-mei-dard-ho-ta-tha-mere-dimag-se-pehle",
+   "title": "Hamesha mere haath mei dard ho ta tha, mere dimag se pehle",
+   "year": 2026,
+   "date": "Feb 2026",
+   "age": null,
+   "form": "literacy narrative",
+   "kind": "narrative",
+   "words": 1133,
+   "tags": [
+    "hindi glosses"
+   ],
+   "featured": true,
+   "note": null,
+   "quote": "The first language I ever learned to write was a Hindi version of a Jain mantra in Prakrit, a Middle-aged Indo-Aryan language spoken and written between 500 B.C."
+  },
+  {
    "slug": "gustave-caillebotte",
    "title": "Gustave Caillebotte",
    "titleFromFilename": true,
@@ -128,7 +270,7 @@
    ],
    "featured": true,
    "note": null,
-   "quote": "I was scared my friends would make fun of me at sleepovers if I had to do a whole puja before eating breakfast with them."
+   "quote": "I promise I recited Navakar Mantra as much as I could when I was younger."
   },
   {
    "slug": "atishay-y-yo",
@@ -160,7 +302,7 @@
    ],
    "featured": true,
    "note": null,
-   "quote": "I pulled up the white Nike socks I had finally convinced Mom to buy for me after months, trying my best to copy my friends' trademarked styles."
+   "quote": "I pulled up the white Nike socks I had finally convinced Mom to buy for me after months, trying my best to copy my friends’ trademarked styles."
   },
   {
    "slug": "the-everlasting-passion",
@@ -251,7 +393,7 @@
    ],
    "featured": true,
    "note": null,
-   "quote": "1930, seventeen years before Indian independence from the British."
+   "quote": "The true work of art is but a shadow of the divine perfection."
   }
  ]
 }
