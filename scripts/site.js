@@ -154,11 +154,34 @@
     }, { passive: true });
   }
 
+
+  /* Glossary terms: hover works via CSS; tap/keyboard for touch + a11y. */
+  function initTerms() {
+    var terms = document.querySelectorAll('.term');
+    if (!terms.length) return;
+    terms.forEach(function (t) { t.setAttribute('tabindex', '0'); });
+    document.addEventListener('click', function (e) {
+      var hit = e.target.closest ? e.target.closest('.term') : null;
+      document.querySelectorAll('.term.open').forEach(function (t) {
+        if (t !== hit) t.classList.remove('open');
+      });
+      if (hit) hit.classList.toggle('open');
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      var hit = e.target.closest ? e.target.closest('.term') : null;
+      if (!hit) return;
+      e.preventDefault();
+      hit.classList.toggle('open');
+    });
+  }
+
   function boot() {
     applyViewport();
     initReveals();
     initNavScrolled();
     initHero();
+    initTerms();
   }
 
   if (document.readyState === 'loading') {

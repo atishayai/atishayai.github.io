@@ -44,10 +44,16 @@ function bodyTextToParagraphs(bodyText) {
 }
 
 function buildMetaLine(draft) {
-  const accent = draft.metaAccent || draft.tag?.toLowerCase() || 'essay';
-  const venue = draft.metaVenue || draft.publication?.toLowerCase() || 'draft';
-  const date = draft.metaDate || draft.date?.toLowerCase() || 'draft';
-  return `<span class="accent">${escapeHtml(accent)}</span> · ${escapeHtml(venue)} · ${escapeHtml(date)}`;
+  const form = draft.form || draft.tag?.toLowerCase() || 'essay';
+  const date = draft.date?.toLowerCase() || 'undated';
+  const parts = [`<span class="accent">${escapeHtml(form)}</span>`, escapeHtml(date)];
+  if (draft.age !== null && draft.age !== undefined && draft.age !== '') {
+    parts.push(`written at ${escapeHtml(String(draft.age))}`);
+  }
+  if (draft.words) {
+    parts.push(`${Number(draft.words).toLocaleString('en-US')} words`);
+  }
+  return parts.join(' · ');
 }
 
 const ALLOWED_INLINE_TAGS = new Set(['b', 'strong', 'i', 'em', 'u', 'span', 'a', 'br']);

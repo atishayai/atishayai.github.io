@@ -97,7 +97,7 @@ test('renderSiteFooter has email and copyright', () => {
 });
 
 test('buildWritingHtml includes v2 nav/footer', () => {
-  const html = buildWritingHtml({ fiction: [], nonfiction: [] });
+  const html = buildWritingHtml({ posts: [] });
   assert.ok(html.includes('v2-nav'));
   assert.ok(html.includes('v2-footer'));
 });

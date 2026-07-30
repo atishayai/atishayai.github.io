@@ -32,13 +32,17 @@ function readTemplate(name) {
   return fs.readFileSync(path.join(TEMPLATES_DIR, name), 'utf8');
 }
 
+/** Newest first for display; ties broken by original manifest order. */
+function sortedPosts(posts) {
+  return [...(posts.posts || [])].sort((a, b) => (b.year || 0) - (a.year || 0));
+}
+
 function findPost(slug) {
   const posts = readPosts();
-  for (const category of ['fiction', 'nonfiction']) {
-    const index = posts[category].findIndex((p) => p.slug === slug);
-    if (index >= 0) {
-      return { posts, category, index, post: posts[category][index] };
-    }
+  const list = posts.posts || [];
+  const index = list.findIndex((p) => p.slug === slug);
+  if (index >= 0) {
+    return { posts, index, post: list[index], category: list[index].kind };
   }
   return null;
 }
@@ -83,68 +87,121 @@ function buildArticleHtml(draft, { preview = false } = {}) {
   });
 }
 
-function buildWritingRow(post, index) {
-  const num = toRomanNumeral(index);
-  return `      <a href="articles/${post.slug}.html" class="wrow">
-        <span class="num">${num}.</span>
-        <div>
-          <div class="title">${escapeHtml(post.title)}</div>
-          <div class="excerpt">${escapeHtml(post.excerpt)}</div>
+/** One archive entry. Entries without a slug are inert — no page exists yet. */
+function buildWritingRow(post) {
+  const tag = post.slug ? 'a' : 'div';
+  const href = post.slug ? ` href="articles/${post.slug}.html"` : '';
+  const kind = post.kind === 'narrative' ? 'narrative' : 'analytical';
+  const words = Number(post.words || 0).toLocaleString('en-US');
+
+  const chips = [
+    `<span class="wchip">age ${escapeHtml(String(post.age ?? '—'))}</span>`,
+    `<span class="wchip">${escapeHtml(kind)}</span>`,
+    ...(post.tags || []).map((t) => `<span class="wchip wchip-live">${escapeHtml(t)}</span>`),
+  ].join('');
+
+  const note = post.note
+    ? `\n          <p class="wnote">${escapeHtml(post.note)}</p>`
+    : '';
+  const quote = post.quote
+    ? `\n          <p class="wquote">${escapeHtml(post.quote)}</p>`
+    : '';
+  const arrow = post.slug ? '<span class="warrow">→</span>' : '';
+
+  return `        <${tag} class="wentry${post.featured ? ' wentry-featured' : ''}"${href} data-kind="${kind}">
+          <div class="wmeta">${escapeHtml(post.date || '')}<i>${escapeHtml(post.form || '')} · ${words} w</i></div>
+          <div class="wbody">
+            <h3 class="wtitle">${escapeHtml(post.title)}${arrow}</h3>${note}${quote}
+            <div class="wchips">${chips}</div>
+          </div>
+        </${tag}>`;
+}
+
+/** Group into year sections so a year heading never renders without entries. */
+function buildWritingSections(posts) {
+  const list = sortedPosts(posts);
+  if (!list.length) {
+    return '      <p class="wempty">The archive is being rebuilt. Nothing here yet.</p>';
+  }
+
+  const byYear = new Map();
+  for (const post of list) {
+    const year = post.year || 'undated';
+    if (!byYear.has(year)) byYear.set(year, []);
+    byYear.get(year).push(post);
+  }
+
+  const sections = [];
+  for (const [year, entries] of byYear) {
+    const kinds = [...new Set(entries.map((e) => (e.kind === 'narrative' ? 'narrative' : 'analytical')))];
+    sections.push(
+      `      <section class="wyear" data-kinds="${kinds.join(' ')}">
+        <div class="wyear-head">
+          <b>${escapeHtml(String(year))}</b>
+          <span>${entries.length} ${entries.length === 1 ? 'piece' : 'pieces'}</span>
         </div>
-        <span class="pub"><b>${escapeHtml(post.publication)}</b> · ${escapeHtml(post.date)}</span>
-        <span class="tag">${escapeHtml(post.tag)}</span>
-      </a>`;
+${entries.map((p) => buildWritingRow(p)).join('\n')}
+      </section>`
+    );
+  }
+
+  return sections.join('\n\n');
 }
 
 function buildWritingHtml(posts) {
   const template = readTemplate('writing.html');
-  const fictionRows = posts.fiction.map((p, i) => buildWritingRow(p, i)).join('\n\n');
-  const nonfictionRows = posts.nonfiction.map((p, i) => buildWritingRow(p, i)).join('\n\n');
-  const nav = renderSiteNav(0, { active: 'writing' });
-  const footer = renderSiteFooter();
+  const list = sortedPosts(posts);
+  const readable = list.filter((p) => p.slug).length;
 
   return renderTemplate(template, {
-    FICTION_ROWS: fictionRows,
-    NONFICTION_ROWS: nonfictionRows,
-    SITE_NAV: nav,
-    SITE_FOOTER: footer,
+    ARCHIVE_SECTIONS: buildWritingSections(posts),
+    TOTAL_COUNT: String(list.length),
+    READABLE_COUNT: String(readable),
+    SITE_NAV: renderSiteNav(0, { active: 'writing' }),
+    SITE_FOOTER: renderSiteFooter(),
   });
 }
 
+/** Pull a four-digit year out of "Apr 2022" / "Jun → Oct 2021" / "2024". */
+function yearFromDate(date, fallback) {
+  const matches = String(date || '').match(/\b(19|20)\d{2}\b/g);
+  if (matches?.length) return Number(matches[matches.length - 1]);
+  return fallback ?? new Date().getFullYear();
+}
+
 function postFromDraft(draft) {
+  const kind = draft.kind === 'narrative' || draft.category === 'narrative' ? 'narrative' : 'analytical';
   return {
     slug: draft.slug,
     title: draft.title,
-    excerpt: draft.excerpt,
-    publication: draft.publication,
+    titleFromFilename: draft.titleFromFilename || undefined,
+    year: Number(draft.year) || yearFromDate(draft.date),
     date: draft.date,
-    tag: draft.tag,
-    metaAccent: draft.metaAccent,
-    metaVenue: draft.metaVenue || draft.publication?.toLowerCase() || '',
-    metaDate: draft.metaDate || draft.date?.toLowerCase() || '',
+    age: draft.age === '' || draft.age === undefined ? null : Number(draft.age),
+    form: draft.form || draft.tag || 'essay',
+    kind,
+    words: Number(draft.words) || 0,
+    tags: Array.isArray(draft.tags) ? draft.tags : [],
+    featured: Boolean(draft.featured),
+    note: draft.note || draft.excerpt || null,
+    quote: draft.quote || null,
   };
 }
 
 function upsertPost(posts, draft) {
-  const category = draft.category === 'fiction' ? 'fiction' : 'nonfiction';
-  const other = category === 'fiction' ? 'nonfiction' : 'fiction';
+  if (!Array.isArray(posts.posts)) posts.posts = [];
   const entry = postFromDraft(draft);
-
-  posts[other] = posts[other].filter((p) => p.slug !== entry.slug);
-  const idx = posts[category].findIndex((p) => p.slug === entry.slug);
+  const idx = posts.posts.findIndex((p) => p.slug === entry.slug);
   if (idx >= 0) {
-    posts[category][idx] = entry;
+    posts.posts[idx] = { ...posts.posts[idx], ...entry };
   } else {
-    posts[category].unshift(entry);
+    posts.posts.unshift(entry);
   }
-
   return posts;
 }
 
 function removePostFromManifest(posts, slug) {
-  for (const category of ['fiction', 'nonfiction']) {
-    posts[category] = posts[category].filter((p) => p.slug !== slug);
-  }
+  posts.posts = (posts.posts || []).filter((p) => p.slug !== slug);
   return posts;
 }
 
@@ -182,11 +239,8 @@ function validateDraftForPublish(draft) {
   if (!draft.slug?.trim()) {
     throw new Error('URL slug is required before publishing.');
   }
-  if (!draft.excerpt?.trim()) {
-    throw new Error('Excerpt is required before publishing.');
-  }
-  if (!draft.publication?.trim()) {
-    throw new Error('Publication venue is required before publishing.');
+  if (!draft.date?.trim()) {
+    throw new Error('Date is required before publishing.');
   }
   if (!hasBodyContent(draft)) {
     throw new Error('Body content is required before publishing.');
@@ -317,14 +371,17 @@ function loadPostForEdit(slug) {
     isPublished: true,
     title: found.post.title,
     slug: found.post.slug,
-    category: found.category,
-    tag: found.post.tag,
-    publication: found.post.publication,
+    kind: found.post.kind,
+    category: found.post.kind,
+    year: found.post.year,
     date: found.post.date,
-    excerpt: found.post.excerpt,
-    metaAccent: found.post.metaAccent,
-    metaVenue: found.post.metaVenue,
-    metaDate: found.post.metaDate,
+    age: found.post.age,
+    form: found.post.form,
+    words: found.post.words,
+    tags: found.post.tags || [],
+    featured: Boolean(found.post.featured),
+    note: found.post.note,
+    quote: found.post.quote,
     bodyBlocks,
     sourceFile: null,
   };

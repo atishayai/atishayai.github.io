@@ -10,17 +10,16 @@ function main() {
   const posts = JSON.parse(fs.readFileSync(POSTS_PATH, 'utf8'));
   let missing = 0;
 
-  for (const category of ['fiction', 'nonfiction']) {
-    for (const post of posts[category]) {
-      const articlePath = path.join(ARTICLES_DIR, `${post.slug}.html`);
-      if (!fs.existsSync(articlePath)) {
-        console.warn(`Missing article: ${post.slug}.html`);
-        missing++;
-      }
+  const list = (posts.posts || []).filter((p) => p.slug);
+  for (const post of list) {
+    const articlePath = path.join(ARTICLES_DIR, `${post.slug}.html`);
+    if (!fs.existsSync(articlePath)) {
+      console.warn(`Missing article: ${post.slug}.html`);
+      missing++;
     }
   }
 
-  console.log(`Validated ${posts.fiction.length} fiction + ${posts.nonfiction.length} nonfiction posts.`);
+  console.log(`Validated ${list.length} readable of ${(posts.posts || []).length} entries.`);
   if (missing) {
     console.warn(`${missing} article file(s) missing.`);
     process.exit(1);

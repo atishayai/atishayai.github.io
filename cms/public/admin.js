@@ -116,8 +116,7 @@
     try {
       const posts = await api('/api/posts');
       const all = [
-        ...posts.fiction.map((p) => ({ ...p, category: 'fiction' })),
-        ...posts.nonfiction.map((p) => ({ ...p, category: 'nonfiction' })),
+        ...(posts.posts || []).filter((p) => p.slug).map((p) => ({ ...p, category: p.kind })),
       ];
       if (!all.length) {
         el.innerHTML = '<p class="studio-empty">No published posts.</p>';
@@ -415,7 +414,7 @@
     fieldSlug.value = draft.slug || '';
     fieldSlug.dataset.manual = published || draft.slug ? '1' : '';
     slugPreview.textContent = draft.slug || 'your-slug';
-    document.getElementById('field-category').value = draft.category || 'nonfiction';
+    document.getElementById('field-category').value = draft.category || draft.kind || 'narrative';
     document.getElementById('field-tag').value = draft.tag || '';
     setPublicationValue(draft.publication || '');
     document.getElementById('field-date').value = draft.date || '';

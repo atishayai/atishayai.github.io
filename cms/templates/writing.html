@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0C0C0C">
 <title>Writing — atishay</title>
+<meta name="description" content="A chronological archive of everything I have written, earliest work included.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="styles.css">
@@ -16,53 +17,29 @@
 <main class="container v2-page-main">
 
   <section class="page-head">
-    <div class="eyebrow reveal">No. II — Writing</div>
-    <h1 class="reveal d1"><span class="accent">Fiction</span><br>&amp; non-fiction.</h1>
-    <p class="blurb reveal d2">Essays, short fiction, zines, and the occasional column. <span class="ink">A working bibliography, updated as the year permits.</span></p>
+    <div class="eyebrow reveal">No. II — The Archive</div>
+    <h1 class="reveal d1"><span class="accent">Everything</span>,<br>in order.</h1>
+    <p class="blurb reveal d2">Every piece I have kept, with the age I was when I wrote it. <span class="ink">{{TOTAL_COUNT}} pieces, {{READABLE_COUNT}} readable so far.</span></p>
   </section>
 
-  <div class="tabs-bar reveal">
-    <span class="label">Read as</span>
-    <button class="tab active" data-pane="fiction">Fiction</button>
-    <span class="sep">·</span>
-    <button class="tab" data-pane="nonfiction">Non-fiction</button>
+  <div class="wfilters reveal" id="wfilters">
+    <span class="label">Filter</span>
+    <button class="wfilter active" data-filter="all" aria-pressed="true">All</button>
+    <button class="wfilter" data-filter="narrative" aria-pressed="false">Narrative</button>
+    <button class="wfilter" data-filter="analytical" aria-pressed="false">Analytical</button>
   </div>
 
-  <section class="writing-list">
+  <div class="warchive" id="warchive">
 
-    <div class="wpane active" id="paneFiction">
+{{ARCHIVE_SECTIONS}}
 
-{{FICTION_ROWS}}
-
-    </div>
-
-    <div class="wpane" id="paneNonfiction">
-
-{{NONFICTION_ROWS}}
-
-    </div>
-
-  </section>
+  </div>
 
 </main>
 
 {{SITE_FOOTER}}
 
 <script src="scripts/site.js" defer></script>
-<script>
-  document.querySelectorAll('.tabs-bar .tab').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const pane = btn.dataset.pane;
-      document.querySelectorAll('.tabs-bar .tab').forEach(b => b.classList.toggle('active', b === btn));
-      document.querySelectorAll('.wpane').forEach(p => p.classList.toggle('active', p.id === 'pane' + pane.charAt(0).toUpperCase() + pane.slice(1)));
-    });
-  });
-
-  if (location.hash) {
-    const target = location.hash.replace('#', '');
-    const btn = document.querySelector(`.tab[data-pane="${target}"]`);
-    if (btn) btn.click();
-  }
-</script>
+<script src="scripts/archive.js" defer></script>
 </body>
 </html>

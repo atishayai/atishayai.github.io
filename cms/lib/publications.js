@@ -25,10 +25,8 @@ function writePublicationsFile(list) {
 function publicationsFromPosts() {
   const posts = JSON.parse(fs.readFileSync(POSTS_PATH, 'utf8'));
   const venues = new Set();
-  for (const category of ['fiction', 'nonfiction']) {
-    for (const post of posts[category] || []) {
-      if (post.publication?.trim()) venues.add(post.publication.trim());
-    }
+  for (const post of posts.posts || []) {
+    if (post.publication?.trim()) venues.add(post.publication.trim());
   }
   return [...venues];
 }

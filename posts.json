@@ -1,4 +1,40 @@
 {
-  "fiction": [],
-  "nonfiction": []
+  "posts": [
+    { "slug": null, "title": "Gustave Caillebotte", "titleFromFilename": true, "year": 2016, "date": "Mar 2016", "age": 10, "form": "report", "kind": "analytical", "words": 425, "tags": ["early work"], "featured": false, "note": null, "quote": null },
+    { "slug": null, "title": "Leonardo da Vinci", "titleFromFilename": true, "year": 2016, "date": "May 2016", "age": 10, "form": "report", "kind": "analytical", "words": 416, "tags": ["early work"], "featured": false, "note": null, "quote": null },
+
+    { "slug": null, "title": "The Benefit of Artificial Intelligence on Healthcare", "year": 2019, "date": "May 2019", "age": 13, "form": "research", "kind": "analytical", "words": 2039, "tags": ["early work"], "featured": false, "note": null, "quote": null },
+    { "slug": null, "title": "Technology Contributes to a Quarantined Life", "year": 2019, "date": "Sep 2019", "age": 13, "form": "argument", "kind": "analytical", "words": 1436, "tags": ["early work"], "featured": false, "note": null, "quote": null },
+
+    { "slug": null, "title": "The American Dream: How Can It Be Fulfilled?", "year": 2020, "date": "Feb 2020", "age": 14, "form": "argument", "kind": "analytical", "words": 1010, "tags": [], "featured": false, "note": null, "quote": null },
+    { "slug": null, "title": "Description about a Family Member", "titleFromFilename": true, "year": 2020, "date": "Oct 2020", "age": 14, "form": "description · 3 drafts", "kind": "narrative", "words": 794, "tags": ["shows revision"], "featured": false, "note": null, "quote": null },
+    { "slug": null, "title": "The Impact of the COVID-19 Pandemic on the Psychological Well-Being and Mental Health of Individuals", "year": 2020, "date": "Nov 2020", "age": 14, "form": "capstone", "kind": "analytical", "words": 1266, "tags": [], "featured": false, "note": null, "quote": null },
+
+    { "slug": null, "title": "Story of More Letter", "titleFromFilename": true, "year": 2021, "date": "2021", "age": 15, "form": "letter", "kind": "analytical", "words": 525, "tags": [], "featured": false, "note": null, "quote": null },
+    { "slug": "badi-nani", "title": "Badi Nani", "year": 2021, "date": "Jun → Oct 2021", "age": 15, "form": "narrative · two drafts", "kind": "narrative", "words": 573, "tags": ["revision toggle"], "featured": true, "note": null, "quote": "The same story, written twice, four months apart. Both drafts are here." },
+
+    { "slug": null, "title": "Roy's Perspective of Sati Through the Role and Rights of Women", "year": 2022, "date": "Feb 2022", "age": 16, "form": "history", "kind": "analytical", "words": 1100, "tags": ["india"], "featured": false, "note": null, "quote": null },
+    { "slug": null, "title": "Gandhi's Promise to India", "year": 2022, "date": "Feb 2022", "age": 16, "form": "history", "kind": "analytical", "words": 1134, "tags": ["india"], "featured": false, "note": null, "quote": null },
+    { "slug": null, "title": "Letter Narrative", "titleFromFilename": true, "year": 2022, "date": "Mar 2022", "age": 16, "form": "letter narrative", "kind": "narrative", "words": 970, "tags": ["hindi glosses"], "featured": true, "note": null, "quote": null },
+    { "slug": null, "title": "Atishay y Yo", "year": 2022, "date": "Apr 2022", "age": 16, "form": "essay · español", "kind": "narrative", "words": 284, "tags": ["español"], "featured": false, "note": null, "quote": null },
+    { "slug": "kurta", "title": "Kurta", "year": 2022, "date": "Apr 2022", "age": 16, "form": "narrative", "kind": "narrative", "words": 753, "tags": ["hindi glosses"], "featured": true, "note": null, "quote": null },
+    { "slug": null, "title": "The Everlasting Passion", "year": 2022, "date": "May 2022", "age": 16, "form": "narrative", "kind": "narrative", "words": 1082, "tags": [], "featured": true, "note": null, "quote": null },
+    { "slug": null, "title": "A Threat to India", "year": 2022, "date": "May 2022", "age": 16, "form": "history", "kind": "analytical", "words": 2391, "tags": ["india"], "featured": false, "note": null, "quote": null },
+    { "slug": null, "title": "Scars", "year": 2022, "date": "Oct 2022", "age": 16, "form": "narrative", "kind": "narrative", "words": 720, "tags": [], "featured": true, "note": null, "quote": null },
+    { "slug": null, "title": "Un Análisis Sobre El Primer Acto de La Casa de Bernarda Alba", "year": 2022, "date": "Dec 2022", "age": 16, "form": "análisis · español", "kind": "analytical", "words": 368, "tags": ["español"], "featured": false, "note": null, "quote": null },
+    { "slug": null, "title": "The Black Americans' Fight for the New Birth of Freedom", "year": 2022, "date": "Dec 2022", "age": 16, "form": "history", "kind": "analytical", "words": 1454, "tags": [], "featured": false, "note": null, "quote": null },
+
+    { "slug": null, "title": "Reflection Memo 1", "titleFromFilename": true, "year": 2023, "date": "Jan 2023", "age": 16, "form": "memo", "kind": "analytical", "words": 831, "tags": [], "featured": false, "note": null, "quote": null },
+    { "slug": null, "title": "Reflection Memo 2", "titleFromFilename": true, "year": 2023, "date": "Jan 2023", "age": 16, "form": "memo", "kind": "analytical", "words": 753, "tags": [], "featured": false, "note": null, "quote": null },
+    { "slug": null, "title": "Education, Urgency, and Unity: A Black American's Struggle for Freedom", "year": 2023, "date": "Feb 2023", "age": 17, "form": "memo", "kind": "analytical", "words": 749, "tags": [], "featured": false, "note": null, "quote": null },
+    { "slug": null, "title": "The Role of Glass and Movies in The Glass Menagerie", "year": 2023, "date": "Mar 2023", "age": 17, "form": "criticism", "kind": "analytical", "words": 1218, "tags": [], "featured": false, "note": null, "quote": null },
+    { "slug": null, "title": "HHD 340 Final Paper", "titleFromFilename": true, "year": 2023, "date": "Mar 2023", "age": 17, "form": "reflection", "kind": "analytical", "words": 463, "tags": [], "featured": false, "note": null, "quote": null },
+    { "slug": null, "title": "Chimpanzee Article Essay Prompt", "titleFromFilename": true, "year": 2023, "date": "Apr 2023", "age": 17, "form": "science", "kind": "analytical", "words": 511, "tags": ["science"], "featured": false, "note": null, "quote": null },
+    { "slug": null, "title": "Epigenetic Inheritance Essay Response", "year": 2023, "date": "Apr 2023", "age": 17, "form": "science", "kind": "analytical", "words": 373, "tags": ["science"], "featured": false, "note": null, "quote": null },
+    { "slug": null, "title": "Virus Essay", "year": 2023, "date": "Apr 2023", "age": 17, "form": "science", "kind": "analytical", "words": 393, "tags": ["science"], "featured": false, "note": null, "quote": null },
+    { "slug": null, "title": "The Ineffectiveness of the War on Drugs in the American Prison System", "year": 2023, "date": "May 2023", "age": 17, "form": "research · 21 pp", "kind": "analytical", "words": 6673, "tags": ["longform"], "featured": true, "note": null, "quote": null },
+
+    { "slug": null, "title": "Senior Meditation", "year": 2024, "date": "2024", "age": 18, "form": "braided essay", "kind": "narrative", "words": 2852, "tags": ["four strands", "hindi glosses"], "featured": true, "note": null, "quote": "The true work of art is but a shadow of the divine perfection. — Michelangelo, the epigraph" },
+    { "slug": null, "title": "SciCore Senior Reflection", "titleFromFilename": true, "year": 2024, "date": "2024", "age": 18, "form": "reflection", "kind": "narrative", "words": 91, "tags": [], "featured": false, "note": null, "quote": null }
+  ]
 }

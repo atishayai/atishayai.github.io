@@ -11,27 +11,25 @@ const {
   readPosts,
 } = require('./publish');
 
-const SKIP_SLUGS = new Set(['a-system-so-perfect']);
+const SKIP_SLUGS = new Set();
 
 function main() {
   const posts = readPosts();
   let rebuilt = 0;
   let skipped = 0;
 
-  for (const category of ['fiction', 'nonfiction']) {
-    for (const post of posts[category]) {
-      if (SKIP_SLUGS.has(post.slug)) {
-        console.log(`  skip: ${post.slug} (custom layout)`);
-        skipped += 1;
-        continue;
-      }
-      const ok = rebuildArticleFile(post.slug);
-      if (ok) {
-        console.log(`  rebuilt: articles/${post.slug}.html`);
-        rebuilt += 1;
-      } else {
-        console.warn(`  missing: articles/${post.slug}.html`);
-      }
+  for (const post of (posts.posts || []).filter((p) => p.slug)) {
+    if (SKIP_SLUGS.has(post.slug)) {
+      console.log(`  skip: ${post.slug} (custom layout)`);
+      skipped += 1;
+      continue;
+    }
+    const ok = rebuildArticleFile(post.slug);
+    if (ok) {
+      console.log(`  rebuilt: articles/${post.slug}.html`);
+      rebuilt += 1;
+    } else {
+      console.warn(`  missing: articles/${post.slug}.html`);
     }
   }
 
