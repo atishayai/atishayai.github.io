@@ -5,7 +5,8 @@ import json, re, os
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 D = os.path.join(ROOT, "data")
 courses = json.load(open(f"{D}/courses.json"))
-ratings = json.load(open(f"{D}/ratings.json"))
+# ratings.json was a scraped CUReviews table covering 2% of the catalog. Dropped:
+# the app now uses the student's own ratings, which carry no licensing question.
 programs = json.load(open(f"{D}/programs_full.json"))
 try:
     subjects = json.load(open(f"{D}/subjects.json"))
@@ -14,14 +15,22 @@ except Exception:
     subjects = {}
 overlaps = None  # overlaps recomputed live in-app from crosslists; overlap_map.json kept for reference
 
-# --- normalize catalog rows: [subj,num,title,credits,days,times,xlist,flags,level] ---
+# --- normalize catalog rows: [subj,num,title,credits,days,times,xlist,flags,level,instr] ---
 cat = []
+INSTR, _instr_ix = [], {}
+def iid(name):
+    if name not in _instr_ix:
+        _instr_ix[name] = len(INSTR)
+        INSTR.append(name)
+    return _instr_ix[name]
 for s in sorted(courses):
     for c in courses[s]:
         fl = (1 if c.get("su_option") else 0) | (2 if c.get("is_fws") else 0)
+        # index 9: instructor ids into the shared name table below. Deduped because
+        # 2,600 names spread over 4,100 courses is a lot of repeated strings to ship.
         cat.append([c["subject"], c["number"], c["title"], c["credits"],
                     c["meeting_days"], c["meeting_times"], ", ".join(c["crosslistings"]),
-                    fl, c["level"]])
+                    fl, c["level"], [iid(n) for n in c.get("instructors", [])]])
 
 # --- strip any founder-specific / personal strings from program notes ---
 PERSONAL = re.compile(r"Atishay|Georgetown|\bGU\b", re.I)
@@ -53,7 +62,8 @@ for name, pg in programs.items():
     e["items"] = items
     slim[name] = e
 
-data = {"catalog": cat, "ratings": ratings, "programs": slim, "subjectNames": subjects}
+data = {"catalog": cat, "programs": slim, "subjectNames": subjects,
+        "instructors": INSTR}
 blob = json.dumps(data, separators=(",", ":")).replace("</", "<\\/")
 assert "Atishay" not in blob and "Georgetown" not in blob, "PERSONAL DATA LEAKED — aborting build"
 

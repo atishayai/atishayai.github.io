@@ -57,6 +57,21 @@ def credits_str(g):
     return f"{fmt(lo)}-{fmt(hi)}"
 
 
+def instructors(course):
+    """Distinct instructor names, in section order. Official roster data, so this is
+    the one professor field we can ship — ratings sites forbid automated collection."""
+    seen, out = set(), []
+    for g in course.get("enrollGroups", []):
+        for s in g.get("classSections", []):
+            for m in s.get("meetings", []):
+                for i in m.get("instructors", []) or []:
+                    name = " ".join(p for p in [i.get("firstName"), i.get("lastName")] if p).strip()
+                    if name and name.lower() not in seen:
+                        seen.add(name.lower())
+                        out.append(name)
+    return out
+
+
 def meeting_pairs(course):
     """Distinct (day-pattern, time) pairs, lectures first, index-aligned.
 
@@ -102,6 +117,7 @@ def course_row(c):
         "url": f'https://classes.cornell.edu/browse/roster/{c.get("strm","")}/class/{c["subject"]}/{num}',
         "meeting_days": [p[0] for p in pairs],
         "meeting_times": [p[1] for p in pairs],
+        "instructors": instructors(c),
         "su_option": any((g.get("gradingBasis") or "") in SU_BASES for g in groups),
         "is_fws": "FWS" in title.upper() or "FWS" in attrs.upper(),
         "dist_tags": sorted({t.strip() for t in (c.get("catalogDistr") or "").replace("(", "").replace(")", "").split(",") if t.strip()}),

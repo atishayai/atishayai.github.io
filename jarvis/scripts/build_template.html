@@ -188,6 +188,23 @@ select.csel{max-width:150px}
 .rcard a{font-size:14.5px;font-weight:600}
 .rstart{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:5px}
 .rcard .rw{font-size:13px;color:var(--dim);line-height:1.6;margin-top:4px}
+/* course detail */
+#cdet{position:fixed;inset:0;background:rgba(var(--scrim-rgb),.45);z-index:120;display:flex;align-items:center;justify-content:center;padding:16px}
+#cdcard{position:relative;width:min(560px,96vw);max-height:88dvh;overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 26px}
+#cdcard h3{font-size:19px;font-weight:640;line-height:1.3}
+.cdcode{font-family:var(--mono);font-size:13px;color:var(--accent);font-weight:600;margin-bottom:4px}
+.cdx{position:absolute;top:12px;right:14px;background:none;border:none;font-size:17px;color:var(--dim);cursor:pointer;padding:6px;font-family:inherit}
+.cdx:hover{color:var(--txt)}
+.cdsec{border-top:1px solid var(--line);padding:13px 0}
+.cdsec b{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:7px}
+.cdrow{font-size:13.5px;line-height:1.6;padding:3px 0}
+.cdrow.dim{color:var(--dim)}
+.cdlink{display:inline-block;font-size:12.5px;margin-left:8px}
+.cdstar{background:none;border:none;font-size:22px;line-height:1;color:var(--line);cursor:pointer;padding:0 2px;font-family:inherit}
+.cdstar.on{color:var(--amber)}
+.crs b,.en b{cursor:pointer}
+.crs b:hover,.en b:hover{text-decoration:underline}
+@media (max-width:760px){#cdcard{padding:20px 18px}}
 /* custom blocks + stepper */
 .blk.cust{border-color:var(--amber);background:rgba(var(--amber-rgb),.12);color:var(--amber)}
 #steps{display:flex;gap:6px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
@@ -251,7 +268,8 @@ details#custform .body{padding:0 12px 12px;display:flex;flex-direction:column;ga
 <div id="toast"></div>
 <script>
 const DATA = "__INJECT_DATA__";
-const CAT = DATA.catalog, RAT = DATA.ratings, PROGRAMS = DATA.programs;
+const CAT = DATA.catalog, PROGRAMS = DATA.programs;
+const INSTRUCTORS = DATA.instructors || [];
 const IDX = {}; CAT.forEach(r=>IDX[r[0]+' '+r[1]]=r);
 const SUBJECTS = [...new Set(CAT.map(r=>r[0]))].sort();
 const SUBJECT_NAMES = DATA.subjectNames || {};
@@ -262,11 +280,15 @@ const S=(k,v)=>v===undefined?JSON.parse(localStorage.getItem(NS+k)||'null'):loca
 /* clear any pre-v3 leftovers so every user starts truly clean */
 try{Object.keys(localStorage).filter(k=>k.startsWith('cj.')).forEach(k=>localStorage.removeItem(k))}catch(e){}
 let plan=S('plan')||[], todos=S('todos')||[], notes=S('notes')||[], events=S('events')||{}, brainN=S('brain')||[{id:'root',label:'🧠 ME',parent:null}], custom=S('custom')||[];
+let myRates=S('myrates')||{};
 let prefs=S('prefs')||{subjects:[],programs:[],daysOff:[],noBefore:0,noAfter:0,noGrad:false}, reqDone=S('reqs')||{};
 /* migrate v1 prefs */
 if(prefs.noFri!==undefined){prefs={subjects:prefs.subjects||[],programs:prefs.programs||[],daysOff:prefs.noFri?['F']:[],noBefore:prefs.no8?540:0,noAfter:prefs.no6?1080:0,noGrad:false};S('prefs',prefs)}
 /* ---- the optimizer engine: personal double-count finder ---- */
-function bestRating(codes){let b=[0,0,0];codes.forEach(c=>{const r=RAT[c];if(r&&r[0]>b[0])b=r});return b}
+// Was a scraped third-party ratings table covering 2% of the catalog, of unclear
+// provenance, that also silently broke sort ties. Now it is the student's own rating —
+// data we own outright, with no licensing question, and the seed of a real dataset.
+function bestRating(codes){let b=0;codes.forEach(c=>{const v=myRates[c]||0;if(v>b)b=v});return b}
 const DAYNAMES={M:'Monday',T:'Tuesday',W:'Wednesday',R:'Thursday',F:'Friday'};
 function fitsCons(code){ // returns array of violated rules — a course fails only if EVERY section pattern violates
   const out=[],ps=patterns(code);if(!ps.length)return out;
@@ -291,7 +313,7 @@ function myOverlaps(){
       out.push({code,title:r[2],cr:r[3],hits:hit.length,subs:hit,rating:bestRating(codes),lvl:r[8]});
     }
   });
-  return out.sort((a,b)=>b.hits-a.hits||(b.rating[0]||0)-(a.rating[0]||0));
+  return out.sort((a,b)=>b.hits-a.hits||(b.rating||0)-(a.rating||0));
 }
 const toast=m=>{const t=document.getElementById('toast');t.textContent=m;t.style.opacity=1;clearTimeout(toast._x);toast._x=setTimeout(()=>t.style.opacity=0,2000)};
 function patterns(c){const r=rec(c);if(!r)return[];const o=[];for(let i=0;i<Math.max(r[4].length,r[5].length);i++)o.push({days:r[4][i]||r[4][0]||'',time:r[5][i]||r[5][0]||''});return o.filter(p=>p.days&&p.time)}
@@ -492,7 +514,7 @@ function drawRes(){
     return`<div class="crs" draggable="true" ondragstart="event.dataTransfer.setData('text/plain','${c}')" ondblclick="addC('${c}')" style="${inPlan?'opacity:.45':''}">
       <button class="add" onclick="event.stopPropagation();addC('${c}')" ${inPlan?'disabled':''}
         aria-label="add ${c} to schedule">${inPlan?'✓':'+ add'}</button>
-      <b>${c}</b> <span class="dim">· ${r[3]}cr${inPlan?' · ✓ added':''}</span><span class="t">${r[2]}</span>
+      <b onclick="event.stopPropagation();openCourse('${c}')" title="course details">${c}</b> <span class="dim">· ${r[3]}cr${inPlan?' · ✓ added':''}</span><span class="t">${r[2]}</span>
       <span class="t">${r[4].map((d,i)=>d+' '+(r[5][i]||'')).join(' | ')||'time TBA'}</span></div>`;
   }).join('')||`<div class="empty">no course matches "${q}"<br><span class="fine">try a subject code (CS), a name (computer), or a number (1110)</span></div>`;
 }
@@ -536,7 +558,7 @@ function drawEnr(){
   const fm=m=>`${Math.floor(m/60)>12?Math.floor(m/60)-12:Math.floor(m/60)}:${String(m%60).padStart(2,'0')}${m<720?'a':'p'}`;
   const courseHtml=plan.map((p,i)=>{
     const ps=patterns(p.code);
-    return`<div class="en"><div class="row" style="align-items:center"><span style="flex:1;color:var(--accent)">${p.code}</span>
+    return`<div class="en"><div class="row" style="align-items:center"><span style="flex:1;color:var(--accent);cursor:pointer" onclick="openCourse('${p.code}')" title="course details">${p.code}</span>
       <button class="b rm" onclick="plan.splice(${i},1);S('plan',plan);crTop();sch()">✕</button></div>
       <div class="fine">${title(p.code)}</div>
       ${ps.length>1?`<select onchange="plan[${i}].pat=+this.value;S('plan',plan);drawGrid()">${ps.map((x,j)=>`<option value="${j}" ${j===(p.pat||0)?'selected':''}>${x.days} ${x.time}</option>`).join('')}</select>`
@@ -564,13 +586,13 @@ function opt(){
       <span style="font-size:10px;letter-spacing:2px;color:var(--amber)">HIGH-LEVERAGE FOR YOU — one course, multiple programs</span>
       <span class="fine">based on: ${prefs.subjects.join(' · ')}</span>
       <button class="b" onclick="openSetup()">edit ⚙</button></div>
-    ${ov.length?`<div class="card" style="padding:0;margin-bottom:18px"><table><thead><tr><th>Hits</th><th>Course</th><th>Title</th><th>Cr</th><th>Counts toward</th><th>CU Reviews</th><th>Meets</th><th></th></tr></thead><tbody>
+    ${ov.length?`<div class="card" style="padding:0;margin-bottom:18px"><table><thead><tr><th>Hits</th><th>Course</th><th>Title</th><th>Cr</th><th>Counts toward</th><th>Your rating</th><th>Meets</th><th></th></tr></thead><tbody>
     ${ov.slice(0,80).map(o=>{const cons=fitsCons(o.code);const p=patterns(o.code)[0]||{days:'',time:''};
       return`<tr><td><span class="hit">${o.hits}</span></td>
       <td style="white-space:nowrap"><a href="${url(o.code)}" target="_blank">${o.code}</a></td>
       <td>${o.title}${cons.map(c=>`<span class="flag">⚠ ${c}</span>`).join('')}</td><td>${o.cr}</td>
       <td class="dim">${o.subs.join(' · ')}</td>
-      <td class="dim">${o.rating[0]?`<span style="color:var(--amber)">${'★'.repeat(Math.round(o.rating[0]))}</span> ${o.rating[0]}/5 · diff ${o.rating[1]}`:'—'}</td>
+      <td class="dim">${o.rating?`<span style="color:var(--amber)">${'★'.repeat(o.rating)}</span>`:'<span class="fine">not rated</span>'}</td>
       <td class="dim" style="white-space:nowrap">${p.days} ${p.time}</td>
       <td><button class="b" onclick="addC('${o.code}')">+ schedule</button></td></tr>`}).join('')}
     </tbody></table></div>`
@@ -798,6 +820,61 @@ function addEv(){const i=document.getElementById('evIn');if(!i.value.trim())retu
   const sel=document.getElementById('evCourse');
   (events[selD]=events[selD]||[]).push({t:i.value.trim(),c:(sel&&sel.value)||''});
   S('events',events);cal()}
+/* ===== COURSE DETAIL =====
+   One panel per course: who teaches it, every section time, and links out to what
+   students say. Cornell's own course evaluations and RateMyProfessors are LINKED,
+   never embedded — RMP's robots.txt blocks automated collection outright (it names
+   anthropic-ai and Claude-Web explicitly), and republishing a scraped ratings
+   database inside a product you intend to charge for is a licensing problem, not a
+   technical one. Your own rating below is stored locally and is the beginning of a
+   dataset you actually own. */
+function instrOf(code){const r=rec(code);if(!r)return[];return (r[9]||[]).map(i=>INSTRUCTORS[i]).filter(Boolean)}
+function rmpURL(name){return 'https://www.ratemyprofessors.com/search/professors?q='+encodeURIComponent(name)}
+const CORNELL_EVALS='https://courseeval.cals.cornell.edu/EvalPublic.aspx';
+function rateCourse(code,v){
+  if(v)myRates[code]=v; else delete myRates[code]; // clearing should remove it, not store a 0
+  S('myrates',myRates);openCourse(code)}
+function openCourse(code){
+  const r=rec(code);if(!r)return;
+  // rateCourse re-opens to re-render, and a course can be opened while one is already
+  // up — without this every star click leaves another overlay stacked behind the last,
+  // and getElementById('cdcard') starts returning a stale card.
+  document.querySelectorAll('#cdet').forEach(e=>e.remove());
+  const teach=instrOf(code), pats=patterns(code), mine=myRates[code]||0;
+  const d=document.createElement('div');d.id='cdet';
+  d.innerHTML=`<div id="cdcard">
+    <button class="cdx" onclick="document.getElementById('cdet').remove()" aria-label="close">✕</button>
+    <div class="cdcode">${code}</div>
+    <h3>${r[2]}</h3>
+    <div class="fine" style="margin:6px 0 14px">${r[3]} credits${r[6]?' · also listed as '+r[6]:''}</div>
+
+    <div class="cdsec"><b>When it meets</b>
+      ${pats.length?pats.map(p=>`<div class="cdrow">${p.days} · ${p.time}</div>`).join(''):'<div class="cdrow dim">No scheduled meeting time listed.</div>'}
+    </div>
+
+    <div class="cdsec"><b>Who teaches it</b>
+      ${teach.length?teach.map(n=>`<div class="cdrow">${n}
+        <a class="cdlink" href="${rmpURL(n)}" target="_blank" rel="noopener noreferrer">look up on RateMyProfessors ↗</a></div>`).join('')
+        :'<div class="cdrow dim">No instructor listed yet for this term.</div>'}
+    </div>
+
+    <div class="cdsec"><b>What students say</b>
+      <div class="cdrow"><a class="cdlink" href="${CORNELL_EVALS}" target="_blank" rel="noopener noreferrer">Cornell course evaluations ↗</a>
+        <span class="fine">Official, collected from everyone enrolled. Cornell login required.</span></div>
+      <div class="cdrow"><a class="cdlink" href="https://classes.cornell.edu/search/roster/FA26?q=${encodeURIComponent(code)}" target="_blank" rel="noopener noreferrer">Cornell Class Roster ↗</a>
+        <span class="fine">Enrollment status, prerequisites, full section list.</span></div>
+      <div class="fine" style="margin-top:8px">Ratings live on those sites — Jarvis links to them rather than copying them.</div>
+    </div>
+
+    <div class="cdsec"><b>Your own take</b>
+      <div class="cdrow">${[1,2,3,4,5].map(n=>`<button class="cdstar ${mine>=n?'on':''}" onclick="rateCourse('${code}',${n})" aria-label="rate ${n}">★</button>`).join('')}
+        ${mine?`<button class="b" style="margin-left:8px" onclick="rateCourse('${code}',0)">clear</button>`:''}</div>
+      <div class="fine">Saved on this device only. When accounts arrive these become shared reviews.</div>
+    </div>
+  </div>`;
+  d.onclick=e=>{if(e.target===d)d.remove()};
+  document.body.appendChild(d);
+}
 /* ===== RESOURCES =====
    A student panel member put it best: the problem is not that resources are missing,
    it is that there are hundreds and no way to tell which are yours. 25% of students do

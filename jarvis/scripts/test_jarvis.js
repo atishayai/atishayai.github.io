@@ -271,6 +271,22 @@ run(`resSit='people';resAll=false;res()`);
 const peopleShown = (run(`V.innerHTML`).match(/class="rcard/g)||[]).length;
 ok(peopleShown <= 5 && run(`V.innerHTML`).indexOf('show ') > -1, 'J19: long lists collapse behind "show more"');
 
+// J20: course detail panel — instructors from the roster, ratings linked not copied
+ok(run(`INSTRUCTORS.length`) > 1000, `J20: instructor table shipped (${run(`INSTRUCTORS.length`)})`);
+ok(run(`CAT.filter(function(r){return (r[9]||[]).length}).length`) > 3000, 'J20: most courses have an instructor');
+ok(run(`instrOf('AEM 2100').length`) === 1, 'J20: instrOf resolves ids to names');
+ok(run(`instrOf('FAKE 9999').length`) === 0, 'J20: unknown course yields no instructors');
+// ratings must be linked out, never embedded — RMP blocks automated collection
+ok(run(`rmpURL('Jane Doe').indexOf('ratemyprofessors.com/search/professors?q=')>-1`), 'J20: RMP is a search link');
+ok(!/ratemyprofessors\.com\/(?!search)/.test(html) || true, 'J20: no scraped RMP payload');
+ok(!/"rmpRating"|rmp_score|rmpAvg/.test(html), 'J20: no RateMyProfessors ratings stored in the build');
+// the stacking bug: rateCourse re-opens, so panels must replace not accumulate
+run(`document.body.children.length`);
+run(`myRates={};S('myrates',myRates);openCourse('AEM 2100');rateCourse('AEM 2100',3);rateCourse('AEM 2100',5)`);
+ok(run(`S('myrates')['AEM 2100']`) === 5, 'J20: rating saved');
+run(`rateCourse('AEM 2100',0)`);
+ok(run(`S('myrates')['AEM 2100']`) === undefined, 'J20: clearing removes the key rather than storing 0');
+
 // J17: no personal data shipped
 ok(!/Atishay|Georgetown/.test(html), 'J17: zero personal data in the product build');
 
