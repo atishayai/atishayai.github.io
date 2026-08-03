@@ -60,5 +60,14 @@ assert "Atishay" not in blob and "Georgetown" not in blob, "PERSONAL DATA LEAKED
 tpl = open(f"{ROOT}/scripts/build_template.html").read()
 assert '"__INJECT_DATA__"' in tpl, "template placeholder missing"
 html = tpl.replace('"__INJECT_DATA__"', blob)
+
+# Social scrapers ignore relative og:image/og:url, so these must be absolute.
+# Override when deploying elsewhere:  SITE_URL=https://jarvis.example/ python3 scripts/build.py
+site = os.environ.get("SITE_URL", "https://www.atishay.io/jarvis/")
+if not site.endswith("/"):
+    site += "/"
+html = html.replace("__SITE_URL__", site)
+assert "__SITE_URL__" not in html, "share-link placeholder left unfilled"
+
 open(f"{ROOT}/index.html", "w").write(html)
-print(f"Built index.html ({len(html)//1024} KB) — {len(cat)} courses, {len(slim)} programs")
+print(f"Built index.html ({len(html)//1024} KB) — {len(cat)} courses, {len(slim)} programs — share URL {site}")
