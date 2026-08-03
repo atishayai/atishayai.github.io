@@ -109,6 +109,7 @@ a{color:var(--accent);text-decoration:none}
 #obcard h2{font-size:26px;letter-spacing:-.3px;font-weight:680;color:var(--accent)}
 #obcard p{font-size:14px;color:var(--dim);line-height:1.8;margin:14px 0 20px}
 #obcard input{text-align:center;font-size:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 /* ---- mobile ----
    The app was built desktop-first: fixed multi-column grids and HTML5 drag-and-drop,
    which does not fire from touch on iOS Safari or Android Chrome. This block stacks the
@@ -124,6 +125,7 @@ a{color:var(--accent);text-decoration:none}
   main{padding:12px 12px 28px}
   /* stacked panes — auto height so the page scrolls instead of trapping inner scrollers */
   #sch,#notes{grid-template-columns:1fr;height:auto;gap:12px}
+  .grid2{grid-template-columns:1fr}
   #results,#enrlist,#nlist{max-height:46vh}
   #coursepane,#enr{min-height:0}
   /* week grid keeps 5 days but scrolls sideways rather than crushing to ~60px columns */
@@ -192,6 +194,8 @@ select.csel{max-width:150px}
 .subrow:hover{background:rgba(var(--accent-rgb),.07)}
 .subrow b{font-family:var(--mono);color:var(--accent);font-weight:600;min-width:62px}
 .subrow span{color:var(--dim);font-size:12.5px}
+.bar{height:6px;border-radius:99px;background:var(--panel2);margin-top:5px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:99px}
 /* course detail */
 #cdet{position:fixed;inset:0;background:rgba(var(--scrim-rgb),.45);z-index:120;display:flex;align-items:center;justify-content:center;padding:16px}
 #cdcard{position:relative;width:min(560px,96vw);max-height:88dvh;overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 26px}
@@ -381,6 +385,10 @@ function home(){
     (events[k]||[]).forEach(e=>next7.push({d:i,k,e}))}
   const openT=todos.filter(t=>!t.d);
   const cr=credits();
+  // Degree progress across every tracked program, from the requirement checkboxes.
+  const progress=(prefs.programs||[]).map(nm=>{const pg=PROGRAMS[nm];if(!pg)return null;
+    const items=pg.items||[], done=items.filter((_,i)=>reqDone[nm+'.'+i]).length;
+    return{nm,done,total:items.length,pct:items.length?Math.round(done*100/items.length):0}}).filter(Boolean);
   const nextStep=FLOW.find(f=>!f[2]());
   const cf=conflicts();
   V.innerHTML=stepper()+`
@@ -389,17 +397,33 @@ function home(){
       <div style="font-size:22px">${h<12?'Good morning':h<18?'Good afternoon':'Good evening'}${n?', <b style="color:var(--accent);font-weight:normal">'+n+'</b>':''}.</div>
       <div class="fine" style="margin-top:6px">${now.toLocaleDateString('en',{weekday:'long',month:'long',day:'numeric'})} · ${cr?cr+' credits planned':'no schedule yet'}${cr&&(cr<12||cr>18)?` <span style="color:var(--amber)">⚠ ${cr<12?'below the 12-credit full-time floor':'above the 18-credit max'}</span>`:''}${cf.size?` · <span style="color:var(--red)">⚠ ${cf.size} schedule conflict${cf.size>1?'s':''}</span>`:''}</div>
     </div>
-    <div class="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+    <div class="grid2">
       <div class="card"><div style="font-size:10px;letter-spacing:2px;color:var(--accent);margin-bottom:8px">TODAY'S CLASSES</div>
         ${todayCls.length?todayCls.map(x=>`<div style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:11.5px"><span class="dim" style="min-width:110px">${fm(x.t[0])} – ${fm(x.t[1])}</span><span style="color:${x.cust?'var(--amber)':'var(--accent)'}">${x.c}</span></div>`).join('')
         :`<div class="empty" style="padding:16px">${'MTWRF'.includes(dayL)?'Nothing on the grid today.':'Weekend — no classes.'} ${plan.length?'':'<br>Build your week in Schedule.'}</div>`}</div>
       <div class="card"><div style="font-size:10px;letter-spacing:2px;color:var(--amber);margin-bottom:8px">NEXT 7 DAYS</div>
         ${next7.length?next7.slice(0,7).map(x=>`<div style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:11.5px"><span class="dim" style="min-width:80px">${x.d===0?'today':x.d===1?'tomorrow':'in '+x.d+' days'}</span><span>${x.e}</span></div>`).join('')
         :'<div class="empty" style="padding:16px">No deadlines coming up.<br>Add exams &amp; due dates in Calendar.</div>'}</div>
+      <div class="card"><div style="font-size:10px;letter-spacing:2px;color:var(--accent);margin-bottom:8px">DEGREE PROGRESS</div>
+        ${progress.length?progress.map(p=>`<div style="padding:6px 0">
+          <div style="display:flex;justify-content:space-between;font-size:12px"><span>${p.nm}</span><span class="dim">${p.done}/${p.total}</span></div>
+          <div class="bar"><i style="width:${p.pct}%"></i></div></div>`).join('')
+          +`<div class="fine" style="margin-top:8px"><a href="#" onclick="go('prog');return false">open the checklists →</a></div>`
+        :`<div class="empty" style="padding:16px">No major or minor tracked yet.<br><button class="b" style="margin-top:8px" onclick="openSetup()">pick one</button></div>`}</div>
       <div class="card"><div style="font-size:10px;letter-spacing:2px;color:var(--green);margin-bottom:8px">OPEN TO-DOS · ${openT.length}</div>
         ${openT.length?openT.slice(0,5).map(t=>{const gi=todos.indexOf(t);
           return`<div class="todo" style="padding:7px 0"><input type="checkbox" onchange="todos[${gi}].d=true;S('todos',todos);home()"><span>${t.t}</span></div>`}).join('')+(openT.length>5?`<div class="fine" style="padding-top:6px">+ ${openT.length-5} more in To-Dos</div>`:'')
         :'<div class="empty" style="padding:16px">Clear. Add to-dos as they come.</div>'}</div>
+      <div class="card" style="grid-column:1/-1"><div style="font-size:10px;letter-spacing:2px;color:var(--accent);margin-bottom:4px">THE REST OF COLLEGE</div>
+        <div class="fine" style="margin-bottom:10px">Cornell has hundreds of these. Pick what fits and you'll get a few, not a list.</div>
+        <div class="row" style="flex-wrap:wrap;gap:6px">
+          <span class="schip" onclick="resSit='clubs';go('res')">Clubs &amp; getting involved</span>
+          <span class="schip" onclick="resSit='research';go('res')">Research &amp; labs</span>
+          <span class="schip" onclick="resSit='behind';go('res')">Academic help</span>
+          <span class="schip" onclick="resSit='stress';go('res')">Mental health</span>
+          <span class="schip" onclick="resSit='money';go('res')">Money</span>
+          <span class="schip" onclick="resSit='career';go('res')">After graduation</span>
+        </div></div>
       <div class="card"><div style="font-size:10px;letter-spacing:2px;color:var(--dim);margin-bottom:8px">YOUR DATA, YOURS</div>
         <div class="fine" style="margin-bottom:10px">Everything lives on this device. Take it anywhere:</div>
         <div class="row" style="flex-wrap:wrap">
@@ -894,7 +918,7 @@ function openCourse(code){
    Every entry below is a real Cornell office or student org with a verified URL.
    Do not add an entry without checking it exists — sending someone to a service that
    is not there is worse than showing nothing. */
-const SIT_NOTES={people:"There's no single right door here. The staffed centres below are open to anyone — you don't have to already belong to something to walk in. The student-run groups are further down."};
+const SIT_NOTES={research:"Most research positions are never posted. The usual route is emailing a professor whose work interests you — reading one of their papers first is what makes that email work.",people:"There's no single right door here. The staffed centres below are open to anyone — you don't have to already belong to something to walk in. The student-run groups are further down."};
 const SITUATIONS=[
   ['behind',"I'm behind in a class"],
   ['writing',"I have to write something"],
@@ -902,6 +926,8 @@ const SITUATIONS=[
   ['people',"I'm looking for my people"],
   ['stress',"I'm stressed, or not okay"],
   ['money',"Money is tight"],
+  ['clubs',"I want to join something"],
+  ['research',"I want to do research or find a lab"],
   ['career',"I'm thinking about after graduation"],
   ['access',"I need accommodations"],
   ['harm',"Something happened to me"],
@@ -926,6 +952,12 @@ const RESOURCES=[
   {n:"Anabel's Grocery",u:'https://www.anabelsgrocery.org/',w:'Student-run grocery with genuinely affordable food.',t:['money']},
   {n:'Office of the Bursar',u:'https://www.dfa.cornell.edu/bursar',w:'Billing, tuition charges, payment plans.',t:['money']},
   {n:'Career Services',u:'https://career.cornell.edu/',w:'Not just for seniors — go early and it is far more useful.',t:['career'],s:'career'},
+  {n:'Student Organization Directory',u:'https://scl.cornell.edu/get-involved/campus-activities/student-organization-directory',w:'The official list. Over a thousand clubs, searchable by name and type.',t:['clubs'],s:'clubs'},
+  {n:'CampusGroups',u:'https://cornell.campusgroups.com/club_signup',w:'Where clubs actually run sign-ups and post events. Browse by category.',t:['clubs']},
+  {n:'Get Involved',u:'https://scl.cornell.edu/get-involved',w:'Clubs, campus activities, volunteering and student government in one place.',t:['clubs','people']},
+  {n:'Undergraduate Research',u:'https://undergraduateresearch.cornell.edu/',w:'Start here. Most lab positions are never advertised — students get them by emailing researchers directly.',t:['research'],s:'research'},
+  {n:'Arts & Sciences Undergraduate Research',u:'https://as.cornell.edu/research/undergraduate-research',w:'College-specific guidance on finding a lab and applying for funding.',t:['research']},
+  {n:'Cornell Experience',u:'https://experience.cornell.edu/',w:'Searchable research programmes, grants and summer opportunities.',t:['research','career']},
   {n:'Student Disability Services',u:'https://sds.cornell.edu/',w:'Academic accommodations, including for conditions diagnosed after you arrive.',t:['access'],s:'access'},
   {n:'Victim Advocacy Program',u:'https://health.cornell.edu/services/victim-advocacy',w:'Confidential support after assault or harassment. You choose what happens next.',t:['harm'],s:'harm'},
   {n:'Institutional Equity & Title IX',u:'https://titleix.cornell.edu/',w:'For reporting bias, discrimination, or sexual misconduct.',t:['harm']},
