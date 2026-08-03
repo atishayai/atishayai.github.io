@@ -32,7 +32,8 @@ button.b.rm{color:var(--red);background:rgba(255,93,108,.06)}
 .crs b{color:var(--cyan);font-weight:normal}
 .crs .t{display:block;font-size:10px;color:var(--dim);margin-top:2px;line-height:1.4}
 .crs:active{cursor:grabbing}
-#grid{border:1px solid var(--line);border-radius:12px;background:var(--panel);display:grid;grid-template-columns:40px repeat(5,1fr);overflow-y:auto;align-content:start}
+#gridwrap{min-height:0;display:flex;flex-direction:column}
+#grid{border:1px solid var(--line);border-radius:12px;background:var(--panel);display:grid;grid-template-columns:40px repeat(5,1fr);overflow-y:auto;align-content:start;flex:1}
 #grid .hd{position:sticky;top:0;z-index:2;background:var(--panel2);padding:8px 0;text-align:center;font-size:10px;letter-spacing:2px;color:var(--cyan);border-bottom:1px solid var(--line)}
 .dcol{position:relative;border-left:1px solid var(--line)}
 .dcol.over{background:rgba(62,224,255,.06)}
@@ -91,6 +92,55 @@ a{color:var(--cyan);text-decoration:none}
 #obcard h2{font-size:20px;letter-spacing:4px;color:var(--cyan);text-shadow:0 0 16px rgba(62,224,255,.5)}
 #obcard p{font-size:11.5px;color:var(--dim);line-height:1.8;margin:14px 0 20px}
 #obcard input{text-align:center;font-size:14px}
+/* ---- mobile ----
+   The app was built desktop-first: fixed multi-column grids and HTML5 drag-and-drop,
+   which does not fire from touch on iOS Safari or Android Chrome. This block stacks the
+   layouts; tap-to-add covers the drag gap (see .crs .add). */
+@media (max-width:760px){
+  body{height:100dvh}
+  header{gap:10px;padding:10px 12px;flex-wrap:wrap}
+  header h1{font-size:13px;letter-spacing:3px}
+  #cr{width:100%;order:3;font-size:9px}
+  nav{gap:2px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;order:2}
+  nav::-webkit-scrollbar{display:none}
+  nav button{padding:10px 11px;font-size:10px;min-height:44px;white-space:nowrap}
+  main{padding:12px 12px 28px}
+  /* stacked panes — auto height so the page scrolls instead of trapping inner scrollers */
+  #sch,#notes{grid-template-columns:1fr;height:auto;gap:12px}
+  #results,#enrlist,#nlist{max-height:46vh}
+  #coursepane,#enr{min-height:0}
+  /* week grid keeps 5 days but scrolls sideways rather than crushing to ~60px columns */
+  #gridwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;height:66dvh}
+  #grid{min-width:560px}
+  #brainwrap{height:62vh}
+  #cal{max-width:100%}
+  .cd{min-height:52px;padding:4px 5px}
+  .cd .ev{font-size:8px}
+  #calhead{gap:8px}
+  /* touch targets: 44px is the iOS minimum for a reliable tap */
+  button.b{padding:12px 16px;font-size:11.5px;min-height:44px}
+  .todo{padding:14px 12px}
+  .todo input[type=checkbox]{width:20px;height:20px}
+  .todo .x{font-size:20px;padding:0 6px}
+  .ni,.crs,.en{padding:13px 12px}
+  input[type=text],textarea{font-size:16px}  /* <16px makes iOS Safari zoom on focus */
+  table{font-size:10.5px}
+  th,td{padding:7px 5px}
+  #obcard{padding:22px 18px;width:min(440px,94vw);max-height:88dvh;overflow-y:auto}
+  #obcard h2{font-size:17px;letter-spacing:3px}
+  #obcard p{font-size:11px;line-height:1.7}
+  #toast{bottom:14px;font-size:11px}
+}
+/* Tap-to-add: on touch devices drag is unavailable, so every course row carries an
+   explicit button. Shown only where a pointer cannot hover. */
+.crs .add{display:none}
+@media (hover:none),(max-width:760px){
+  .crs{cursor:default}
+  .crs .add{display:inline-block;float:right;margin-left:8px;background:rgba(62,224,255,.12);
+    border:1px solid var(--line);color:var(--cyan);border-radius:7px;
+    padding:7px 13px;font-size:11px;font-family:inherit;cursor:pointer;min-height:38px}
+  .crs .add:active{background:rgba(62,224,255,.28)}
+}
 #obcard .steps{text-align:left;font-size:10.5px;color:var(--dim);line-height:2;margin:16px 0;padding-left:8px}
 #obcard .steps b{color:var(--txt)}
 #greet{font-size:10px;color:var(--dim)}
@@ -332,7 +382,7 @@ function sch(){
         </div>
       </details>
     </div>
-    <div id="grid"></div>
+    <div id="gridwrap"><div id="grid"></div></div>
     <div id="enr">
       <div style="font-size:10px;letter-spacing:2px;color:var(--dim)">MY SCHEDULE — <span id="crIn">${credits()}</span> CR</div>
       <div id="enrlist"></div>
@@ -370,6 +420,8 @@ function drawRes(){
   document.getElementById('results').innerHTML=rows.map(r=>{
     const c=r[0]+' '+r[1],inPlan=plan.some(p=>p.code===c);
     return`<div class="crs" draggable="true" ondragstart="event.dataTransfer.setData('text/plain','${c}')" ondblclick="addC('${c}')" style="${inPlan?'opacity:.45':''}">
+      <button class="add" onclick="event.stopPropagation();addC('${c}')" ${inPlan?'disabled':''}
+        aria-label="add ${c} to schedule">${inPlan?'✓':'+ add'}</button>
       <b>${c}</b> <span class="dim">· ${r[3]}cr${inPlan?' · ✓ added':''}</span><span class="t">${r[2]}</span>
       <span class="t">${r[4].map((d,i)=>d+' '+(r[5][i]||'')).join(' | ')||'time TBA'}</span></div>`;
   }).join('')||`<div class="empty">no course matches "${q}"<br><span class="fine">try a subject code (CS), a name (computer), or a number (1110)</span></div>`;
@@ -380,7 +432,7 @@ function addC(code,day){
   const ps=patterns(code);let pi=0;
   if(day)ps.forEach((p,i)=>{if(p.days.includes(day)&&pi===0&&!ps[0].days.includes(day))pi=i});
   plan.push({code,pat:pi});S('plan',plan);crTop();
-  toast(code+' added');drawGrid();drawEnr();const ci=document.getElementById('crIn');if(ci)ci.textContent=credits();
+  toast(code+' added');drawGrid();drawEnr();drawRes();const ci=document.getElementById('crIn');if(ci)ci.textContent=credits();
 }
 function allItems(){
   const it=plan.map(p=>({c:p.code,p:patterns(p.code)[p.pat||0],cust:false})).filter(x=>x.p)
@@ -741,7 +793,7 @@ function onboard(){
     <p>Your academic command center.<br>Everything lives on your device. You build it; it remembers.</p>
     <div class="steps">
       <b>Find Courses</b> — one class that counts for 3 programs? Jarvis finds it<br>
-      <b>My Week</b> — drag ${CAT.length} real courses onto your schedule<br>
+      <b>My Week</b> — build your schedule from ${CAT.length} real courses<br>
       <b>Programs</b> — every Cornell major &amp; minor as a checklist<br>
       <b>Today</b> — your classes, deadlines &amp; to-dos, every morning
     </div>
