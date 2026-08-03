@@ -8,7 +8,7 @@
 <meta name="description" content="Build your Cornell schedule, track every major and minor requirement, and find the classes that count toward more than one at once. Free, no account, runs in your browser.">
 <!-- Link preview for when this gets shared (Instagram bio, iMessage, Discord).
      Absolute URLs are required — relative ones are ignored by every scraper.
-     __SITE_URL__ is filled in at build time.
+     The og:url below is substituted at build time; override with SITE_URL=... .
      TODO: add a 1200x630 share.png and switch twitter:card to summary_large_image.
      Deliberately omitted for now: pointing og:image at a file that does not exist
      makes scrapers render a blank card, which looks more broken than no image. -->
@@ -159,6 +159,14 @@ a{color:var(--accent);text-decoration:none}
   .crs .add:active{background:rgba(var(--accent-rgb),.28)}
 }
 #obcard .steps{text-align:left;font-size:13px;color:var(--dim);line-height:2;margin:16px 0;padding-left:8px}
+.schoolpick{display:flex;flex-direction:column;gap:9px;text-align:left}
+.schoolbtn{display:block;width:100%;background:var(--panel);border:1px solid var(--line);border-radius:11px;
+  padding:14px 16px;font-family:inherit;cursor:pointer;color:var(--txt);text-align:left;
+  transition:border-color .15s ease,background .15s ease}
+.schoolbtn b{display:block;font-size:15px;font-weight:620;margin-bottom:3px}
+.schoolbtn span{display:block;font-size:12px;color:var(--dim);line-height:1.5}
+.schoolbtn:hover{border-color:var(--accent);background:rgba(var(--accent-rgb),.04)}
+.schoolbtn.on{border-color:var(--accent)}
 #obcard .steps b{color:var(--txt)}
 #greet{font-size:10px;color:var(--dim)}
 .row{display:flex;gap:8px}
@@ -424,6 +432,7 @@ function addCust(){
   toast(name+' added');sch();
 }
 function drawRes(){
+  if(!document.getElementById('results'))return;
   const s=q.trim().toLowerCase();
   let rows;
   if(!s){rows=CAT.slice(0,25);}
@@ -468,6 +477,7 @@ function conflicts(){
   }return out;
 }
 function drawGrid(){
+  if(!document.getElementById('grid'))return; // not on My Week — nothing to paint
   const T0=8*60,T1=21*60,PX=.72,cf=conflicts();
   const cols={M:[],T:[],W:[],R:[],F:[]};
   allItems().forEach(x=>{[...x.days].forEach(d=>{if(cols[d])cols[d].push({c:x.c,t:x.t,x:cf.has(x.c),cust:x.cust})})});
@@ -482,6 +492,7 @@ function drawGrid(){
     </div>`).join('')}`;
 }
 function drawEnr(){
+  if(!document.getElementById('enrlist'))return;
   const fm=m=>`${Math.floor(m/60)>12?Math.floor(m/60)-12:Math.floor(m/60)}:${String(m%60).padStart(2,'0')}${m<720?'a':'p'}`;
   const courseHtml=plan.map((p,i)=>{
     const ps=patterns(p.code);
@@ -587,10 +598,10 @@ function openSetup(){
 function supDots(){return`<div style="display:flex;gap:6px;justify-content:center;margin-bottom:18px">${[1,2,3].map(i=>`<span style="width:8px;height:8px;border-radius:50%;background:${i===supStep?'var(--accent)':i<supStep?'var(--green)':'var(--line)'}"></span>`).join('')}</div>`}
 function supFoot(nextLabel){return`<div class="row" style="margin-top:24px;justify-content:space-between">
   <button class="b" onclick="${supStep>1?'supStep--;drawSup()':`document.getElementById('setup').remove()`}">${supStep>1?'← back':'later'}</button>
-  <button class="b" style="font-size:12px;padding:10px 24px" onclick="${supStep<3?'supStep++;drawSup()':'saveSetup()'}">${nextLabel}</button></div>`}
+  <button class="b" style="font-size:12px;padding:10px 24px" onclick="${supStep<3?'supNext()':'saveSetup()'}">${nextLabel}</button></div>`}
 function drawSup(){
   const B=document.getElementById('supBody');
-  if(supStep===1){
+  if(supStep===2){
     const q=supQ.trim().toUpperCase();
     const picked=supSubjects.filter(s=>true);
     const rest=SUBJECTS.filter(s=>!supSubjects.includes(s)&&(!q||s.includes(q)||(SUBJECT_NAMES[s]||'').toUpperCase().includes(q)));
@@ -603,7 +614,7 @@ function drawSup(){
     <div class="chipbox" id="supChips" style="max-height:200px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;padding:10px">${rest.map(s=>`<span class="schip" onclick="tgSub('${s}')" title="${SUBJECT_NAMES[s]||''}">${s}</span>`).join('')||'<span class="fine">no match</span>'}</div>`
     +supFoot(supSubjects.length?'next →':'skip →');
   }
-  if(supStep===2){
+  if(supStep===1){
     const q=supPQ.trim().toLowerCase();
     const names=Object.keys(PROGRAMS).filter(p=>(supPT==='all'||PROGRAMS[p].type===supPT)&&(!q||p.toLowerCase().includes(q)));
     names.sort((a,b)=>(supPrograms.includes(b)?1:0)-(supPrograms.includes(a)?1:0)||a.localeCompare(b));
@@ -634,6 +645,26 @@ function drawSup(){
     +supFoot('done — let’s go ✦');
   }
 }
+function subjectCodeFor(name){
+  // Programs are named like "Anthropology (BA)"; subject names come from the roster.
+  // Matches about half of the 221 — used only to pre-tick, never to replace asking.
+  const base=name.replace(/\s*\(.*?\)\s*$/,'').trim().toLowerCase();
+  if(!base)return null;
+  for(const code in SUBJECT_NAMES){
+    const nm=(SUBJECT_NAMES[code]||'').trim().toLowerCase();
+    if(nm&&nm===base)return code;
+  }
+  for(const code in SUBJECT_NAMES){
+    const nm=(SUBJECT_NAMES[code]||'').trim().toLowerCase();
+    if(nm&&(nm.startsWith(base)||base.startsWith(nm)))return code;
+  }
+  return null;
+}
+function seedSubjectsFromPrograms(){
+  supPrograms.forEach(p=>{const c=subjectCodeFor(p);
+    if(c&&SUBJECTS.includes(c)&&!supSubjects.includes(c))supSubjects.push(c)});
+}
+function supNext(){if(supStep===1)seedSubjectsFromPrograms();supStep++;drawSup()}
 function tgSub(s){const i=supSubjects.indexOf(s);i>=0?supSubjects.splice(i,1):supSubjects.push(s);drawSup()}
 function tgProg(p){const i=supPrograms.indexOf(p);i>=0?supPrograms.splice(i,1):supPrograms.push(p);drawSup()}
 function tgDay(d){const i=supDays.indexOf(d);i>=0?supDays.splice(i,1):supDays.push(d);drawSup()}
@@ -810,27 +841,38 @@ function drawB(){
   svg.onmouseup=svg.onmouseleave=()=>{dr=null;svg.classList.remove('g')};
 }
 /* onboarding — first run */
+/* First screen. Asks which school before anything else: most people arriving from a
+   shared link are not at Cornell, and finding that out three screens in feels like a
+   bait-and-switch. Non-Cornell students are told plainly and still let in to look —
+   a hard wall loses them and teaches us nothing. No name prompt: asking who you are
+   before showing anything is friction with no payoff. Name lives in ⚙ instead. */
 function onboard(){
   const d=document.createElement('div');d.id='onboard';
   d.innerHTML=`<div id="obcard">
-    <h2>◉ JARVIS</h2>
-    <p>Your academic command center.<br>Everything lives on your device. You build it; it remembers.</p>
-    <div class="steps">
-      <b>Find Courses</b> — one class that counts for 3 programs? Jarvis finds it<br>
-      <b>My Week</b> — build your schedule from ${CAT.length} real courses<br>
-      <b>Programs</b> — every Cornell major &amp; minor as a checklist<br>
-      <b>Today</b> — your classes, deadlines &amp; to-dos, every morning
+    <h2>Jarvis</h2>
+    <p>Your whole college life in one place — schedule, degree progress, deadlines and notes.<br>
+    Free, no account, and everything stays on your device.</p>
+    <div class="fine" style="margin:20px 0 10px;text-align:center">Where do you go?</div>
+    <div class="schoolpick">
+      <button class="schoolbtn on" onclick="obSchool('cornell')">
+        <b>Cornell</b><span>Fall 2026 — ${CAT.length} courses, ${Object.keys(PROGRAMS).length} programs, ready now</span></button>
+      <button class="schoolbtn" onclick="obSchool('other')">
+        <b>Somewhere else</b><span>Not built yet — come in and look around</span></button>
     </div>
-    <input type="text" id="obName" placeholder="what should I call you?" maxlength="20" onkeydown="if(event.key==='Enter')obGo()">
-    <div style="margin-top:14px"><button class="b" style="font-size:12px;padding:10px 26px" onclick="obGo()">enter →</button></div>
   </div>`;
   document.body.appendChild(d);
-  setTimeout(()=>document.getElementById('obName').focus(),50);
 }
-function obGo(){
-  const n=document.getElementById('obName').value.trim()||'boss';
-  S('user',n);document.getElementById('onboard').remove();greet();
-  toast('Welcome, '+n+'.');openSetup();
+function obSchool(which){
+  S('school',which);
+  document.getElementById('onboard').remove();
+  greet();
+  if(which==='other'){
+    // Honest about the limit, but still land them somewhere real.
+    toast('Only Cornell’s catalog is loaded — have a look around');
+    go('home');
+    return;
+  }
+  openSetup();
 }
 function greet(){
   const n=S('user');if(!n)return;
@@ -839,7 +881,10 @@ function greet(){
 }
 /* boot */
 crTop();go('home');
-if(!S('user'))onboard();else greet();
+// Anyone who set up before the school question existed is already a Cornell user;
+// don't make them sit through onboarding again.
+if(!S('school')&&S('user'))S('school','cornell');
+if(!S('school'))onboard();else greet();
 </script>
 </body>
 </html>

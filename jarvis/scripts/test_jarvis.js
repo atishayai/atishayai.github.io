@@ -60,21 +60,24 @@ catch (e) { ok(false, 'boot: ' + e.message); console.error(e); process.exit(1); 
 const g = name => vm.runInContext(name, ctx);
 const run = code => vm.runInContext(code, ctx);
 
-// J1: onboarding shown (no user yet), name flow
-ok(run(`S('user')`) === null, 'J1: fresh user has no stored name');
-run(`document.getElementById('obName').value='Test'`);
-run(`obGo()`);
-ok(run(`S('user')`) === 'Test', 'J1: onboarding saves the name');
+// J1: onboarding asks which school before anything else
+ok(run(`S('school')`) === null, 'J1: fresh user has no school yet');
+ok(run(`document.getElementById('onboard')!==undefined`), 'J1: onboarding screen is shown');
+run(`obSchool('cornell')`);
+ok(run(`S('school')`) === 'cornell', 'J1: picking a school is remembered');
 
-// J2: setup wizard — pick subjects, program, rules (auto-opened by obGo)
-run(`tgSub('COGST');tgSub('PSYCH');tgSub('LING');tgSub('PHIL')`);
-run(`supStep=2;drawSup()`);
+// J2: setup wizard — programs first, then subjects, then rules (auto-opened by obSchool)
 run(`tgProg(Object.keys(PROGRAMS).find(k=>/Cognitive/i.test(k)))`);
+run(`supNext()`);
+run(`tgSub('COGST');tgSub('PSYCH');tgSub('LING');tgSub('PHIL')`);
 run(`supStep=3;drawSup()`);
 run(`tgDay('F')`);
 run(`saveSetup()`);
 const prefs = run(`prefs`);
-ok(prefs.subjects.length === 4 && prefs.programs.length === 1 && prefs.daysOff.includes('F'), 'J2: wizard saved (4 subjects, 1 program, Fridays off)');
+// COGST is auto-seeded from the Cognitive Science program, then toggled off by the
+// tgSub('COGST') above — so the four taps net out to three subjects.
+ok(prefs.subjects.length === 3 && prefs.programs.length === 1 && prefs.daysOff.includes('F'), 'J2: wizard saved (3 subjects, 1 program, Fridays off)');
+ok(!prefs.subjects.includes('COGST') && prefs.subjects.includes('PSYCH'), 'J2: seeded subject can be toggled back off');
 ok(run(`Object.keys(PROGRAMS).length`) >= 200, `J2: full program catalog shipped (${run(`Object.keys(PROGRAMS).length`)})`);
 
 // J3: optimizer finds real double-counting courses for these interests
@@ -100,6 +103,20 @@ const cf = run(`[...conflicts()]`);
 ok(cf.includes('COGST 1101') && cf.includes('ANTHR 2430'), 'J5: time conflict detected (COGST 1101 × ANTHR 2430)');
 run(`addC('FAKE 9999')`);
 ok(run(`plan.length`) === 3, 'J5: unknown course code safely ignored');
+
+// J5b: "one click to schedule" from Find Courses / Programs, where the My Week DOM
+// does not exist. The stub DOM always returns an element, so this asserts the guards
+// directly rather than relying on a thrown error.
+ok(run(`(function(){var real=document.getElementById;document.getElementById=function(id){
+  return (id==='grid'||id==='enrlist'||id==='results')?null:real.call(document,id)};
+  var err=null; try{ drawGrid(); drawEnr(); drawRes(); }catch(e){ err=String(e) }
+  document.getElementById=real; return err===null })()`), 'J5b: painters no-op when their tab is not rendered');
+ok(run(`(function(){var real=document.getElementById;document.getElementById=function(id){
+  return (id==='grid'||id==='enrlist'||id==='results')?null:real.call(document,id)};
+  var before=plan.length,err=null; try{ addC('PSYCH 1101') }catch(e){ err=String(e) }
+  document.getElementById=real; var okNow=err===null && plan.length===before+1;
+  plan=plan.filter(function(x){return x.code!=='PSYCH 1101'}); S('plan',plan); // leave state as found
+  return okNow })()`), 'J5b: addC works off the My Week tab');
 
 // J6: manual block (the lab fix)
 run(`document.getElementById('cbName').value='PHYS 2207 LAB'`);
@@ -189,6 +206,7 @@ ok(/PHYS 2207 LAB/.test(lastBlob), 'J13: manual lab included in .ics');
 ok(/20260820/.test(lastBlob), 'J13: calendar deadlines included in .ics');
 
 // J14: JSON backup round-trip
+run(`S('user','Test')`);
 run(`dlJSON()`);
 const backup = JSON.parse(lastBlob);
 ok(backup._jarvis === 1 && backup.plan.length === 3 && backup.user === 'Test', 'J14: backup contains full state');
