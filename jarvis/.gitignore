@@ -1,0 +1,8 @@
+node_modules/
+*.log
+.DS_Store
+# personal data never belongs in the product repo
+student_profile.json
+# raw Cornell roster scrape — stays local, never published.
+# index.html is built from it and ships with the data baked in.
+data/

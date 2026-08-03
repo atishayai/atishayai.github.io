@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JARVIS</title>
+<style>
+:root{--bg:#07090f;--panel:#0d1220;--panel2:#111a2e;--line:#1e2c48;--cyan:#3ee0ff;--amber:#ffb02e;--red:#ff5d6c;--green:#3ddc84;--dim:#7d8ca8;--txt:#e2eaf7;--mono:'SF Mono',ui-monospace,Menlo,monospace}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:radial-gradient(1200px 700px at 50% -10%,#0d1b30 0%,var(--bg) 60%);color:var(--txt);font-family:var(--mono);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+header{display:flex;align-items:center;gap:18px;padding:14px 22px;border-bottom:1px solid var(--line)}
+header h1{font-size:15px;letter-spacing:4px;color:var(--cyan);text-shadow:0 0 14px rgba(62,224,255,.5)}
+nav{display:flex;gap:4px;flex:1}
+nav button{background:none;border:1px solid transparent;border-radius:8px;color:var(--dim);font-family:inherit;font-size:11px;letter-spacing:1.5px;padding:8px 14px;cursor:pointer}
+nav button:hover{color:var(--txt)}
+nav button.on{color:var(--cyan);border-color:var(--line);background:rgba(62,224,255,.06)}
+#cr{font-size:10px;color:var(--dim)}#cr b{color:var(--txt);font-size:13px}
+main{flex:1;overflow:auto;padding:18px 22px;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+input[type=text],textarea{background:#0a1120;border:1px solid var(--line);color:var(--txt);font-family:inherit;font-size:12px;padding:9px 12px;border-radius:8px;outline:none;width:100%}
+input:focus,textarea:focus{border-color:var(--cyan)}
+button.b{background:rgba(62,224,255,.08);border:1px solid var(--line);color:var(--cyan);font-family:inherit;font-size:10.5px;padding:7px 13px;border-radius:8px;cursor:pointer;white-space:nowrap}
+button.b:hover{background:rgba(62,224,255,.16)}
+button.b.rm{color:var(--red);background:rgba(255,93,108,.06)}
+.dim{color:var(--dim)}.fine{font-size:10px;color:var(--dim);line-height:1.7}
+/* schedule */
+#sch{display:grid;grid-template-columns:300px 1fr 240px;gap:14px;height:calc(100vh - 110px)}
+#coursepane{display:flex;flex-direction:column;gap:8px;min-height:0}
+#results{flex:1;overflow-y:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.crs{padding:9px 12px;border-bottom:1px solid var(--line);cursor:grab;font-size:11px}
+.crs:hover{background:rgba(62,224,255,.05)}
+.crs b{color:var(--cyan);font-weight:normal}
+.crs .t{display:block;font-size:10px;color:var(--dim);margin-top:2px;line-height:1.4}
+.crs:active{cursor:grabbing}
+#grid{border:1px solid var(--line);border-radius:12px;background:var(--panel);display:grid;grid-template-columns:40px repeat(5,1fr);overflow-y:auto;align-content:start}
+#grid .hd{position:sticky;top:0;z-index:2;background:var(--panel2);padding:8px 0;text-align:center;font-size:10px;letter-spacing:2px;color:var(--cyan);border-bottom:1px solid var(--line)}
+.dcol{position:relative;border-left:1px solid var(--line)}
+.dcol.over{background:rgba(62,224,255,.06)}
+.hl{position:absolute;left:0;right:0;border-top:1px solid rgba(30,44,72,.6)}
+.tc{position:relative}.tc span{position:absolute;right:5px;font-size:8px;color:var(--dim);transform:translateY(-50%)}
+.blk{position:absolute;left:3%;width:94%;border:1px solid var(--cyan);background:rgba(62,224,255,.1);color:var(--cyan);border-radius:6px;padding:3px 6px;font-size:9px;line-height:1.3;overflow:hidden}
+.blk.x{border-color:var(--red);background:rgba(255,93,108,.12);color:var(--red)}
+#enr{display:flex;flex-direction:column;gap:8px;min-height:0}
+#enrlist{flex:1;overflow-y:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:4px 10px}
+.en{padding:8px 0;border-bottom:1px solid var(--line);font-size:11px}
+.en select{background:#0a1120;border:1px solid var(--line);color:var(--dim);font-family:inherit;font-size:9.5px;padding:3px 6px;border-radius:6px;margin-top:4px;max-width:100%}
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{font-size:9px;letter-spacing:1.5px;color:var(--dim);text-align:left;padding:8px;border-bottom:1px solid var(--line);text-transform:uppercase;white-space:nowrap}
+td{padding:8px;border-bottom:1px solid var(--line)}
+tr:hover td{background:rgba(62,224,255,.03)}
+a{color:var(--cyan);text-decoration:none}
+.hit{display:inline-block;min-width:20px;text-align:center;border-radius:5px;padding:1px 5px;font-weight:bold;background:rgba(62,224,255,.14);color:var(--cyan)}
+/* todos */
+.todo{display:flex;gap:10px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line);font-size:12px}
+.todo input[type=checkbox]{accent-color:var(--cyan);width:15px;height:15px}
+.todo.done span{color:var(--dim);text-decoration:line-through}
+.todo span{flex:1}
+.todo .x{color:var(--dim);cursor:pointer;font-size:14px}.todo .x:hover{color:var(--red)}
+/* notes */
+#notes{display:grid;grid-template-columns:240px 1fr;gap:14px;height:calc(100vh - 110px)}
+#nlist{overflow-y:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.ni{padding:10px 12px;border-bottom:1px solid var(--line);cursor:pointer;font-size:11px}
+.ni:hover{background:rgba(62,224,255,.05)}
+.ni.on{background:rgba(62,224,255,.08);border-left:2px solid var(--cyan)}
+.ni .d{font-size:9px;color:var(--dim);margin-top:2px}
+#ned{display:flex;flex-direction:column;gap:8px}
+#ntext{flex:1;resize:none;line-height:1.7;font-size:12.5px}
+/* calendar */
+#cal{max-width:760px}
+#calhead{display:flex;align-items:center;gap:14px;margin-bottom:10px}
+#calhead h2{font-size:14px;letter-spacing:2px;color:var(--cyan);flex:1;text-align:center}
+#calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cd{min-height:74px;border:1px solid var(--line);border-radius:8px;padding:5px 7px;font-size:10px;color:var(--dim);cursor:pointer;background:var(--panel)}
+.cd:hover{border-color:var(--cyan)}
+.cd.today{border-color:var(--amber)}
+.cd.sel{border-color:var(--cyan);background:rgba(62,224,255,.06)}
+.cd .n{color:var(--txt);font-size:11px}
+.cd .ev{color:var(--cyan);font-size:8.5px;margin-top:2px;line-height:1.3;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.dow{text-align:center;font-size:9px;letter-spacing:2px;color:var(--dim);padding:4px 0}
+/* brain */
+#brainwrap{position:relative;height:calc(100vh - 160px);border:1px solid var(--line);border-radius:12px;overflow:hidden;background:radial-gradient(700px 500px at 50% 45%,#0c1830 0%,transparent 70%)}
+#bsvg{width:100%;height:100%;cursor:grab}#bsvg.g{cursor:grabbing}
+.lk{stroke:var(--line);stroke-width:1.2;fill:none}
+.nd{cursor:pointer}.nd circle{fill:#0d1220;stroke:var(--cyan);stroke-width:1.5}
+.nd.sel circle{stroke:var(--amber);stroke-width:2.5;filter:drop-shadow(0 0 8px rgba(255,176,46,.6))}
+.nd text{fill:var(--txt);font-family:var(--mono);pointer-events:none;text-anchor:middle}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--cyan);color:#04121a;font-size:11px;padding:8px 18px;border-radius:20px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:50}
+#onboard{position:fixed;inset:0;background:rgba(4,7,12,.92);backdrop-filter:blur(6px);z-index:100;display:flex;align-items:center;justify-content:center}
+#obcard{width:min(440px,92vw);background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:34px;text-align:center}
+#obcard h2{font-size:20px;letter-spacing:4px;color:var(--cyan);text-shadow:0 0 16px rgba(62,224,255,.5)}
+#obcard p{font-size:11.5px;color:var(--dim);line-height:1.8;margin:14px 0 20px}
+#obcard input{text-align:center;font-size:14px}
+#obcard .steps{text-align:left;font-size:10.5px;color:var(--dim);line-height:2;margin:16px 0;padding-left:8px}
+#obcard .steps b{color:var(--txt)}
+#greet{font-size:10px;color:var(--dim)}
+.row{display:flex;gap:8px}
+.empty{padding:30px;text-align:center;color:var(--dim);font-size:11px;line-height:1.8}
+/* custom blocks + stepper */
+.blk.cust{border-color:var(--amber);background:rgba(255,176,46,.12);color:var(--amber)}
+#steps{display:flex;gap:6px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.step{display:flex;gap:7px;align-items:center;font-size:10px;letter-spacing:1px;color:var(--dim);border:1px solid var(--line);border-radius:20px;padding:6px 13px;cursor:pointer}
+.step:hover{color:var(--txt)}
+.step.done{color:var(--green);border-color:rgba(61,220,132,.4)}
+.step.cur{color:var(--cyan);border-color:var(--cyan)}
+.step .n{width:15px;height:15px;border-radius:50%;border:1px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:8.5px}
+.arrow{color:var(--line);font-size:11px}
+#nextbtn{margin-left:auto;background:rgba(62,224,255,.12);border:1px solid var(--cyan);color:var(--cyan);font-family:inherit;font-size:10.5px;letter-spacing:1px;padding:7px 16px;border-radius:20px;cursor:pointer}
+#nextbtn:hover{background:rgba(62,224,255,.22)}
+.daychip{display:inline-flex;width:26px;height:26px;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:6px;font-size:10px;color:var(--dim);cursor:pointer;user-select:none}
+.daychip.on{border-color:var(--amber);color:var(--amber);background:rgba(255,176,46,.1)}
+select.sm{background:#0a1120;border:1px solid var(--line);color:var(--txt);font-family:inherit;font-size:10px;padding:6px;border-radius:6px}
+details#custform{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:0}
+details#custform summary{cursor:pointer;font-size:10.5px;color:var(--amber);padding:10px 12px;list-style:none}
+details#custform summary:hover{color:var(--txt)}
+details#custform .body{padding:0 12px 12px;display:flex;flex-direction:column;gap:8px}
+/* setup modal */
+#setup{position:fixed;inset:0;background:rgba(4,7,12,.9);backdrop-filter:blur(6px);z-index:90;display:flex;align-items:center;justify-content:center}
+#supcard{width:min(640px,94vw);max-height:88vh;overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:26px}
+#supcard h2{font-size:13px;letter-spacing:3px;color:var(--cyan);margin-bottom:4px}
+#supcard .sec{font-size:10px;letter-spacing:2px;color:var(--amber);margin:18px 0 8px;text-transform:uppercase}
+.chipbox{display:flex;flex-wrap:wrap;gap:6px}
+.schip{font-size:10px;padding:4px 10px;border:1px solid var(--line);border-radius:14px;color:var(--dim);cursor:pointer;user-select:none}
+.schip:hover{color:var(--txt)}
+.schip.on{color:var(--cyan);border-color:var(--cyan);background:rgba(62,224,255,.08)}
+.pgrow{display:flex;gap:9px;align-items:center;padding:7px 0;border-bottom:1px dashed var(--line);font-size:11.5px;cursor:pointer}
+.pgrow input{accent-color:var(--cyan)}
+.cons{display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:var(--txt)}
+.cons label{display:flex;gap:6px;align-items:center;cursor:pointer}
+.cons input{accent-color:var(--cyan)}
+/* programs view */
+.prog{border:1px solid var(--line);border-radius:12px;margin-bottom:12px;background:var(--panel);overflow:hidden}
+.prog>header{display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;border-bottom:none}
+.prog>header:hover{background:rgba(62,224,255,.04)}
+.prog h4{font-size:12px;flex:1;font-weight:normal}
+.prog .body{display:none;padding:2px 16px 14px;border-top:1px solid var(--line)}
+.prog.open .body{display:block}
+.reqitem{padding:9px 0;border-bottom:1px dashed var(--line);font-size:11.5px}
+.reqitem label{display:flex;gap:9px;cursor:pointer}
+.reqitem input{accent-color:var(--cyan);margin-top:2px}
+.reqitem .rd{font-size:10px;color:var(--dim);margin-top:3px;line-height:1.5}
+.oc{display:inline-block;font-size:9.5px;padding:2px 8px;margin:3px 4px 0 0;border-radius:6px;border:1px solid var(--line);color:var(--dim);cursor:pointer}
+.oc.off{border-color:rgba(61,220,132,.45);color:var(--green)}
+.oc.fri{border-color:rgba(255,176,46,.5);color:var(--amber)}
+.oc:hover{filter:brightness(1.4)}
+.flag{font-size:8.5px;padding:1px 6px;border-radius:8px;border:1px solid rgba(255,176,46,.5);color:var(--amber);margin-left:5px}
+#gear{background:none;border:1px solid var(--line);border-radius:8px;color:var(--dim);font-family:inherit;font-size:12px;padding:6px 10px;cursor:pointer}
+#gear:hover{color:var(--cyan);border-color:var(--cyan)}
+</style>
+</head>
+<body>
+<header>
+  <h1>◉ JARVIS</h1>
+  <nav id="nav"></nav>
+  <span id="greet"></span>
+  <span id="cr"><b id="crN">0</b> cr planned</span>
+</header>
+<main id="v"></main>
+<div id="toast"></div>
+<script>
+const DATA = "__INJECT_DATA__";
+const CAT = DATA.catalog, RAT = DATA.ratings, PROGRAMS = DATA.programs;
+const IDX = {}; CAT.forEach(r=>IDX[r[0]+' '+r[1]]=r);
+const SUBJECTS = [...new Set(CAT.map(r=>r[0]))].sort();
+const SUBJECT_NAMES = DATA.subjectNames || {};
+const rec=c=>IDX[c], title=c=>rec(c)?rec(c)[2]:'';
+const url=c=>{const[s,n]=c.split(' ');return`https://classes.cornell.edu/browse/roster/FA26/class/${s}/${n}`};
+const NS='jv3.';
+const S=(k,v)=>v===undefined?JSON.parse(localStorage.getItem(NS+k)||'null'):localStorage.setItem(NS+k,JSON.stringify(v));
+/* clear any pre-v3 leftovers so every user starts truly clean */
+try{Object.keys(localStorage).filter(k=>k.startsWith('cj.')).forEach(k=>localStorage.removeItem(k))}catch(e){}
+let plan=S('plan')||[], todos=S('todos')||[], notes=S('notes')||[], events=S('events')||{}, brainN=S('brain')||[{id:'root',label:'🧠 ME',parent:null}], custom=S('custom')||[];
+let prefs=S('prefs')||{subjects:[],programs:[],daysOff:[],noBefore:0,noAfter:0,noGrad:false}, reqDone=S('reqs')||{};
+/* migrate v1 prefs */
+if(prefs.noFri!==undefined){prefs={subjects:prefs.subjects||[],programs:prefs.programs||[],daysOff:prefs.noFri?['F']:[],noBefore:prefs.no8?540:0,noAfter:prefs.no6?1080:0,noGrad:false};S('prefs',prefs)}
+/* ---- the optimizer engine: personal double-count finder ---- */
+function bestRating(codes){let b=[0,0,0];codes.forEach(c=>{const r=RAT[c];if(r&&r[0]>b[0])b=r});return b}
+const DAYNAMES={M:'Monday',T:'Tuesday',W:'Wednesday',R:'Thursday',F:'Friday'};
+function fitsCons(code){ // returns array of violated rules — a course fails only if EVERY section pattern violates
+  const out=[],ps=patterns(code);if(!ps.length)return out;
+  const r=rec(code);
+  (prefs.daysOff||[]).forEach(d=>{if(ps.every(x=>x.days.includes(d)))out.push(DAYNAMES[d])});
+  if(prefs.noBefore&&ps.every(x=>{const t=pt(x.time);return t&&t[0]<prefs.noBefore}))out.push('before '+fmMin(prefs.noBefore));
+  if(prefs.noAfter&&ps.every(x=>{const t=pt(x.time);return t&&t[1]>prefs.noAfter}))out.push('after '+fmMin(prefs.noAfter));
+  if(prefs.noGrad&&r&&r[8]>=5000)out.push('grad-level');
+  return out;
+}
+function fmMin(m){const h=Math.floor(m/60);return(h>12?h-12:h)+(m%60?':'+String(m%60).padStart(2,'0'):'')+(h<12?'am':'pm')}
+function myOverlaps(){
+  if(prefs.subjects.length<2)return[];
+  const mine=new Set(prefs.subjects),seen=new Set(),out=[];
+  CAT.forEach(r=>{
+    const code=r[0]+' '+r[1];
+    if(seen.has(code))return;
+    const codes=[code,...(r[6]?r[6].split(', '):[])].filter(x=>x.trim());
+    const hit=[...new Set(codes.map(c=>c.split(' ')[0]).filter(s=>mine.has(s)))];
+    if(hit.length>=2){
+      codes.forEach(c=>seen.add(c));
+      out.push({code,title:r[2],cr:r[3],hits:hit.length,subs:hit,rating:bestRating(codes),lvl:r[8]});
+    }
+  });
+  return out.sort((a,b)=>b.hits-a.hits||(b.rating[0]||0)-(a.rating[0]||0));
+}
+const toast=m=>{const t=document.getElementById('toast');t.textContent=m;t.style.opacity=1;clearTimeout(toast._x);toast._x=setTimeout(()=>t.style.opacity=0,2000)};
+function patterns(c){const r=rec(c);if(!r)return[];const o=[];for(let i=0;i<Math.max(r[4].length,r[5].length);i++)o.push({days:r[4][i]||r[4][0]||'',time:r[5][i]||r[5][0]||''});return o.filter(p=>p.days&&p.time)}
+function pt(t){const m=t.match(/(\d+):(\d+)(AM|PM)-(\d+):(\d+)(AM|PM)/);if(!m)return null;const f=(h,mi,a)=>{h=+h%12;if(a==='PM')h+=12;return h*60+ +mi};return[f(m[1],m[2],m[3]),f(m[4],m[5],m[6])]}
+function credits(){let s=0;plan.forEach(p=>{const r=rec(p.code);if(r)s+=parseFloat(String(r[3]).split('-')[0])||0});return s}
+function crTop(){document.getElementById('crN').textContent=credits()}
+/* router */
+const TABS=[['home','TODAY'],['sch','MY WEEK'],['opt','FIND COURSES'],['prog','PROGRAMS'],['nb','NOTEBOOK'],['cal','CALENDAR'],['brain','BRAIN']];
+let cur='home';
+document.getElementById('nav').innerHTML=TABS.map(t=>`<button data-t="${t[0]}" onclick="go('${t[0]}')">${t[1]}</button>`).join('')+`<button id="gear" title="my setup: interests · programs · rules" onclick="openSetup()">⚙</button>`;
+function go(t){if(t==='setup'){openSetup();return}if(t==='todo'||t==='note')t='nb';cur=t;document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));({home,sch,opt,prog,nb,cal,brain})[t]()}
+/* ===== NOTEBOOK (to-dos + notes, one place) ===== */
+function nb(){
+  V.innerHTML=stepper()+`<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:1000px">
+    <div><div style="font-size:10px;letter-spacing:2px;color:var(--green);margin-bottom:8px">TO-DOS</div>
+      <div class="row" style="margin-bottom:10px"><input type="text" id="tIn" placeholder="what needs doing? Enter adds it" onkeydown="if(event.key==='Enter')addT()"><button class="b" onclick="addT()">add</button></div>
+      <div class="card" style="padding:0" id="tList"></div></div>
+    <div><div style="font-size:10px;letter-spacing:2px;color:var(--cyan);margin-bottom:8px">NOTES</div>
+      <div class="row" style="margin-bottom:10px"><button class="b" onclick="newN()">+ new note</button><span class="fine" id="nstat" style="align-self:center"></span><button class="b rm" onclick="delN()" style="margin-left:auto">delete</button></div>
+      <div id="nlist" style="max-height:150px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;margin-bottom:8px"></div>
+      <textarea id="ntext" style="height:calc(100vh - 420px);min-height:160px;resize:vertical;line-height:1.7" placeholder="pick or create a note…" oninput="saveN()"></textarea></div>
+  </div>`;
+  drawT();if(curN===null&&notes.length)curN=0;drawN();
+}
+/* ===== TODAY (concierge home) ===== */
+function home(){
+  const n=S('user')||'';
+  const now=new Date(),h=now.getHours();
+  const dayL=['S','M','T','W','R','F','S'][now.getDay()];
+  const todayCls=allItems().filter(x=>x.days.includes(dayL)).sort((a,b)=>a.t[0]-b.t[0]);
+  const fm=m=>`${Math.floor(m/60)>12?Math.floor(m/60)-12:Math.floor(m/60)}:${String(m%60).padStart(2,'0')}${m<720?'am':'pm'}`;
+  const next7=[];
+  for(let i=0;i<8;i++){const d=new Date(now);d.setDate(d.getDate()+i);const k=d.toISOString().slice(0,10);
+    (events[k]||[]).forEach(e=>next7.push({d:i,k,e}))}
+  const openT=todos.filter(t=>!t.d);
+  const cr=credits();
+  const nextStep=FLOW.find(f=>!f[2]());
+  const cf=conflicts();
+  V.innerHTML=stepper()+`
+  <div style="max-width:820px">
+    <div style="padding:8px 4px 20px">
+      <div style="font-size:22px">${h<12?'Good morning':h<18?'Good afternoon':'Good evening'}${n?', <b style="color:var(--cyan);font-weight:normal">'+n+'</b>':''}.</div>
+      <div class="fine" style="margin-top:6px">${now.toLocaleDateString('en',{weekday:'long',month:'long',day:'numeric'})} · ${cr?cr+' credits planned':'no schedule yet'}${cr&&(cr<12||cr>18)?` <span style="color:var(--amber)">⚠ ${cr<12?'below the 12-credit full-time floor':'above the 18-credit max'}</span>`:''}${cf.size?` · <span style="color:var(--red)">⚠ ${cf.size} schedule conflict${cf.size>1?'s':''}</span>`:''}</div>
+    </div>
+    <div class="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div class="card"><div style="font-size:10px;letter-spacing:2px;color:var(--cyan);margin-bottom:8px">TODAY'S CLASSES</div>
+        ${todayCls.length?todayCls.map(x=>`<div style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:11.5px"><span class="dim" style="min-width:110px">${fm(x.t[0])} – ${fm(x.t[1])}</span><span style="color:${x.cust?'var(--amber)':'var(--cyan)'}">${x.c}</span></div>`).join('')
+        :`<div class="empty" style="padding:16px">${'MTWRF'.includes(dayL)?'Nothing on the grid today.':'Weekend — no classes.'} ${plan.length?'':'<br>Build your week in Schedule.'}</div>`}</div>
+      <div class="card"><div style="font-size:10px;letter-spacing:2px;color:var(--amber);margin-bottom:8px">NEXT 7 DAYS</div>
+        ${next7.length?next7.slice(0,7).map(x=>`<div style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:11.5px"><span class="dim" style="min-width:80px">${x.d===0?'today':x.d===1?'tomorrow':'in '+x.d+' days'}</span><span>${x.e}</span></div>`).join('')
+        :'<div class="empty" style="padding:16px">No deadlines coming up.<br>Add exams &amp; due dates in Calendar.</div>'}</div>
+      <div class="card"><div style="font-size:10px;letter-spacing:2px;color:var(--green);margin-bottom:8px">OPEN TO-DOS · ${openT.length}</div>
+        ${openT.length?openT.slice(0,5).map(t=>{const gi=todos.indexOf(t);
+          return`<div class="todo" style="padding:7px 0"><input type="checkbox" onchange="todos[${gi}].d=true;S('todos',todos);home()"><span>${t.t}</span></div>`}).join('')+(openT.length>5?`<div class="fine" style="padding-top:6px">+ ${openT.length-5} more in To-Dos</div>`:'')
+        :'<div class="empty" style="padding:16px">Clear. Add to-dos as they come.</div>'}</div>
+      <div class="card"><div style="font-size:10px;letter-spacing:2px;color:var(--dim);margin-bottom:8px">YOUR DATA, YOURS</div>
+        <div class="fine" style="margin-bottom:10px">Everything lives on this device. Take it anywhere:</div>
+        <div class="row" style="flex-wrap:wrap">
+          <button class="b" onclick="dlICS()">📅 export schedule (.ics)</button>
+          <button class="b" onclick="dlJSON()">⬇ backup everything</button>
+          <button class="b" onclick="document.getElementById('impF').click()">⬆ restore backup</button>
+          <input type="file" id="impF" accept=".json" style="display:none" onchange="impJSON(this)">
+          <button class="b rm" onclick="resetAll()">↺ start fresh</button>
+        </div>
+        <div class="fine" style="margin-top:10px">.ics drops your whole class schedule into Google / Apple Calendar. Start fresh wipes everything on this device (export a backup first if you care).</div></div>
+    </div>
+    ${nextStep?`<div class="fine" style="margin-top:16px">suggested next move: <a href="#" onclick="go('${nextStep[0]}');return false">${nextStep[1]} →</a></div>`:''}
+  </div>`;
+}
+/* ===== EXPORT / IMPORT ===== */
+function dl(name,content,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click()}
+function dlICS(){
+  const DW={M:'MO',T:'TU',W:'WE',R:'TH',F:'FR'};
+  const first={M:'20260824',T:'20260825',W:'20260826',R:'20260827',F:'20260828'}; // week of Aug 24 2026
+  let ics='BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//JARVIS//EN\r\n';
+  allItems().forEach((x,i)=>{
+    const days=[...x.days].map(d=>DW[d]).filter(Boolean);if(!days.length)return;
+    const d0=first[[...x.days][0]];
+    const t=m=>String(Math.floor(m/60)).padStart(2,'0')+String(m%60).padStart(2,'0')+'00';
+    ics+=`BEGIN:VEVENT\r\nUID:jarvis-${i}@local\r\nDTSTART;TZID=America/New_York:${d0}T${t(x.t[0])}\r\nDTEND;TZID=America/New_York:${d0}T${t(x.t[1])}\r\nRRULE:FREQ=WEEKLY;BYDAY=${days.join(',')};UNTIL=20261205T000000Z\r\nSUMMARY:${x.c.replace(/[,;]/g,' ')}\r\nEND:VEVENT\r\n`;
+  });
+  Object.entries(events).forEach(([k,list])=>list.forEach((e,j)=>{
+    ics+=`BEGIN:VEVENT\r\nUID:jarvis-ev-${k}-${j}@local\r\nDTSTART;VALUE=DATE:${k.replace(/-/g,'')}\r\nSUMMARY:${e.replace(/[,;]/g,' ')}\r\nEND:VEVENT\r\n`;}));
+  ics+='END:VCALENDAR\r\n';
+  dl('jarvis_schedule.ics',ics,'text/calendar');toast('.ics downloaded — open it to add to your calendar');
+}
+function dlJSON(){
+  const keys=['user','prefs','plan','custom','todos','notes','events','brain','reqs'];
+  const o={_jarvis:1,exported:new Date().toISOString()};keys.forEach(k=>o[k]=S(k));
+  dl('jarvis_backup.json',JSON.stringify(o,null,1),'application/json');toast('backup downloaded');
+}
+function resetAll(){
+  if(!confirm('Wipe everything and start over? (Your schedule, to-dos, notes, brain — all of it. No undo.)'))return;
+  Object.keys(localStorage).filter(k=>k.startsWith(NS)||k.startsWith('cj.')).forEach(k=>localStorage.removeItem(k));
+  location.reload();
+}
+function impJSON(inp){
+  const f=inp.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{try{const o=JSON.parse(r.result);if(!o._jarvis)throw 0;
+    ['user','prefs','plan','custom','todos','notes','events','brain','reqs'].forEach(k=>{if(o[k]!=null)S(k,o[k])});
+    location.reload();
+  }catch(e){toast('that is not a Jarvis backup file')}};
+  r.readAsText(f);
+}
+const V=document.getElementById('v');
+/* ===== STEPPER (guided flow) ===== */
+const FLOW=[['setup','Tell Jarvis your interests',()=>prefs.subjects.length>0],['sch','Build schedule',()=>plan.length+custom.length>0],['cal','Add deadlines',()=>Object.keys(events).length>0],['todo','First to-dos',()=>todos.length>0],['brain','Map your brain',()=>brainN.length>1]];
+function stepper(){
+  const idx=FLOW.findIndex(f=>f[0]===cur);
+  const next=FLOW.find(f=>!f[2]())||null;
+  return`<div id="steps">${FLOW.map((f,i)=>`<span class="step ${f[2]()?'done':''} ${f[0]===cur?'cur':''}" onclick="go('${f[0]}')"><span class="n">${f[2]()?'✓':i+1}</span>${f[1]}</span>${i<FLOW.length-1?'<span class="arrow">→</span>':''}`).join('')}
+  ${next&&next[0]!==cur?`<button id="nextbtn" onclick="go('${next[0]}')">next: ${next[1]} →</button>`:next===null?`<span id="nextbtn" style="cursor:default;border-color:rgba(61,220,132,.5);color:var(--green)">✓ all set up</span>`:''}</div>`;
+}
+/* ===== SCHEDULE ===== */
+let q='',cbDays={M:false,T:false,W:false,R:false,F:false};
+const TIMES=[];for(let h=8;h<=21;h++)for(const m of ['00','30'])TIMES.push(`${h>12?h-12:h}:${m}${h<12?'AM':'PM'}`);
+function sch(){
+  V.innerHTML=stepper()+`<div id="sch" style="height:calc(100vh - 160px)">
+    <div id="coursepane">
+      <input type="text" placeholder="search all ${CAT.length} FA26 courses… drag onto a day →" value="${q}" oninput="q=this.value;drawRes()">
+      <div id="results"></div>
+      <details id="custform">
+        <summary>+ add anything manually — lab · discussion · section · job · club</summary>
+        <div class="body">
+          <input type="text" id="cbName" placeholder="name it (e.g. PHYS 2207 LAB, work shift)">
+          <div class="row">${['M','T','W','R','F'].map(d=>`<span class="daychip" id="dc${d}" onclick="cbDays['${d}']=!cbDays['${d}'];this.classList.toggle('on')">${d}</span>`).join('')}</div>
+          <div class="row"><select class="sm" id="cbS">${TIMES.map(t=>`<option>${t}</option>`).join('')}</select><span class="dim" style="align-self:center">to</span><select class="sm" id="cbE">${TIMES.map((t,i)=>`<option ${i===2?'selected':''}>${t}</option>`).join('')}</select>
+          <button class="b" onclick="addCust()">add to schedule</button></div>
+        </div>
+      </details>
+    </div>
+    <div id="grid"></div>
+    <div id="enr">
+      <div style="font-size:10px;letter-spacing:2px;color:var(--dim)">MY SCHEDULE — <span id="crIn">${credits()}</span> CR</div>
+      <div id="enrlist"></div>
+    </div>
+  </div>`;
+  drawRes();drawGrid();drawEnr();
+}
+function t24(t){const m=t.match(/(\d+):(\d+)(AM|PM)/);let h=+m[1]%12;if(m[3]==='PM')h+=12;return h*60+ +m[2]}
+function addCust(){
+  const name=document.getElementById('cbName').value.trim();
+  const days=Object.keys(cbDays).filter(d=>cbDays[d]).join('');
+  const s=t24(document.getElementById('cbS').value),e=t24(document.getElementById('cbE').value);
+  if(!name){toast('give it a name');return}
+  if(!days){toast('pick at least one day');return}
+  if(e<=s){toast('end must be after start');return}
+  custom.push({name,days,s,e});S('custom',custom);
+  cbDays={M:false,T:false,W:false,R:false,F:false};
+  toast(name+' added');sch();
+}
+function drawRes(){
+  const s=q.trim().toLowerCase();
+  let rows;
+  if(!s){rows=CAT.slice(0,25);}
+  else{
+    const toks=s.split(/\s+/).filter(Boolean);
+    rows=CAT.map(r=>{
+      const hay=(r[0]+' '+r[1]+' '+r[2]+' '+(SUBJECT_NAMES[r[0]]||'')).toLowerCase();
+      if(!toks.every(t=>hay.includes(t)))return null;
+      let sc=0;const code=(r[0]+' '+r[1]).toLowerCase();
+      if(code===s)sc+=100; if(code.startsWith(s))sc+=50; if(r[2].toLowerCase().startsWith(s))sc+=20;
+      sc-=r[8]/1000; // prefer lower-level intro courses on ties
+      return[sc,r];
+    }).filter(Boolean).sort((a,b)=>b[0]-a[0]).slice(0,60).map(x=>x[1]);
+  }
+  document.getElementById('results').innerHTML=rows.map(r=>{
+    const c=r[0]+' '+r[1],inPlan=plan.some(p=>p.code===c);
+    return`<div class="crs" draggable="true" ondragstart="event.dataTransfer.setData('text/plain','${c}')" ondblclick="addC('${c}')" style="${inPlan?'opacity:.45':''}">
+      <b>${c}</b> <span class="dim">· ${r[3]}cr${inPlan?' · ✓ added':''}</span><span class="t">${r[2]}</span>
+      <span class="t">${r[4].map((d,i)=>d+' '+(r[5][i]||'')).join(' | ')||'time TBA'}</span></div>`;
+  }).join('')||`<div class="empty">no course matches "${q}"<br><span class="fine">try a subject code (CS), a name (computer), or a number (1110)</span></div>`;
+}
+function addC(code,day){
+  if(!rec(code))return;
+  if(plan.some(p=>p.code===code)){toast(code+' already in schedule');return}
+  const ps=patterns(code);let pi=0;
+  if(day)ps.forEach((p,i)=>{if(p.days.includes(day)&&pi===0&&!ps[0].days.includes(day))pi=i});
+  plan.push({code,pat:pi});S('plan',plan);crTop();
+  toast(code+' added');drawGrid();drawEnr();const ci=document.getElementById('crIn');if(ci)ci.textContent=credits();
+}
+function allItems(){
+  const it=plan.map(p=>({c:p.code,p:patterns(p.code)[p.pat||0],cust:false})).filter(x=>x.p)
+    .map(x=>({c:x.c,days:x.p.days,t:pt(x.p.time),cust:false})).filter(x=>x.t);
+  custom.forEach(cb=>it.push({c:cb.name,days:cb.days,t:[cb.s,cb.e],cust:true}));
+  return it;
+}
+function conflicts(){
+  const out=new Set(),it=allItems();
+  for(let i=0;i<it.length;i++)for(let j=i+1;j<it.length;j++){
+    if([...it[i].days].some(d=>it[j].days.includes(d))&&it[i].t[0]<it[j].t[1]&&it[j].t[0]<it[i].t[1]){out.add(it[i].c);out.add(it[j].c)}
+  }return out;
+}
+function drawGrid(){
+  const T0=8*60,T1=21*60,PX=.72,cf=conflicts();
+  const cols={M:[],T:[],W:[],R:[],F:[]};
+  allItems().forEach(x=>{[...x.days].forEach(d=>{if(cols[d])cols[d].push({c:x.c,t:x.t,x:cf.has(x.c),cust:x.cust})})});
+  document.getElementById('grid').innerHTML=
+    `<div class="hd"></div>${['MON','TUE','WED','THU','FRI'].map(d=>`<div class="hd">${d}</div>`).join('')}
+    <div class="tc" style="height:${(T1-T0)*PX}px">${Array.from({length:(T1-T0)/60},(_,i)=>`<span style="top:${i*60*PX}px">${(T0/60+i)>12?(T0/60+i-12)+'p':(T0/60+i)+'a'}</span>`).join('')}</div>
+    ${['M','T','W','R','F'].map(d=>`<div class="dcol" data-day="${d}" style="height:${(T1-T0)*PX}px"
+      ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')"
+      ondrop="this.classList.remove('over');addC(event.dataTransfer.getData('text/plain'),'${d}')">
+      ${Array.from({length:(T1-T0)/60},(_,i)=>`<div class="hl" style="top:${i*60*PX}px"></div>`).join('')}
+      ${cols[d].map(b=>`<div class="blk${b.x?' x':''}${b.cust?' cust':''}" style="top:${(b.t[0]-T0)*PX}px;height:${Math.max((b.t[1]-b.t[0])*PX,18)}px"><b>${b.c}</b></div>`).join('')}
+    </div>`).join('')}`;
+}
+function drawEnr(){
+  const fm=m=>`${Math.floor(m/60)>12?Math.floor(m/60)-12:Math.floor(m/60)}:${String(m%60).padStart(2,'0')}${m<720?'a':'p'}`;
+  const courseHtml=plan.map((p,i)=>{
+    const ps=patterns(p.code);
+    return`<div class="en"><div class="row" style="align-items:center"><span style="flex:1;color:var(--cyan)">${p.code}</span>
+      <button class="b rm" onclick="plan.splice(${i},1);S('plan',plan);crTop();sch()">✕</button></div>
+      <div class="fine">${title(p.code)}</div>
+      ${ps.length>1?`<select onchange="plan[${i}].pat=+this.value;S('plan',plan);drawGrid()">${ps.map((x,j)=>`<option value="${j}" ${j===(p.pat||0)?'selected':''}>${x.days} ${x.time}</option>`).join('')}</select>`
+      :`<div class="fine">${(ps[0]||{}).days||''} ${(ps[0]||{}).time||''}</div>`}</div>`;
+  }).join('');
+  const custHtml=custom.map((cb,i)=>`<div class="en"><div class="row" style="align-items:center"><span style="flex:1;color:var(--amber)">${cb.name}</span>
+    <button class="b rm" onclick="custom.splice(${i},1);S('custom',custom);sch()">✕</button></div>
+    <div class="fine">${cb.days} ${fm(cb.s)}–${fm(cb.e)} · manual</div></div>`).join('');
+  document.getElementById('enrlist').innerHTML=(courseHtml+custHtml)||'<div class="empty">Drag courses here from the left,<br>or double-click a result.<br><br>Labs &amp; anything else:<br>"+ add anything manually" below the search.</div>';
+}
+/* ===== OPTIMIZER (personal) ===== */
+let oq='',oHideBad=true;
+function opt(){
+  if(!prefs.subjects.length){
+    V.innerHTML=stepper()+`<div class="empty" style="max-width:520px;margin:60px auto">
+      <div style="font-size:26px;margin-bottom:10px">◉</div>
+      The Optimizer finds courses that count toward <b style="color:var(--cyan)">several of YOUR interests at once</b> — one class, multiple boxes ticked.<br><br>
+      It needs to know you first.<br><br>
+      <button class="b" style="font-size:12px;padding:10px 22px" onclick="openSetup()">tell Jarvis your interests →</button></div>`;
+    return;
+  }
+  const ov=myOverlaps();
+  V.innerHTML=stepper()+`<div style="max-width:1100px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <span style="font-size:10px;letter-spacing:2px;color:var(--amber)">HIGH-LEVERAGE FOR YOU — one course, multiple programs</span>
+      <span class="fine">based on: ${prefs.subjects.join(' · ')}</span>
+      <button class="b" onclick="openSetup()">edit ⚙</button></div>
+    ${ov.length?`<div class="card" style="padding:0;margin-bottom:18px"><table><thead><tr><th>Hits</th><th>Course</th><th>Title</th><th>Cr</th><th>Counts toward</th><th>CU Reviews</th><th>Meets</th><th></th></tr></thead><tbody>
+    ${ov.slice(0,80).map(o=>{const cons=fitsCons(o.code);const p=patterns(o.code)[0]||{days:'',time:''};
+      return`<tr><td><span class="hit">${o.hits}</span></td>
+      <td style="white-space:nowrap"><a href="${url(o.code)}" target="_blank">${o.code}</a></td>
+      <td>${o.title}${cons.map(c=>`<span class="flag">⚠ ${c}</span>`).join('')}</td><td>${o.cr}</td>
+      <td class="dim">${o.subs.join(' · ')}</td>
+      <td class="dim">${o.rating[0]?`<span style="color:var(--amber)">${'★'.repeat(Math.round(o.rating[0]))}</span> ${o.rating[0]}/5 · diff ${o.rating[1]}`:'—'}</td>
+      <td class="dim" style="white-space:nowrap">${p.days} ${p.time}</td>
+      <td><button class="b" onclick="addC('${o.code}')">+ schedule</button></td></tr>`}).join('')}
+    </tbody></table></div>`
+    :`<div class="card" style="margin-bottom:18px"><div class="empty">No double-counting courses found across ${prefs.subjects.join(', ')} this semester.<br>Pick 2+ related subjects in ⚙ setup — cross-listed fields (e.g. COGST/PSYCH/LING/PHIL) overlap the most.</div></div>`}
+    <div style="font-size:10px;letter-spacing:2px;color:var(--cyan);margin-bottom:8px">FULL FA26 CATALOG — ${CAT.length} COURSES</div>
+    <div class="row" style="margin-bottom:8px;align-items:center">
+      <input type="text" placeholder="search…" value="${oq}" oninput="oq=this.value;drawOpt()" style="max-width:340px">
+      <label class="fine" style="display:flex;gap:5px;align-items:center;cursor:pointer"><input type="checkbox" ${oHideBad?'checked':''} onchange="oHideBad=this.checked;drawOpt()" style="accent-color:var(--cyan)"> hide courses that break my rules</label>
+    </div>
+    <div class="card" style="padding:0"><table><thead><tr><th>Course</th><th>Title</th><th>Cr</th><th>Meets</th><th>Crosslist</th><th></th></tr></thead><tbody id="optB"></tbody></table><div class="fine" id="optM" style="padding:10px 14px"></div></div>
+  </div>`;
+  drawOpt();
+}
+function drawOpt(){
+  const s=oq.trim().toLowerCase();
+  const rows=CAT.filter(r=>{
+    if(s&&!(r[0]+' '+r[1]+' '+r[2]).toLowerCase().includes(s))return false;
+    if(oHideBad&&fitsCons(r[0]+' '+r[1]).length)return false;
+    return true;});
+  document.getElementById('optB').innerHTML=rows.slice(0,100).map(r=>{const c=r[0]+' '+r[1];
+    return`<tr><td style="white-space:nowrap"><a href="${url(c)}" target="_blank">${c}</a></td><td>${r[2]}</td><td>${r[3]}</td>
+    <td class="dim">${r[4].map((d,i)=>d+' '+(r[5][i]||'')).join(' | ')}</td><td class="dim">${r[6]}</td>
+    <td><button class="b" onclick="addC('${c}')">+</button></td></tr>`}).join('');
+  document.getElementById('optM').textContent=rows.length>100?`+ ${rows.length-100} more — refine`:`${rows.length} result(s)`;
+}
+/* ===== PROGRAMS (requirement checklists) ===== */
+function prog(){
+  const tracked=prefs.programs;
+  if(!tracked.length){
+    V.innerHTML=stepper()+`<div class="empty" style="max-width:520px;margin:60px auto">
+      <div style="font-size:26px;margin-bottom:10px">☰</div>
+      Track majors and minors here — every requirement as a checklist,<br>with FA26 courses that satisfy each slot, one click to schedule.<br><br>
+      <button class="b" style="font-size:12px;padding:10px 22px" onclick="openSetup()">pick programs to track →</button></div>`;
+    return;
+  }
+  V.innerHTML=stepper()+`<div style="max-width:900px">
+  <div class="fine" style="margin-bottom:10px">Chips: <span class="oc off" style="cursor:default">offered FA26 — click to schedule</span> <span class="oc fri" style="cursor:default">offered but Friday</span> <span class="oc" style="cursor:default">not offered FA26</span>. Check off slots as you complete them. <button class="b" onclick="openSetup()">edit programs ⚙</button></div>
+  ${tracked.map((name,pi)=>{const pg=PROGRAMS[name];if(!pg)return'';
+    return`<div class="prog ${pi===0?'open':''}"><header onclick="this.parentElement.classList.toggle('open')">
+    <h4>${name} <span class="dim" style="font-size:9px">· ${pg.type}</span></h4>
+    <a href="${pg.source}" target="_blank" style="font-size:9px" onclick="event.stopPropagation()">official page ↗</a></header>
+    <div class="body">
+    ${pg.note?`<div class="fine" style="padding:8px 0">${pg.note}</div>`:''}
+    ${(pg.items||[]).map((it,ii)=>{const key=name+'.'+ii;
+      return`<div class="reqitem"><label><input type="checkbox" ${reqDone[key]?'checked':''} onchange="reqDone['${key}']=this.checked;S('reqs',reqDone)">
+      <span><b style="font-weight:normal">${it.name}</b>${it.n?` <span class="dim">× ${it.n}</span>`:''}
+      ${it.detail?`<div class="rd">${it.detail}</div>`:''}
+      <div>${(it.options||[]).map(o=>{const r=rec(o);const fri=r&&r[4].length===1&&(r[4][0]||'').includes('F');
+        return`<span class="oc ${r?(fri?'fri':'off'):''}" title="${r?r[2].replace(/"/g,'&quot;')+' · '+r[4].map((d,i)=>d+' '+(r[5][i]||'')).join(' | '):'not offered FA26'}" onclick="${r?`addC('${o}')`:''}">${o}</span>`}).join('')}</div>
+      </span></label></div>`}).join('')}
+    </div></div>`}).join('')}</div>`;
+}
+/* ===== SETUP WIZARD — one question at a time ===== */
+let supSubjects=[],supPrograms=[],supQ='',supPQ='',supPT='all',supStep=1,supDays=[];
+function openSetup(){
+  supSubjects=[...prefs.subjects];supPrograms=[...prefs.programs];supDays=[...(prefs.daysOff||[])];
+  supQ='';supPQ='';supPT='all';supStep=1;
+  const d=document.createElement('div');d.id='setup';
+  d.innerHTML=`<div id="supcard"><div id="supBody"></div></div>`;
+  document.body.appendChild(d);drawSup();
+}
+function supDots(){return`<div style="display:flex;gap:6px;justify-content:center;margin-bottom:18px">${[1,2,3].map(i=>`<span style="width:8px;height:8px;border-radius:50%;background:${i===supStep?'var(--cyan)':i<supStep?'var(--green)':'var(--line)'}"></span>`).join('')}</div>`}
+function supFoot(nextLabel){return`<div class="row" style="margin-top:24px;justify-content:space-between">
+  <button class="b" onclick="${supStep>1?'supStep--;drawSup()':`document.getElementById('setup').remove()`}">${supStep>1?'← back':'later'}</button>
+  <button class="b" style="font-size:12px;padding:10px 24px" onclick="${supStep<3?'supStep++;drawSup()':'saveSetup()'}">${nextLabel}</button></div>`}
+function drawSup(){
+  const B=document.getElementById('supBody');
+  if(supStep===1){
+    const q=supQ.trim().toUpperCase();
+    const picked=supSubjects.filter(s=>true);
+    const rest=SUBJECTS.filter(s=>!supSubjects.includes(s)&&(!q||s.includes(q)||(SUBJECT_NAMES[s]||'').toUpperCase().includes(q)));
+    B.innerHTML=supDots()+`
+    <h2 style="text-align:center">what are you into? 🎯</h2>
+    <div class="fine" style="text-align:center;margin:6px 0 16px">tap everything that sparks something — majors, maybes, curiosities.<br>pick <b style="color:var(--cyan)">2 or more</b> and Jarvis finds courses that count for several at once.</div>
+    <input type="text" placeholder="search all ${SUBJECTS.length} subjects… psych, econ, cs, music…" oninput="supQ=this.value;drawSup()">
+    ${picked.length?`<div class="fine" style="margin:10px 0 4px">picked (${picked.length}):</div><div class="chipbox">${picked.map(s=>`<span class="schip on" onclick="tgSub('${s}')" title="${SUBJECT_NAMES[s]||''}">${s} ✕</span>`).join('')}</div>`:''}
+    <div class="fine" style="margin:12px 0 4px">${q?'matches':'all subjects'} — scroll:</div>
+    <div class="chipbox" id="supChips" style="max-height:200px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;padding:10px">${rest.map(s=>`<span class="schip" onclick="tgSub('${s}')" title="${SUBJECT_NAMES[s]||''}">${s}</span>`).join('')||'<span class="fine">no match</span>'}</div>`
+    +supFoot(supSubjects.length?'next →':'skip →');
+  }
+  if(supStep===2){
+    const q=supPQ.trim().toLowerCase();
+    const names=Object.keys(PROGRAMS).filter(p=>(supPT==='all'||PROGRAMS[p].type===supPT)&&(!q||p.toLowerCase().includes(q)));
+    names.sort((a,b)=>(supPrograms.includes(b)?1:0)-(supPrograms.includes(a)?1:0)||a.localeCompare(b));
+    B.innerHTML=supDots()+`
+    <h2 style="text-align:center">any programs on your radar? 🎓</h2>
+    <div class="fine" style="text-align:center;margin:6px 0 16px">all <b style="color:var(--cyan)">${Object.keys(PROGRAMS).length}</b> Cornell majors &amp; minors. track any — each becomes a checklist.</div>
+    <input type="text" placeholder="search programs… econ, film, data science…" oninput="supPQ=this.value;drawSup()">
+    <div class="row" style="margin:8px 0 6px">
+      <span class="schip ${'all'===supPT?'on':''}" onclick="supPT='all';drawSup()">all</span>
+      <span class="schip ${'major'===supPT?'on':''}" onclick="supPT='major';drawSup()">majors (83)</span>
+      <span class="schip ${'minor'===supPT?'on':''}" onclick="supPT='minor';drawSup()">minors (138)</span>
+    </div>
+    <div id="supProgs" style="max-height:240px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;padding:2px 10px">${names.slice(0,60).map(p=>`
+      <div class="pgrow" onclick="tgProg('${p.replace(/'/g,"\\'")}')"><input type="checkbox" ${supPrograms.includes(p)?'checked':''} onclick="event.stopPropagation();tgProg('${p.replace(/'/g,"\\'")}')"><span style="flex:1">${p}</span><span class="dim" style="font-size:9px">${PROGRAMS[p].type}</span></div>`).join('')||'<div class="empty">no match</div>'}</div>`
+    +supFoot(supPrograms.length?'next →':'skip →');
+  }
+  if(supStep===3){
+    B.innerHTML=supDots()+`
+    <h2 style="text-align:center">when is class NOT happening? 😤</h2>
+    <div class="fine" style="text-align:center;margin:6px 0 16px">your non-negotiables. Jarvis flags anything that breaks them.</div>
+    <div class="fine" style="margin-bottom:6px">days I keep completely free:</div>
+    <div class="row" style="margin-bottom:14px">${['M','T','W','R','F'].map(d=>`<span class="schip ${supDays.includes(d)?'on':''}" onclick="tgDay('${d}')" id="sd${d}" style="padding:8px 14px">${{M:'Mon',T:'Tue',W:'Wed',R:'Thu',F:'Fri'}[d]}</span>`).join('')}</div>
+    <div class="cons">
+      <label>nothing before <select class="sm" id="supB">${[[0,'— any time'],[480,'8am'],[540,'9am'],[600,'10am'],[660,'11am'],[720,'noon']].map(o=>`<option value="${o[0]}" ${prefs.noBefore===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select></label>
+      <label>nothing after <select class="sm" id="supA">${[[0,'— any time'],[960,'4pm'],[1020,'5pm'],[1080,'6pm'],[1200,'8pm']].map(o=>`<option value="${o[0]}" ${prefs.noAfter===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select></label>
+      <label><input type="checkbox" id="supG" ${prefs.noGrad?'checked':''}> hide grad courses (5000+)</label>
+    </div>`
+    +supFoot('done — let’s go ✦');
+  }
+}
+function tgSub(s){const i=supSubjects.indexOf(s);i>=0?supSubjects.splice(i,1):supSubjects.push(s);drawSup()}
+function tgProg(p){const i=supPrograms.indexOf(p);i>=0?supPrograms.splice(i,1):supPrograms.push(p);drawSup()}
+function tgDay(d){const i=supDays.indexOf(d);i>=0?supDays.splice(i,1):supDays.push(d);drawSup()}
+function saveSetup(){
+  prefs={subjects:supSubjects,programs:supPrograms,daysOff:supDays,
+    noBefore:+((document.getElementById('supB')||{}).value||0),
+    noAfter:+((document.getElementById('supA')||{}).value||0),
+    noGrad:!!(document.getElementById('supG')||{}).checked};
+  S('prefs',prefs);document.getElementById('setup').remove();
+  toast(prefs.subjects.length>=2?'You’re set — check Find Courses ✦':'Saved. Add interests anytime via ⚙');
+  go(prefs.subjects.length>=2?'opt':'home');
+}
+/* ===== TODOS ===== */
+function todo(){
+  V.innerHTML=stepper()+`<div style="max-width:640px">
+    <div class="row" style="margin-bottom:12px"><input type="text" id="tIn" placeholder="new to-do… Enter to add" onkeydown="if(event.key==='Enter')addT()"><button class="b" onclick="addT()">add</button></div>
+    <div class="card" style="padding:0" id="tList"></div></div>`;
+  drawT();
+}
+function addT(){const i=document.getElementById('tIn');if(!i.value.trim())return;todos.unshift({t:i.value.trim(),d:false,ts:Date.now()});S('todos',todos);i.value='';drawT()}
+function drawT(){document.getElementById('tList').innerHTML=todos.length?todos.map((t,i)=>`
+  <div class="todo ${t.d?'done':''}"><input type="checkbox" ${t.d?'checked':''} onchange="todos[${i}].d=this.checked;S('todos',todos);drawT()"><span>${t.t}</span><span class="x" onclick="todos.splice(${i},1);S('todos',todos);drawT()">✕</span></div>`).join('')
+  :'<div class="empty">Nothing yet. Add your first to-do above.</div>'}
+/* ===== NOTES ===== */
+let curN=null;
+function note(){
+  V.innerHTML=stepper()+`<div id="notes" style="height:calc(100vh - 165px)">
+    <div style="display:flex;flex-direction:column;gap:8px"><button class="b" onclick="newN()">+ new note</button><div id="nlist"></div></div>
+    <div id="ned"><textarea id="ntext" placeholder="pick or create a note…" oninput="saveN()"></textarea>
+    <div class="row"><span class="fine" style="flex:1" id="nstat"></span><button class="b rm" onclick="delN()">delete note</button></div></div>
+  </div>`;
+  if(curN===null&&notes.length)curN=0;
+  drawN();
+}
+function newN(){notes.unshift({txt:'',ts:Date.now()});curN=0;S('notes',notes);drawN()}
+function drawN(){
+  document.getElementById('nlist').innerHTML=notes.length?notes.map((n,i)=>{
+    const first=(n.txt.split('\n')[0]||'(empty note)').slice(0,34);
+    return`<div class="ni ${i===curN?'on':''}" onclick="curN=${i};drawN()">${first||'(empty note)'}<div class="d">${new Date(n.ts).toLocaleDateString()}</div></div>`}).join('')
+    :'<div class="empty">no notes yet</div>';
+  const ta=document.getElementById('ntext');
+  ta.value=curN!==null&&notes[curN]?notes[curN].txt:'';ta.disabled=curN===null||!notes[curN];
+  document.getElementById('nstat').textContent=curN!==null&&notes[curN]?'autosaves as you type':'';
+}
+function saveN(){if(curN===null||!notes[curN])return;notes[curN].txt=document.getElementById('ntext').value;S('notes',notes);
+  const el=document.querySelectorAll('.ni')[curN];if(el)el.firstChild.textContent=(notes[curN].txt.split('\n')[0]||'(empty note)').slice(0,34)}
+function delN(){if(curN===null||!notes[curN])return;notes.splice(curN,1);curN=notes.length?0:null;S('notes',notes);drawN()}
+/* ===== CALENDAR ===== */
+let cy=new Date().getFullYear(),cm=new Date().getMonth(),selD=null;
+function cal(){
+  const first=new Date(cy,cm,1),start=first.getDay(),days=new Date(cy,cm+1,0).getDate();
+  const today=new Date().toISOString().slice(0,10);
+  let cells='';
+  for(let i=0;i<start;i++)cells+='<div></div>';
+  for(let d=1;d<=days;d++){
+    const key=`${cy}-${String(cm+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const ev=events[key]||[];
+    cells+=`<div class="cd ${key===today?'today':''} ${key===selD?'sel':''}" onclick="selD='${key}';cal()">
+      <span class="n">${d}</span>${ev.slice(0,3).map(e=>`<div class="ev">• ${e}</div>`).join('')}${ev.length>3?`<div class="ev">+${ev.length-3}</div>`:''}</div>`;
+  }
+  V.innerHTML=stepper()+`<div id="cal">
+    <div id="calhead"><button class="b" onclick="cm--;if(cm<0){cm=11;cy--}cal()">←</button>
+    <h2>${first.toLocaleString('en',{month:'long'}).toUpperCase()} ${cy}</h2>
+    <button class="b" onclick="cm++;if(cm>11){cm=0;cy++}cal()">→</button></div>
+    <div id="calgrid">${['SUN','MON','TUE','WED','THU','FRI','SAT'].map(d=>`<div class="dow">${d}</div>`).join('')}${cells}</div>
+    ${selD?`<div class="card" style="margin-top:12px">
+      <div style="font-size:11px;color:var(--cyan);margin-bottom:8px">${selD}</div>
+      ${(events[selD]||[]).map((e,i)=>`<div class="todo"><span>${e}</span><span class="x" onclick="events['${selD}'].splice(${i},1);if(!events['${selD}'].length)delete events['${selD}'];S('events',events);cal()">✕</span></div>`).join('')}
+      <div class="row" style="margin-top:8px"><input type="text" id="evIn" placeholder="add event / deadline… Enter" onkeydown="if(event.key==='Enter')addEv()"><button class="b" onclick="addEv()">add</button></div>
+    </div>`:'<div class="fine" style="margin-top:10px">click a day to add deadlines, exams, events</div>'}
+  </div>`;
+  if(selD){const i=document.getElementById('evIn');if(i)i.focus()}
+}
+function addEv(){const i=document.getElementById('evIn');if(!i.value.trim())return;(events[selD]=events[selD]||[]).push(i.value.trim());S('events',events);cal()}
+/* ===== BRAIN ===== */
+let selB='root',bView={sc:1,tx:0,ty:0};
+const BCOLORS=['#3ee0ff','#3ddc84','#ffb02e','#ff5d6c','#b388ff','#4da3ff','#ff9f6b','#7fe0c8'];
+function bnode(id){return brainN.find(n=>n.id===id)}
+function bcolor(n){return n.color||(n.parent==='root'?BCOLORS[Math.abs(hashId(n.id))%BCOLORS.length]:n.parent?bcolor(bnode(n.parent)||{}):'#3ee0ff')}
+function hashId(s){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return h}
+function bTasks(n){return n.tasks||[]}
+function brain(){
+  const n=bnode(selB)||bnode('root');
+  V.innerHTML=stepper()+`<div style="display:grid;grid-template-columns:1fr 300px;gap:12px">
+    <div>
+      <div class="row" style="margin-bottom:8px">
+        <input type="text" id="bIn" placeholder="add a branch under “${(n.label||'').slice(0,18)}”… Enter" onkeydown="if(event.key==='Enter')addB()">
+        <button class="b" onclick="addB()">+ branch</button>
+        <button class="b" onclick="bFit()">⤢ fit</button>
+      </div>
+      <div id="brainwrap" style="height:calc(100vh - 235px)"><svg id="bsvg"></svg>
+        <div style="position:absolute;bottom:10px;left:12px" class="fine">scroll = zoom · drag = pan · click a node to open it</div>
+      </div>
+    </div>
+    <div id="bpanel"></div>
+  </div>`;
+  drawB();drawBPanel();
+}
+function drawBPanel(){
+  const n=bnode(selB)||bnode('root');selB=n.id;
+  const kids=brainN.filter(x=>x.parent===n.id);
+  const tasks=bTasks(n),done=tasks.filter(t=>t.d).length;
+  const P=document.getElementById('bpanel');if(!P)return;
+  P.innerHTML=`<div class="card" style="border-left:3px solid ${bcolor(n)}">
+    <div class="row" style="align-items:center;margin-bottom:6px">
+      <span style="font-size:15px;flex:1;color:${bcolor(n)}">${n.emoji||'●'} ${n.label}</span>
+      ${n.id!=='root'?`<button class="b" onclick="renB()" title="rename">✎</button><button class="b rm" onclick="delB()" title="delete branch">🗑</button>`:''}
+    </div>
+    <div class="row" style="flex-wrap:wrap;gap:5px;margin-bottom:10px">
+      ${BCOLORS.map(c=>`<span onclick="setBColor('${c}')" style="width:16px;height:16px;border-radius:50%;background:${c};cursor:pointer;border:2px solid ${bcolor(n)===c?'#fff':'transparent'}"></span>`).join('')}
+      <input type="text" maxlength="2" value="${n.emoji||''}" placeholder="🙂" onchange="setBEmoji(this.value)" style="width:44px;text-align:center;padding:3px" title="emoji">
+    </div>
+    <div style="font-size:10px;letter-spacing:1.5px;color:var(--dim);margin-bottom:6px">TO-DOS FOR THIS NODE ${tasks.length?`· ${done}/${tasks.length}`:''}</div>
+    ${tasks.length?`<div style="margin-bottom:6px">${tasks.map((t,i)=>`<div class="todo" style="padding:6px 0;font-size:11.5px"><input type="checkbox" ${t.d?'checked':''} onchange="bTask(${i})"><span class="${t.d?'dim':''}" style="${t.d?'text-decoration:line-through':''}">${t.t}</span><span class="x" onclick="bTaskDel(${i})">✕</span></div>`).join('')}</div>`:'<div class="fine" style="margin-bottom:6px">nothing here yet</div>'}
+    <div class="row"><input type="text" id="btIn" placeholder="add a to-do here… Enter" onkeydown="if(event.key==='Enter')bTaskAdd()" style="font-size:11px"><button class="b" onclick="bTaskAdd()">+</button></div>
+    <div style="font-size:10px;letter-spacing:1.5px;color:var(--dim);margin:12px 0 4px">NOTE</div>
+    <textarea placeholder="jot anything about ${n.label}…" oninput="setBNote(this.value)" style="height:80px;font-size:11.5px;resize:vertical">${n.note||''}</textarea>
+    ${kids.length?`<div class="fine" style="margin-top:10px">branches: ${kids.map(k=>`<span style="color:${bcolor(k)};cursor:pointer" onclick="selB='${k.id}';drawB();drawBPanel()">${k.emoji||''}${k.label}</span>`).join(' · ')}</div>`:''}
+  </div>`;
+}
+function addB(){const i=document.getElementById('bIn');if(!i||!i.value.trim())return;
+  const id='n'+Date.now();brainN.push({id,label:i.value.trim(),parent:selB,tasks:[]});S('brain',brainN);i.value='';selB=id;drawB();drawBPanel();toast('branch added')}
+function renB(){const n=bnode(selB);if(!n||n.id==='root')return;const v=prompt('rename:',n.label);if(v&&v.trim()){n.label=v.trim();S('brain',brainN);drawB();drawBPanel()}}
+function delB(){if(selB==='root'){toast('the core stays put');return}
+  const kill=new Set([selB]);let ch=true;while(ch){ch=false;brainN.forEach(n=>{if(n.parent&&kill.has(n.parent)&&!kill.has(n.id)){kill.add(n.id);ch=true}})}
+  const p=bnode(selB).parent;brainN=brainN.filter(n=>!kill.has(n.id));selB=p||'root';S('brain',brainN);drawB();drawBPanel()}
+function setBColor(c){const n=bnode(selB);if(!n)return;n.color=c;S('brain',brainN);drawB();drawBPanel()}
+function setBEmoji(e){const n=bnode(selB);if(!n)return;n.emoji=e.trim()||undefined;S('brain',brainN);drawB();drawBPanel()}
+function setBNote(v){const n=bnode(selB);if(!n)return;n.note=v;S('brain',brainN)}
+function bTaskAdd(){const i=document.getElementById('btIn');if(!i||!i.value.trim())return;const n=bnode(selB);n.tasks=n.tasks||[];n.tasks.push({t:i.value.trim(),d:false});S('brain',brainN);drawBPanel();drawB()}
+function bTask(i){const n=bnode(selB);n.tasks[i].d=!n.tasks[i].d;S('brain',brainN);drawBPanel();drawB()}
+function bTaskDel(i){const n=bnode(selB);n.tasks.splice(i,1);S('brain',brainN);drawBPanel();drawB()}
+function bFit(){bView={sc:1,tx:0,ty:0};drawB()}
+function drawB(){
+  const svg=document.getElementById('bsvg');if(!svg)return;svg.innerHTML='';
+  const NS='http://www.w3.org/2000/svg',W=svg.clientWidth||900,H=svg.clientHeight||560;
+  const g=document.createElementNS(NS,'g');svg.appendChild(g);
+  const kids=id=>brainN.filter(n=>n.parent===id);
+  const pos={root:[W/2,H/2]};
+  const l1=kids('root');
+  l1.forEach((n,i)=>{const a=(i/Math.max(l1.length,1))*2*Math.PI-Math.PI/2,R=Math.min(W,H)*.27;
+    pos[n.id]=[W/2+R*Math.cos(a),H/2+R*Math.sin(a)];
+    const l2=kids(n.id),span=Math.PI/Math.max(l1.length,1)*1.7;
+    l2.forEach((k,j)=>{const ka=a+(l2.length>1?(j/(l2.length-1)-.5)*span:0),R2=R+Math.min(W,H)*.2;
+      pos[k.id]=[W/2+R2*Math.cos(ka),H/2+R2*Math.sin(ka)];
+      const l3=kids(k.id);
+      l3.forEach((m,x)=>{const ma=ka+(l3.length>1?(x/(l3.length-1)-.5)*span*.6:0),R3=R2+Math.min(W,H)*.15;
+        pos[m.id]=[W/2+R3*Math.cos(ma),H/2+R3*Math.sin(ma)]})})});
+  brainN.forEach(n=>{if(!pos[n.id])pos[n.id]=[W/2+(Math.random()-.5)*200,H/2+(Math.random()-.5)*200]});
+  brainN.forEach(n=>{if(!n.parent)return;const p=document.createElementNS(NS,'path');
+    const[a,b]=[pos[n.parent],pos[n.id]];
+    p.setAttribute('d',`M${a[0]},${a[1]} Q${(a[0]+b[0])/2},${(a[1]+b[1])/2} ${b[0]},${b[1]}`);
+    p.setAttribute('fill','none');p.setAttribute('stroke',bcolor(n));p.setAttribute('stroke-width','1.4');p.setAttribute('opacity','.5');g.appendChild(p)});
+  brainN.forEach(n=>{
+    const grp=document.createElementNS(NS,'g');grp.setAttribute('class','nd'+(n.id===selB?' sel':''));grp.style.cursor='pointer';
+    const[x,y]=pos[n.id],r=n.id==='root'?32:n.parent==='root'?20:13,col=bcolor(n);
+    const tasks=bTasks(n),done=tasks.filter(t=>t.d).length,open=tasks.length-done;
+    const c=document.createElementNS(NS,'circle');c.setAttribute('cx',x);c.setAttribute('cy',y);c.setAttribute('r',r);
+    c.setAttribute('fill',n.id===selB?col:'#0d1220');c.setAttribute('stroke',col);c.setAttribute('stroke-width',n.id===selB?3:1.6);
+    if(open>0){const pulse=document.createElementNS(NS,'animate');pulse.setAttribute('attributeName','stroke-opacity');pulse.setAttribute('values','1;.35;1');pulse.setAttribute('dur','2s');pulse.setAttribute('repeatCount','indefinite');c.appendChild(pulse)}
+    grp.appendChild(c);
+    if(n.emoji){const em=document.createElementNS(NS,'text');em.setAttribute('x',x);em.setAttribute('y',y+r/3);em.setAttribute('text-anchor','middle');em.setAttribute('font-size',r*0.9);em.textContent=n.emoji;grp.appendChild(em)}
+    const t=document.createElementNS(NS,'text');t.setAttribute('x',x);t.setAttribute('y',n.id==='root'&&!n.emoji?y+4:y+r+13);t.setAttribute('text-anchor','middle');
+    t.setAttribute('font-size',n.id==='root'?12:n.parent==='root'?10.5:9);t.setAttribute('fill',n.id===selB?col:'#e2eaf7');t.textContent=n.label;grp.appendChild(t);
+    if(tasks.length){const bd=document.createElementNS(NS,'text');bd.setAttribute('x',x+r-2);bd.setAttribute('y',y-r+4);bd.setAttribute('text-anchor','middle');bd.setAttribute('font-size',9);bd.setAttribute('fill',open?'#ffb02e':'#3ddc84');bd.textContent=open?open:'✓';grp.appendChild(bd)}
+    grp.addEventListener('click',e=>{e.stopPropagation();selB=n.id;drawB();drawBPanel()});
+    g.appendChild(grp);
+  });
+  let{sc,tx,ty}=bView,dr=null;
+  const ap=()=>{g.setAttribute('transform',`translate(${tx},${ty}) scale(${sc})`);bView={sc,tx,ty}};ap();
+  svg.onwheel=e=>{e.preventDefault();const f=e.deltaY<0?1.1:.9;tx=e.offsetX-(e.offsetX-tx)*f;ty=e.offsetY-(e.offsetY-ty)*f;sc=Math.max(.3,Math.min(4,sc*f));ap()};
+  svg.onmousedown=e=>{dr={x:e.clientX-tx,y:e.clientY-ty};svg.classList.add('g')};
+  svg.onmousemove=e=>{if(dr){tx=e.clientX-dr.x;ty=e.clientY-dr.y;ap()}};
+  svg.onmouseup=svg.onmouseleave=()=>{dr=null;svg.classList.remove('g')};
+}
+/* onboarding — first run */
+function onboard(){
+  const d=document.createElement('div');d.id='onboard';
+  d.innerHTML=`<div id="obcard">
+    <h2>◉ JARVIS</h2>
+    <p>Your academic command center.<br>Everything lives on your device. You build it; it remembers.</p>
+    <div class="steps">
+      <b>Find Courses</b> — one class that counts for 3 programs? Jarvis finds it<br>
+      <b>My Week</b> — drag ${CAT.length} real courses onto your schedule<br>
+      <b>Programs</b> — every Cornell major &amp; minor as a checklist<br>
+      <b>Today</b> — your classes, deadlines &amp; to-dos, every morning
+    </div>
+    <input type="text" id="obName" placeholder="what should I call you?" maxlength="20" onkeydown="if(event.key==='Enter')obGo()">
+    <div style="margin-top:14px"><button class="b" style="font-size:12px;padding:10px 26px" onclick="obGo()">enter →</button></div>
+  </div>`;
+  document.body.appendChild(d);
+  setTimeout(()=>document.getElementById('obName').focus(),50);
+}
+function obGo(){
+  const n=document.getElementById('obName').value.trim()||'boss';
+  S('user',n);document.getElementById('onboard').remove();greet();
+  toast('Welcome, '+n+'.');openSetup();
+}
+function greet(){
+  const n=S('user');if(!n)return;
+  const h=new Date().getHours();
+  document.getElementById('greet').textContent=(h<12?'good morning':h<18?'good afternoon':'good evening')+', '+n;
+}
+/* boot */
+crTop();go('home');
+if(!S('user'))onboard();else greet();
+</script>
+</body>
+</html>
