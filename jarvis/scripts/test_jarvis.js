@@ -256,6 +256,21 @@ ok(/SUMMARY:legacy string/.test(lastBlob), 'J18: .ics still exports untagged dea
 run(`newN();document.getElementById('ntext').value='lecture notes';saveN();setNoteCourse('PSYCH 1101')`);
 ok(run(`notes[0].c`) === 'PSYCH 1101' && run(`notes[0].txt`) === 'lecture notes', 'J18: note stores course and text');
 
+// J19: resources — a recommender, not a directory
+ok(run(`RESOURCES.length`) >= 30, `J19: resource list populated (${run(`RESOURCES.length`)})`);
+ok(run(`RESOURCES.every(function(r){return r.u.indexOf('http')===0})`), 'J19: every resource has a real URL');
+ok(run(`RESOURCES.every(r=>r.n&&r.w&&r.t&&r.t.length)`), 'J19: every resource has a name, description and situation');
+ok(run(`SITUATIONS.every(([k])=>RESOURCES.some(r=>r.t.includes(k)))`), 'J19: no situation returns an empty list');
+ok(run(`SITUATIONS.every(function(x){var k=x[0];return RESOURCES.filter(function(r){return r.s===k}).length===1 || !!SIT_NOTES[k]})`), 'J19: every situation has a starting point or says why it has none');
+run(`resSit='';resAll=false;res()`);
+ok(!/rcard/.test(run(`V.innerHTML`)), 'J19: nothing shown until a situation is picked');
+run(`resSit='stress';res()`);
+ok((run(`V.innerHTML`).match(/class="rcard/g)||[]).length <= 5, 'J19: caps at five so it does not become the overwhelm it fixes');
+ok(/start here/.test(run(`V.innerHTML`)), 'J19: marks a starting point');
+run(`resSit='people';resAll=false;res()`);
+const peopleShown = (run(`V.innerHTML`).match(/class="rcard/g)||[]).length;
+ok(peopleShown <= 5 && run(`V.innerHTML`).indexOf('show ') > -1, 'J19: long lists collapse behind "show more"');
+
 // J17: no personal data shipped
 ok(!/Atishay|Georgetown/.test(html), 'J17: zero personal data in the product build');
 

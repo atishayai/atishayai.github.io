@@ -182,6 +182,12 @@ a{color:var(--accent);text-decoration:none}
 .ni .cchip{margin-left:6px;font-size:9.5px}
 select.csel{max-width:150px}
 .nbfilter{flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:12px;max-width:1000px}
+/* resources */
+.rcard{border:1px solid var(--line);border-radius:10px;padding:13px 15px;margin-bottom:9px;background:var(--panel)}
+.rcard.first{border-color:rgba(var(--accent-rgb),.45);background:rgba(var(--accent-rgb),.04)}
+.rcard a{font-size:14.5px;font-weight:600}
+.rstart{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:5px}
+.rcard .rw{font-size:13px;color:var(--dim);line-height:1.6;margin-top:4px}
 /* custom blocks + stepper */
 .blk.cust{border-color:var(--amber);background:rgba(var(--amber-rgb),.12);color:var(--amber)}
 #steps{display:flex;gap:6px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
@@ -316,10 +322,10 @@ function courseSel(id,selected){
 function cChip(code){return code?`<span class="cchip">${code}</span>`:''}
 function crTop(){document.getElementById('crN').textContent=credits()}
 /* router */
-const TABS=[['home','Today'],['sch','My Week'],['opt','Find Courses'],['prog','Programs'],['nb','Notebook'],['cal','Calendar'],['brain','Brain']];
+const TABS=[['home','Today'],['sch','My Week'],['opt','Find Courses'],['prog','Programs'],['nb','Notebook'],['cal','Calendar'],['res','Resources'],['brain','Brain']];
 let cur='home';
 document.getElementById('nav').innerHTML=TABS.map(t=>`<button data-t="${t[0]}" onclick="go('${t[0]}')">${t[1]}</button>`).join('')+`<button id="gear" title="my setup: interests · programs · rules" onclick="openSetup()">⚙</button>`;
-function go(t){if(t==='setup'){openSetup();return}if(t==='todo'||t==='note')t='nb';cur=t;document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));({home,sch,opt,prog,nb,cal,brain})[t]()}
+function go(t){if(t==='setup'){openSetup();return}if(t==='todo'||t==='note')t='nb';cur=t;document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));({home,sch,opt,prog,nb,cal,res,brain})[t]()}
 /* ===== NOTEBOOK (to-dos + notes, one place) ===== */
 function nb(){
   const cs=myCourses();
@@ -792,6 +798,88 @@ function addEv(){const i=document.getElementById('evIn');if(!i.value.trim())retu
   const sel=document.getElementById('evCourse');
   (events[selD]=events[selD]||[]).push({t:i.value.trim(),c:(sel&&sel.value)||''});
   S('events',events);cal()}
+/* ===== RESOURCES =====
+   A student panel member put it best: the problem is not that resources are missing,
+   it is that there are hundreds and no way to tell which are yours. 25% of students do
+   not know their campus mental-health services exist. So this is deliberately NOT a
+   directory — you pick a situation in your own words and get a handful, with one marked
+   "start here". The full list is one click away but never the default.
+   Every entry below is a real Cornell office or student org with a verified URL.
+   Do not add an entry without checking it exists — sending someone to a service that
+   is not there is worse than showing nothing. */
+const SIT_NOTES={people:"There's no single right door here. The staffed centres below are open to anyone — you don't have to already belong to something to walk in. The student-run groups are further down."};
+const SITUATIONS=[
+  ['behind',"I'm behind in a class"],
+  ['writing',"I have to write something"],
+  ['new',"I'm new and nothing makes sense"],
+  ['people',"I'm looking for my people"],
+  ['stress',"I'm stressed, or not okay"],
+  ['money',"Money is tight"],
+  ['career',"I'm thinking about after graduation"],
+  ['access',"I need accommodations"],
+  ['harm',"Something happened to me"],
+  ['lost',"I don't know who to ask"]
+];
+const RESOURCES=[
+  {n:'Learning Strategies Center',u:'https://lsc.cornell.edu/',w:'Free tutoring, study-partner matching, and review sessions for the big intro courses.',t:['behind','new'],s:'behind'},
+  {n:'Cornell Writing Centers',u:'https://knight.as.cornell.edu/wc',w:'Free help at any stage of writing — including a blank page. Drop-in or by appointment.',t:['writing'],s:'writing'},
+  {n:'Cornell University Library',u:'https://www.library.cornell.edu',w:'Subject librarians will help you find sources. Most students never ask; it is free.',t:['writing','behind']},
+  {n:'Office of Academic Diversity Initiatives',u:'https://oadi.cornell.edu/programs/student-success-programs.html',w:'Academic support and community for underrepresented and first-generation students.',t:['behind','new','people']},
+  {n:'Tatkon Center for New Students',u:'https://scl.cornell.edu/residential-life/new-student-programs/tatkon-center-first-year-students',w:'Built for people who just got here and do not know how anything works yet.',t:['new'],s:'new'},
+  {n:'Office of the Dean of Students',u:'https://scl.cornell.edu/DOS',w:'The catch-all. If you genuinely do not know who to ask, ask them.',t:['lost','new'],s:'lost'},
+  {n:'Cornell Ombudsman',u:'https://www.ombudsman.cornell.edu/',w:'Neutral and confidential. Talk through a problem without starting a formal process.',t:['lost','harm']},
+  {n:'Registrar',u:'https://registrar.cornell.edu/',w:'Enrollment, records, and transcripts — the official answer on your credits.',t:['lost']},
+  {n:"Let's Talk drop-in",u:'https://health.cornell.edu/services/mental-health-care/lets-talk',w:'Informal, free, no appointment. The lowest-effort way to talk to someone.',t:['stress'],s:'stress'},
+  {n:'Counseling & Psychological Services (CAPS)',u:'https://health.cornell.edu/services/mental-health-care/individual-counseling',w:'Confidential counselling for anything you are carrying.',t:['stress']},
+  {n:'EARS peer support',u:'https://www.earscornell.org',w:'Trained students, not staff. Easier for some people than an office.',t:['stress','people']},
+  {n:'Caring Community',u:'https://caringcommunity.cornell.edu/get-help/',w:'One page for getting help — for you or for a friend you are worried about.',t:['stress','lost']},
+  {n:'Cornell Health',u:'https://health.cornell.edu/services/primary-care',w:'Ordinary doctor visits, illness, injuries, prescriptions.',t:['stress']},
+  {n:'Office of Financial Aid',u:'https://finaid.cornell.edu/',w:'Aid packages change when your circumstances do. Worth asking.',t:['money'],s:'money'},
+  {n:'Cornell Food Pantry',u:'https://scl.cornell.edu/residential-life/dining/about-dining/food-security/cornell-food-pantry',w:'Free food and personal-care items. No explanation required.',t:['money']},
+  {n:"Anabel's Grocery",u:'https://www.anabelsgrocery.org/',w:'Student-run grocery with genuinely affordable food.',t:['money']},
+  {n:'Office of the Bursar',u:'https://www.dfa.cornell.edu/bursar',w:'Billing, tuition charges, payment plans.',t:['money']},
+  {n:'Career Services',u:'https://career.cornell.edu/',w:'Not just for seniors — go early and it is far more useful.',t:['career'],s:'career'},
+  {n:'Student Disability Services',u:'https://sds.cornell.edu/',w:'Academic accommodations, including for conditions diagnosed after you arrive.',t:['access'],s:'access'},
+  {n:'Victim Advocacy Program',u:'https://health.cornell.edu/services/victim-advocacy',w:'Confidential support after assault or harassment. You choose what happens next.',t:['harm'],s:'harm'},
+  {n:'Institutional Equity & Title IX',u:'https://titleix.cornell.edu/',w:'For reporting bias, discrimination, or sexual misconduct.',t:['harm']},
+  {n:'Cornell Police',u:'https://www.cupolice.cornell.edu/',w:'Emergencies and campus safety.',t:['harm']},
+  {n:'Asian & Asian American Center',u:'https://scl.cornell.edu/a3c',w:'Staffed centre and community space.',t:['people']},
+  {n:'LGBT Resource Center',u:'https://scl.cornell.edu/LGBTRC',w:'Staffed centre, advising and community.',t:['people']},
+  {n:"Women's Resource Center",u:'https://scl.cornell.edu/WRC',w:'Programmes, support and community space.',t:['people']},
+  {n:'Office of Spirituality and Meaning-Making',u:'https://scl.cornell.edu/osmm',w:'Multi-faith, and open to people working out what they believe.',t:['people','stress']},
+  {n:'Undocumented & DACA Support',u:'https://scl.cornell.edu/identity-resources/undocumented-daca-support',w:'Legal and financial support.',t:['people','money']},
+  {n:'First Generation Student Union',u:'https://www.instagram.com/cornellfgsu/?hl=en',w:'Student-run, for first-gen and low-income students.',t:['people','new'],o:1},
+  {n:'International Students Union',u:'https://isucornell.com/',w:'Student-run advocacy and community.',t:['people','new'],o:1},
+  {n:'Black Students United',u:'https://m.facebook.com/BSUCornell/',w:'Student-run.',t:['people'],o:1},
+  {n:'La Asociación Latina',u:'https://www.facebook.com/LaAsociacionLatinaCornell/',w:'Umbrella for Latinx organisations.',t:['people'],o:1},
+  {n:'South Asian Council',u:'https://m.facebook.com/SouthAsianCouncilCornell/',w:'Umbrella for South Asian groups.',t:['people'],o:1},
+  {n:'Cornell Asian & Pacific Students Union',u:'http://www.cornellcapsu.org/',w:'Umbrella for 70+ groups.',t:['people'],o:1},
+  {n:'Haven: LGBTQ+ Student Union',u:'https://www.havencornell.com/',w:'Student-run.',t:['people'],o:1},
+  {n:'ALANA Intercultural Board',u:'https://www.facebook.com/ALANAInterculturalBoard/',w:'Umbrella for intercultural organisations.',t:['people'],o:1}
+];
+let resSit='', resAll=false;
+function res(){
+  const picked=resSit;
+  let list=picked?RESOURCES.filter(r=>r.t.includes(picked)):[];
+  // staffed offices before student-run groups, "start here" first of all
+  list.sort((a,b)=>((b.s===picked)-(a.s===picked))||((a.o||0)-(b.o||0)));
+  const shown=resAll?list:list.slice(0,5);
+  V.innerHTML=stepper()+`<div style="max-width:760px">
+    <div style="font-size:20px;margin:4px 0 6px">What's going on?</div>
+    <div class="fine" style="margin-bottom:14px">Cornell has hundreds of these. Pick what fits and you'll get a few, not a list.</div>
+    <div class="row" style="flex-wrap:wrap;gap:6px;margin-bottom:16px">
+      ${SITUATIONS.map(([k,label])=>`<span class="schip ${resSit===k?'on':''}" onclick="resSit=(resSit==='${k}'?'':'${k}');resAll=false;res()">${label}</span>`).join('')}
+    </div>
+    ${!picked?`<div class="empty">Pick one above.<br><span class="fine">Nothing is stored and nothing is sent anywhere.</span></div>`:`
+      ${SIT_NOTES[picked]?`<div class="notice">${SIT_NOTES[picked]}</div>`:''}
+      ${shown.map(r=>`<div class="rcard ${r.s===picked?'first':''}">
+        ${r.s===picked?'<div class="rstart">start here</div>':''}
+        <a href="${r.u}" target="_blank" rel="noopener noreferrer">${r.n} ↗</a>
+        <div class="rw">${r.w}</div></div>`).join('')}
+      ${list.length>shown.length?`<button class="b" style="margin-top:10px" onclick="resAll=true;res()">show ${list.length-shown.length} more</button>`:''}
+      <div class="fine" style="margin-top:16px">Links go to Cornell pages. If something here is out of date, trust the university's page over this one.</div>`}
+  </div>`;
+}
 /* ===== BRAIN ===== */
 let selB='root',bView={sc:1,tx:0,ty:0};
 const BCOLORS=['#1F7A70','#2C7A52','#9A6B12','#B03A38','#6B4E9E','#2F6BAD','#B5651D','#3F8F7F'];
