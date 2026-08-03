@@ -188,6 +188,10 @@ select.csel{max-width:150px}
 .rcard a{font-size:14.5px;font-weight:600}
 .rstart{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:5px}
 .rcard .rw{font-size:13px;color:var(--dim);line-height:1.6;margin-top:4px}
+.subrow{display:flex;align-items:baseline;gap:9px;padding:8px 10px;border-radius:7px;cursor:pointer;font-size:13px}
+.subrow:hover{background:rgba(var(--accent-rgb),.07)}
+.subrow b{font-family:var(--mono);color:var(--accent);font-weight:600;min-width:62px}
+.subrow span{color:var(--dim);font-size:12.5px}
 /* course detail */
 #cdet{position:fixed;inset:0;background:rgba(var(--scrim-rgb),.45);z-index:120;display:flex;align-items:center;justify-content:center;padding:16px}
 #cdcard{position:relative;width:min(560px,96vw);max-height:88dvh;overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 26px}
@@ -586,7 +590,7 @@ function opt(){
       <span style="font-size:10px;letter-spacing:2px;color:var(--amber)">HIGH-LEVERAGE FOR YOU — one course, multiple programs</span>
       <span class="fine">based on: ${prefs.subjects.join(' · ')}</span>
       <button class="b" onclick="openSetup()">edit ⚙</button></div>
-    ${ov.length?`<div class="card" style="padding:0;margin-bottom:18px"><table><thead><tr><th>Hits</th><th>Course</th><th>Title</th><th>Cr</th><th>Counts toward</th><th>Your rating</th><th>Meets</th><th></th></tr></thead><tbody>
+    ${ov.length?`<div class="card" style="padding:0;margin-bottom:18px"><table><thead><tr><th>Counts&nbsp;for</th><th>Course</th><th>Title</th><th>Credits</th><th>Counts toward</th><th>Your rating</th><th>When</th><th></th></tr></thead><tbody>
     ${ov.slice(0,80).map(o=>{const cons=fitsCons(o.code);const p=patterns(o.code)[0]||{days:'',time:''};
       return`<tr><td><span class="hit">${o.hits}</span></td>
       <td style="white-space:nowrap"><a href="${url(o.code)}" target="_blank">${o.code}</a></td>
@@ -596,13 +600,14 @@ function opt(){
       <td class="dim" style="white-space:nowrap">${p.days} ${p.time}</td>
       <td><button class="b" onclick="addC('${o.code}')">+ schedule</button></td></tr>`}).join('')}
     </tbody></table></div>`
-    :`<div class="card" style="margin-bottom:18px"><div class="empty">No double-counting courses found across ${prefs.subjects.join(', ')} this semester.<br>Pick 2+ related subjects in ⚙ setup — cross-listed fields (e.g. COGST/PSYCH/LING/PHIL) overlap the most.</div></div>`}
+    :`<div class="card" style="margin-bottom:18px"><div class="empty">Nothing counts for two of your interests at once yet.<br><span class="fine">That usually means you've picked one subject, or two that don't overlap. Add a couple more in ⚙ setup — related fields like COGST, PSYCH and LING share the most courses.</span><button class="b" onclick="openSetup()">add more interests</button></div></div>`}
     <div style="font-size:10px;letter-spacing:2px;color:var(--accent);margin-bottom:8px">FULL FA26 CATALOG — ${CAT.length} COURSES</div>
+  <div class="fine" style="margin-bottom:8px">Days are written <b>M</b> Mon · <b>T</b> Tue · <b>W</b> Wed · <b>R</b> Thu · <b>F</b> Fri — so “TR 10:10AM” means Tuesday and Thursday.</div>
     <div class="row" style="margin-bottom:8px;align-items:center">
       <input type="text" placeholder="search…" value="${oq}" oninput="oq=this.value;drawOpt()" style="max-width:340px">
       <label class="fine" style="display:flex;gap:5px;align-items:center;cursor:pointer"><input type="checkbox" ${oHideBad?'checked':''} onchange="oHideBad=this.checked;drawOpt()" style="accent-color:var(--accent)"> hide courses that break my rules</label>
     </div>
-    <div class="card" style="padding:0"><table><thead><tr><th>Course</th><th>Title</th><th>Cr</th><th>Meets</th><th>Crosslist</th><th></th></tr></thead><tbody id="optB"></tbody></table><div class="fine" id="optM" style="padding:10px 14px"></div></div>
+    <div class="card" style="padding:0"><table><thead><tr><th>Course</th><th>Title</th><th>Credits</th><th>When</th><th>Also listed as</th><th></th></tr></thead><tbody id="optB"></tbody></table><div class="fine" id="optM" style="padding:10px 14px"></div></div>
   </div>`;
   drawOpt();
 }
@@ -650,9 +655,10 @@ function prog(){
 }
 /* ===== SETUP WIZARD — one question at a time ===== */
 let supSubjects=[],supPrograms=[],supQ='',supPQ='',supPT='all',supStep=1,supDays=[];
+let supBrowseAll=false;
 function openSetup(){
   supSubjects=[...prefs.subjects];supPrograms=[...prefs.programs];supDays=[...(prefs.daysOff||[])];
-  supQ='';supPQ='';supPT='all';supStep=1;
+  supQ='';supPQ='';supPT='all';supStep=1;supBrowseAll=false;
   const d=document.createElement('div');d.id='setup';
   d.innerHTML=`<div id="supcard"><div id="supBody"></div></div>`;
   document.body.appendChild(d);drawSup();
@@ -671,9 +677,13 @@ function drawSup(){
     <h2 style="text-align:center">what are you into? 🎯</h2>
     <div class="fine" style="text-align:center;margin:6px 0 16px">tap everything that sparks something — majors, maybes, curiosities.<br>pick <b style="color:var(--accent)">2 or more</b> and Jarvis finds courses that count for several at once.</div>
     <input type="text" placeholder="search all ${SUBJECTS.length} subjects… psych, econ, cs, music…" oninput="supQ=this.value;drawSup()">
-    ${picked.length?`<div class="fine" style="margin:10px 0 4px">picked (${picked.length}):</div><div class="chipbox">${picked.map(s=>`<span class="schip on" onclick="tgSub('${s}')" title="${SUBJECT_NAMES[s]||''}">${s} ✕</span>`).join('')}</div>`:''}
+    ${picked.length?`<div class="fine" style="margin:10px 0 4px">picked (${picked.length}):</div><div class="chipbox">${picked.map(s=>`<span class="schip on" onclick="tgSub('${s}')" title="click to remove">${s}${SUBJECT_NAMES[s]?' · '+SUBJECT_NAMES[s]:''} ✕</span>`).join('')}</div>`:''}
     <div class="fine" style="margin:12px 0 4px">${q?'matches':'all subjects'} — scroll:</div>
-    <div class="chipbox" id="supChips" style="max-height:200px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;padding:10px">${rest.map(s=>`<span class="schip" onclick="tgSub('${s}')" title="${SUBJECT_NAMES[s]||''}">${s}</span>`).join('')||'<span class="fine">no match</span>'}</div>`
+    <div id="supChips" style="max-height:230px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;padding:6px">${
+      (q||supBrowseAll)
+        ? (rest.slice(0,60).map(s=>`<div class="subrow" onclick="tgSub('${s}')"><b>${s}</b><span>${SUBJECT_NAMES[s]||''}</span></div>`).join('')||'<div class="fine" style="padding:10px">Nothing matches that. Try a word like "psych" or "music".</div>')
+        : `<div class="fine" style="padding:14px;line-height:1.7">Type above to find a subject — try <b>psych</b>, <b>music</b>, <b>computer</b>.<br><button class="b" style="margin-top:9px" onclick="supBrowseAll=true;drawSup()">or browse all ${SUBJECTS.length}</button></div>`
+    }</div>`
     +supFoot(supSubjects.length?'next →':'skip →');
   }
   if(supStep===1){
@@ -736,8 +746,8 @@ function saveSetup(){
     noAfter:+((document.getElementById('supA')||{}).value||0),
     noGrad:!!(document.getElementById('supG')||{}).checked};
   S('prefs',prefs);document.getElementById('setup').remove();
-  toast(prefs.subjects.length>=2?'You’re set — check Find Courses ✦':'Saved. Add interests anytime via ⚙');
-  go(prefs.subjects.length>=2?'opt':'home');
+  toast('Saved — you can change any of this later via ⚙');
+  go('home');
 }
 /* ===== TODOS ===== */
 function todo(){
