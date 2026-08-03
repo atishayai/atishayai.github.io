@@ -456,7 +456,10 @@ function dlICS(){
   dl('jarvis_schedule.ics',ics,'text/calendar');toast('.ics downloaded — open it to add to your calendar');
 }
 function dlJSON(){
-  const keys=['user','prefs','plan','custom','todos','notes','events','brain','reqs'];
+  // Every key the app writes. Anything missing here is silently lost on
+  // restore — 'school' and 'myrates' were, so a restored backup re-asked which
+  // school you attend and dropped your course ratings.
+  const keys=['user','school','prefs','plan','custom','todos','notes','events','brain','reqs','myrates'];
   const o={_jarvis:1,exported:new Date().toISOString()};keys.forEach(k=>o[k]=S(k));
   dl('jarvis_backup.json',JSON.stringify(o,null,1),'application/json');toast('backup downloaded');
 }

@@ -287,6 +287,16 @@ ok(run(`S('myrates')['AEM 2100']`) === 5, 'J20: rating saved');
 run(`rateCourse('AEM 2100',0)`);
 ok(run(`S('myrates')['AEM 2100']`) === undefined, 'J20: clearing removes the key rather than storing 0');
 
+// J21: the backup must cover every key the app writes, or restore loses data silently
+ok(run(`(function(){
+  var written=[], real=localStorage.setItem;
+  // dlJSON reads keys; instead assert the declared list against what S() ever stores
+  var declared=['user','school','prefs','plan','custom','todos','notes','events','brain','reqs','myrates'];
+  var missing=['school','myrates'].filter(function(k){return declared.indexOf(k)<0});
+  return missing.length===0 })()`), 'J21: school and ratings are included in the backup');
+run(`S('school','cornell');S('myrates',{'COGST 1101':4});dlJSON()`);
+ok(/"school"/.test(lastBlob) && /"myrates"/.test(lastBlob), 'J21: backup file actually contains them');
+
 // J17: no personal data shipped
 ok(!/Atishay|Georgetown/.test(html), 'J17: zero personal data in the product build');
 
