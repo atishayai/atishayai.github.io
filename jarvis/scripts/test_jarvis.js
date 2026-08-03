@@ -227,6 +227,35 @@ ok(JSON.stringify(run(`pt('08:40AM-09:55AM')`)) === '[520,595]', 'J16: pt parses
 ok(run(`t24('12:00PM')`) === 720 && run(`t24('12:30AM')`) === 30, 'J16: t24 handles noon & past-midnight');
 ok(JSON.stringify(run(`pt('11:40AM-12:55PM')`)) === '[700,775]', 'J16: pt handles AM→PM crossover');
 
+// J18: course tagging — to-dos, notes and deadlines attach to a course
+run(`nbFilter='';todos.length=0;S('todos',todos);notes.length=0;S('notes',notes)`);
+run(`go('nb')`);
+run(`document.getElementById('tIn').value='problem set 3';document.getElementById('tCourse').value='COGST 1101';addT()`);
+ok(run(`todos[0].c`) === 'COGST 1101', 'J18: to-do stores its course');
+run(`document.getElementById('tIn').value='unrelated errand';document.getElementById('tCourse').value='';addT()`);
+ok(run(`todos[0].c`) === '', 'J18: a to-do can have no course');
+run(`nbFilter='COGST 1101';drawT()`);
+ok(run(`(document.getElementById('tList').innerHTML.match(/class="todo/g)||[]).length`) === 1, 'J18: filter narrows to one course');
+run(`nbFilter='';drawT()`);
+ok(run(`(document.getElementById('tList').innerHTML.match(/class="todo/g)||[]).length`) === 2, 'J18: clearing the filter restores all');
+// checking off a filtered to-do must hit the right one, not the visible row index
+run(`nbFilter='COGST 1101';drawT();todos.find(t=>t.c==='COGST 1101').d=true;S('todos',todos);nbFilter=''`);
+ok(run(`todos.find(t=>t.c==='COGST 1101').d===true && todos.find(t=>!t.c).d===false`), 'J18: filtered edits address the right item');
+
+// deadlines: new ones carry a course, pre-existing plain strings still work
+run(`events={};S('events',events);selD='2026-09-15';cal()`);
+run(`document.getElementById('evIn').value='midterm';document.getElementById('evCourse').value='PSYCH 1101';addEv()`);
+ok(run(`events['2026-09-15'][0].t`) === 'midterm' && run(`events['2026-09-15'][0].c`) === 'PSYCH 1101', 'J18: deadline stores its course');
+run(`events['2026-09-20']=['legacy string'];S('events',events)`);
+ok(run(`evT(events['2026-09-20'][0])`) === 'legacy string' && run(`evC(events['2026-09-20'][0])`) === '', 'J18: legacy string deadlines still readable');
+run(`dlICS()`);
+ok(/SUMMARY:PSYCH 1101 — midterm/.test(lastBlob), 'J18: .ics prefixes the course');
+ok(/SUMMARY:legacy string/.test(lastBlob), 'J18: .ics still exports untagged deadlines');
+
+// notes
+run(`newN();document.getElementById('ntext').value='lecture notes';saveN();setNoteCourse('PSYCH 1101')`);
+ok(run(`notes[0].c`) === 'PSYCH 1101' && run(`notes[0].txt`) === 'lecture notes', 'J18: note stores course and text');
+
 // J17: no personal data shipped
 ok(!/Atishay|Georgetown/.test(html), 'J17: zero personal data in the product build');
 

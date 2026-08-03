@@ -175,6 +175,13 @@ a{color:var(--accent);text-decoration:none}
    a student would otherwise trust it to graduate. */
 .notice{background:rgba(var(--amber-rgb),.08);border:1px solid rgba(var(--amber-rgb),.35);
   border-radius:9px;padding:11px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.65;color:var(--txt)}
+/* course tag shown on a to-do, note or deadline */
+.cchip{display:inline-block;margin-left:7px;font-family:var(--mono);font-size:10.5px;
+  color:var(--accent);background:rgba(var(--accent-rgb),.10);border:1px solid rgba(var(--accent-rgb),.28);
+  border-radius:6px;padding:1px 6px;vertical-align:middle;white-space:nowrap}
+.ni .cchip{margin-left:6px;font-size:9.5px}
+select.csel{max-width:150px}
+.nbfilter{flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:12px;max-width:1000px}
 /* custom blocks + stepper */
 .blk.cust{border-color:var(--amber);background:rgba(var(--amber-rgb),.12);color:var(--amber)}
 #steps{display:flex;gap:6px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
@@ -284,6 +291,29 @@ const toast=m=>{const t=document.getElementById('toast');t.textContent=m;t.style
 function patterns(c){const r=rec(c);if(!r)return[];const o=[];for(let i=0;i<Math.max(r[4].length,r[5].length);i++)o.push({days:r[4][i]||r[4][0]||'',time:r[5][i]||r[5][0]||''});return o.filter(p=>p.days&&p.time)}
 function pt(t){const m=t.match(/(\d+):(\d+)(AM|PM)-(\d+):(\d+)(AM|PM)/);if(!m)return null;const f=(h,mi,a)=>{h=+h%12;if(a==='PM')h+=12;return h*60+ +mi};return[f(m[1],m[2],m[3]),f(m[4],m[5],m[6])]}
 function credits(){let s=0;plan.forEach(p=>{const r=rec(p.code);if(r)s+=parseFloat(String(r[3]).split('-')[0])||0});return s}
+/* ---- course tagging ----
+   To-dos, notes and deadlines can each be attached to a course, so "what do I owe
+   for CHEM 2090" is answerable. Calendar events used to be bare strings; evT/evC
+   read either shape so old backups still load, and the migration below upgrades
+   anything already in storage. */
+function evT(e){return typeof e==='string'?e:((e&&e.t)||'')}
+function evC(e){return typeof e==='string'?'':((e&&e.c)||'')}
+(function migrateEvents(){let ch=false;
+  Object.keys(events).forEach(k=>{if(Array.isArray(events[k]))events[k]=events[k].map(e=>{
+    if(typeof e==='string'){ch=true;return{t:e}}return e})});
+  if(ch)S('events',events)})();
+function myCourses(){
+  const out=plan.map(p=>p.code);
+  custom.forEach(c=>{if(c&&c.name&&!out.includes(c.name))out.push(c.name)});
+  return out;
+}
+function courseSel(id,selected){
+  const cs=myCourses();
+  if(!cs.length)return '';
+  return `<select class="sm csel" id="${id}"><option value="">no course</option>`+
+    cs.map(c=>`<option value="${c}" ${c===selected?'selected':''}>${c}</option>`).join('')+`</select>`;
+}
+function cChip(code){return code?`<span class="cchip">${code}</span>`:''}
 function crTop(){document.getElementById('crN').textContent=credits()}
 /* router */
 const TABS=[['home','Today'],['sch','My Week'],['opt','Find Courses'],['prog','Programs'],['nb','Notebook'],['cal','Calendar'],['brain','Brain']];
@@ -292,12 +322,16 @@ document.getElementById('nav').innerHTML=TABS.map(t=>`<button data-t="${t[0]}" o
 function go(t){if(t==='setup'){openSetup();return}if(t==='todo'||t==='note')t='nb';cur=t;document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));({home,sch,opt,prog,nb,cal,brain})[t]()}
 /* ===== NOTEBOOK (to-dos + notes, one place) ===== */
 function nb(){
-  V.innerHTML=stepper()+`<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:1000px">
+  const cs=myCourses();
+  V.innerHTML=stepper()+(cs.length?`<div class="row nbfilter"><span class="fine">Show</span>
+    <span class="schip ${nbFilter===''?'on':''}" onclick="nbFilter='';nb()">everything</span>
+    ${cs.map(c=>`<span class="schip ${nbFilter===c?'on':''}" onclick="nbFilter='${c.replace(/'/g,"\\'")}';nb()">${c}</span>`).join('')}</div>`:'')
+  +`<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:1000px">
     <div><div style="font-size:10px;letter-spacing:2px;color:var(--green);margin-bottom:8px">TO-DOS</div>
-      <div class="row" style="margin-bottom:10px"><input type="text" id="tIn" placeholder="what needs doing? Enter adds it" onkeydown="if(event.key==='Enter')addT()"><button class="b" onclick="addT()">add</button></div>
+      <div class="row" style="margin-bottom:10px"><input type="text" id="tIn" placeholder="what needs doing? Enter adds it" onkeydown="if(event.key==='Enter')addT()">${courseSel('tCourse','')}<button class="b" onclick="addT()">add</button></div>
       <div class="card" style="padding:0" id="tList"></div></div>
     <div><div style="font-size:10px;letter-spacing:2px;color:var(--accent);margin-bottom:8px">NOTES</div>
-      <div class="row" style="margin-bottom:10px"><button class="b" onclick="newN()">+ new note</button><span class="fine" id="nstat" style="align-self:center"></span><button class="b rm" onclick="delN()" style="margin-left:auto">delete</button></div>
+      <div class="row" style="margin-bottom:10px"><button class="b" onclick="newN()">+ new note</button><span id="nCourseWrap"></span><span class="fine" id="nstat" style="align-self:center"></span><button class="b rm" onclick="delN()" style="margin-left:auto">delete</button></div>
       <div id="nlist" style="max-height:150px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;margin-bottom:8px"></div>
       <textarea id="ntext" style="height:calc(100vh - 420px);min-height:160px;resize:vertical;line-height:1.7" placeholder="pick or create a note…" oninput="saveN()"></textarea></div>
   </div>`;
@@ -361,7 +395,7 @@ function dlICS(){
     ics+=`BEGIN:VEVENT\r\nUID:jarvis-${i}@local\r\nDTSTART;TZID=America/New_York:${d0}T${t(x.t[0])}\r\nDTEND;TZID=America/New_York:${d0}T${t(x.t[1])}\r\nRRULE:FREQ=WEEKLY;BYDAY=${days.join(',')};UNTIL=20261205T000000Z\r\nSUMMARY:${x.c.replace(/[,;]/g,' ')}\r\nEND:VEVENT\r\n`;
   });
   Object.entries(events).forEach(([k,list])=>list.forEach((e,j)=>{
-    ics+=`BEGIN:VEVENT\r\nUID:jarvis-ev-${k}-${j}@local\r\nDTSTART;VALUE=DATE:${k.replace(/-/g,'')}\r\nSUMMARY:${e.replace(/[,;]/g,' ')}\r\nEND:VEVENT\r\n`;}));
+    ics+=`BEGIN:VEVENT\r\nUID:jarvis-ev-${k}-${j}@local\r\nDTSTART;VALUE=DATE:${k.replace(/-/g,'')}\r\nSUMMARY:${((evC(e)?evC(e)+' — ':'')+evT(e)).replace(/[,;]/g,' ')}\r\nEND:VEVENT\r\n`;}));
   ics+='END:VCALENDAR\r\n';
   dl('jarvis_schedule.ics',ics,'text/calendar');toast('.ics downloaded — open it to add to your calendar');
 }
@@ -684,12 +718,19 @@ function todo(){
     <div class="card" style="padding:0" id="tList"></div></div>`;
   drawT();
 }
-function addT(){const i=document.getElementById('tIn');if(!i.value.trim())return;todos.unshift({t:i.value.trim(),d:false,ts:Date.now()});S('todos',todos);i.value='';drawT()}
-function drawT(){document.getElementById('tList').innerHTML=todos.length?todos.map((t,i)=>`
-  <div class="todo ${t.d?'done':''}"><input type="checkbox" ${t.d?'checked':''} onchange="todos[${i}].d=this.checked;S('todos',todos);drawT()"><span>${t.t}</span><span class="x" onclick="todos.splice(${i},1);S('todos',todos);drawT()">✕</span></div>`).join('')
-  :'<div class="empty">Nothing yet. Add your first to-do above.</div>'}
+function addT(){const i=document.getElementById('tIn');if(!i.value.trim())return;
+  const sel=document.getElementById('tCourse');
+  todos.unshift({t:i.value.trim(),d:false,ts:Date.now(),c:(sel&&sel.value)||''});
+  S('todos',todos);i.value='';drawT()}
+function drawT(){
+  const list=document.getElementById('tList'); if(!list)return;
+  const shown=todos.map((t,i)=>({t,i})).filter(x=>!nbFilter||x.t.c===nbFilter);
+  list.innerHTML=shown.length?shown.map(({t,i})=>`
+  <div class="todo ${t.d?'done':''}"><input type="checkbox" ${t.d?'checked':''} onchange="todos[${i}].d=this.checked;S('todos',todos);drawT()"><span>${t.t}${cChip(t.c)}</span><span class="x" onclick="todos.splice(${i},1);S('todos',todos);drawT()">✕</span></div>`).join('')
+  :`<div class="empty">${nbFilter?'Nothing for '+nbFilter+' yet.':'Nothing yet. Add your first to-do above.'}</div>`}
 /* ===== NOTES ===== */
 let curN=null;
+let nbFilter=''; // '' = show everything; otherwise a course code
 function note(){
   V.innerHTML=stepper()+`<div id="notes" style="height:calc(100vh - 165px)">
     <div style="display:flex;flex-direction:column;gap:8px"><button class="b" onclick="newN()">+ new note</button><div id="nlist"></div></div>
@@ -699,18 +740,27 @@ function note(){
   if(curN===null&&notes.length)curN=0;
   drawN();
 }
-function newN(){notes.unshift({txt:'',ts:Date.now()});curN=0;S('notes',notes);drawN()}
-function drawN(){
-  document.getElementById('nlist').innerHTML=notes.length?notes.map((n,i)=>{
+function newN(){notes.unshift({txt:'',ts:Date.now(),c:''});curN=0;S('notes',notes);drawN()}
+function setNoteCourse(v){if(notes[curN]){notes[curN].c=v;S('notes',notes);drawN()}}
+function drawN(keepText){
+  const list=document.getElementById('nlist'); if(!list)return;
+  // Filtering hides rows but keeps each note's real index, so edits and deletes
+  // still address the right note.
+  const shown=notes.map((n,i)=>({n,i})).filter(x=>!nbFilter||x.n.c===nbFilter);
+  list.innerHTML=shown.length?shown.map(({n,i})=>{
     const first=(n.txt.split('\n')[0]||'(empty note)').slice(0,34);
-    return`<div class="ni ${i===curN?'on':''}" onclick="curN=${i};drawN()">${first||'(empty note)'}<div class="d">${new Date(n.ts).toLocaleDateString()}</div></div>`}).join('')
-    :'<div class="empty">no notes yet</div>';
+    return`<div class="ni ${i===curN?'on':''}" onclick="curN=${i};drawN()">${first||'(empty note)'}${cChip(n.c)}<div class="d">${new Date(n.ts).toLocaleDateString()}</div></div>`}).join('')
+    :`<div class="empty">${nbFilter?'no notes for '+nbFilter:'no notes yet'}</div>`;
   const ta=document.getElementById('ntext');
-  ta.value=curN!==null&&notes[curN]?notes[curN].txt:'';ta.disabled=curN===null||!notes[curN];
-  document.getElementById('nstat').textContent=curN!==null&&notes[curN]?'autosaves as you type':'';
+  if(ta&&!keepText){ta.value=curN!==null&&notes[curN]?notes[curN].txt:'';ta.disabled=curN===null||!notes[curN]}
+  const st=document.getElementById('nstat');
+  if(st)st.textContent=curN!==null&&notes[curN]?'autosaves as you type':'';
+  const cw=document.getElementById('nCourseWrap');
+  if(cw)cw.innerHTML=(curN!==null&&notes[curN])
+    ?courseSel('nCourse',notes[curN].c||'').replace('<select','<select onchange="setNoteCourse(this.value)"'):'';
 }
 function saveN(){if(curN===null||!notes[curN])return;notes[curN].txt=document.getElementById('ntext').value;S('notes',notes);
-  const el=document.querySelectorAll('.ni')[curN];if(el)el.firstChild.textContent=(notes[curN].txt.split('\n')[0]||'(empty note)').slice(0,34)}
+  drawN(true)}
 function delN(){if(curN===null||!notes[curN])return;notes.splice(curN,1);curN=notes.length?0:null;S('notes',notes);drawN()}
 /* ===== CALENDAR ===== */
 let cy=new Date().getFullYear(),cm=new Date().getMonth(),selD=null;
@@ -723,7 +773,7 @@ function cal(){
     const key=`${cy}-${String(cm+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const ev=events[key]||[];
     cells+=`<div class="cd ${key===today?'today':''} ${key===selD?'sel':''}" onclick="selD='${key}';cal()">
-      <span class="n">${d}</span>${ev.slice(0,3).map(e=>`<div class="ev">• ${e}</div>`).join('')}${ev.length>3?`<div class="ev">+${ev.length-3}</div>`:''}</div>`;
+      <span class="n">${d}</span>${ev.slice(0,3).map(e=>`<div class="ev">• ${evC(e)?evC(e)+' — ':''}${evT(e)}</div>`).join('')}${ev.length>3?`<div class="ev">+${ev.length-3}</div>`:''}</div>`;
   }
   V.innerHTML=stepper()+`<div id="cal">
     <div id="calhead"><button class="b" onclick="cm--;if(cm<0){cm=11;cy--}cal()">←</button>
@@ -732,13 +782,16 @@ function cal(){
     <div id="calgrid">${['SUN','MON','TUE','WED','THU','FRI','SAT'].map(d=>`<div class="dow">${d}</div>`).join('')}${cells}</div>
     ${selD?`<div class="card" style="margin-top:12px">
       <div style="font-size:11px;color:var(--accent);margin-bottom:8px">${selD}</div>
-      ${(events[selD]||[]).map((e,i)=>`<div class="todo"><span>${e}</span><span class="x" onclick="events['${selD}'].splice(${i},1);if(!events['${selD}'].length)delete events['${selD}'];S('events',events);cal()">✕</span></div>`).join('')}
-      <div class="row" style="margin-top:8px"><input type="text" id="evIn" placeholder="add event / deadline… Enter" onkeydown="if(event.key==='Enter')addEv()"><button class="b" onclick="addEv()">add</button></div>
+      ${(events[selD]||[]).map((e,i)=>`<div class="todo"><span>${evT(e)}${cChip(evC(e))}</span><span class="x" onclick="events['${selD}'].splice(${i},1);if(!events['${selD}'].length)delete events['${selD}'];S('events',events);cal()">✕</span></div>`).join('')}
+      <div class="row" style="margin-top:8px"><input type="text" id="evIn" placeholder="add event / deadline… Enter" onkeydown="if(event.key==='Enter')addEv()">${courseSel('evCourse','')}<button class="b" onclick="addEv()">add</button></div>
     </div>`:'<div class="fine" style="margin-top:10px">click a day to add deadlines, exams, events</div>'}
   </div>`;
   if(selD){const i=document.getElementById('evIn');if(i)i.focus()}
 }
-function addEv(){const i=document.getElementById('evIn');if(!i.value.trim())return;(events[selD]=events[selD]||[]).push(i.value.trim());S('events',events);cal()}
+function addEv(){const i=document.getElementById('evIn');if(!i.value.trim())return;
+  const sel=document.getElementById('evCourse');
+  (events[selD]=events[selD]||[]).push({t:i.value.trim(),c:(sel&&sel.value)||''});
+  S('events',events);cal()}
 /* ===== BRAIN ===== */
 let selB='root',bView={sc:1,tx:0,ty:0};
 const BCOLORS=['#1F7A70','#2C7A52','#9A6B12','#B03A38','#6B4E9E','#2F6BAD','#B5651D','#3F8F7F'];
