@@ -111,7 +111,28 @@ a{color:var(--accent);text-decoration:none}
 #obcard input{text-align:center;font-size:14px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 /* ===== the simple app ===== */
-body.focus header{display:none}            /* no nav until they have an answer */
+body.focus header{display:none}
+body.focus main{background:
+  radial-gradient(520px 340px at 12% -4%, rgba(var(--accent-rgb),.16), transparent 62%),
+  radial-gradient(560px 380px at 96% 2%, rgba(var(--purple-rgb),.14), transparent 60%)}
+.ask h1,.btitle2,.rbig{background:linear-gradient(100deg,var(--txt) 30%,var(--accent) 78%,var(--purple));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.obdots{display:flex;gap:7px;margin-bottom:24px}
+.obdots span{width:26px;height:5px;border-radius:99px;background:var(--line);transition:background .3s}
+.obdots span.done{background:var(--accent)}
+.obdots span.now{background:linear-gradient(90deg,var(--accent),var(--purple))}
+.pickcard.on,.chip.on{box-shadow:0 0 0 1px rgba(var(--accent-rgb),.4),0 6px 22px rgba(var(--accent-rgb),.18)}
+.pickcard:hover{transform:translateY(-1px)}
+.pickcard{transition:transform .12s,border-color .12s,box-shadow .12s}
+.optcard.open{box-shadow:0 10px 34px rgba(var(--accent-rgb),.14)}
+.fork{display:grid;gap:11px;margin-top:26px}
+.forkcard{border:2px solid var(--line);border-radius:16px;padding:19px 20px;cursor:pointer;background:var(--panel);
+  transition:transform .12s,border-color .12s,box-shadow .12s}
+.forkcard:hover{transform:translateY(-1px);border-color:var(--accent)}
+.forkcard.main{border-color:transparent;background:linear-gradient(135deg,rgba(var(--accent-rgb),.22),rgba(var(--purple-rgb),.22));
+  box-shadow:0 8px 26px rgba(var(--purple-rgb),.16)}
+.forkname{font-size:18.5px;font-weight:700}
+.forkwhy{font-size:14px;color:var(--dim);margin-top:5px;line-height:1.5}            /* no nav until they have an answer */
 body.focus main{padding:0}
 .ask{max-width:520px;margin:0 auto;padding:38px 20px 60px}
 .asklogo{font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:var(--purple);font-weight:700;margin-bottom:22px}
@@ -248,6 +269,7 @@ body.focus main{padding:0}
 .chip{font-family:inherit;font-size:14.5px;font-weight:620;padding:10px 16px;border-radius:99px;
   border:2px solid var(--line);background:var(--panel);color:var(--txt);cursor:pointer}
 .chip.on{border-color:var(--purple);background:rgba(var(--purple-rgb),.14);color:var(--purple)}
+.chip.done{border-color:rgba(var(--green-rgb),.4);background:rgba(var(--green-rgb),.1);color:var(--green);font-family:var(--mono);font-size:13px}
 .ask input[type=text]{width:100%;font-family:inherit;font-size:17px;padding:16px 18px;border:2px solid var(--line);
   border-radius:14px;background:var(--panel);color:var(--txt);margin-top:4px}
 .ask input[type=text]:focus{border-color:var(--accent);outline:none}
@@ -1356,7 +1378,17 @@ function plan_(){
    minors are one-tap chips after. The previous screen asked eight things in jargon —
    every removed decision is the point. */
 let selMajor=S('selMajor')||'', selMinors=S('selMinors')||[], selPre=S('selPre')||false;
-let reqQ='', minorQ='', showMinorSearch=false;
+let reqQ='', minorQ='', showMinorSearch=false, doneQ='', showDoneSearch=false;
+function doneHits(){
+  const q=doneQ.trim().toUpperCase();
+  if(q.length<2)return[];
+  return CAT.filter(r=>(codeOf(r)+' '+r[2]).toUpperCase().indexOf(q)>-1&&doneCourses.indexOf(codeOf(r))<0).slice(0,5);
+}
+function obDots(){
+  if(step!=='ask')return '';
+  const at=!S('user')?0:!S('year')?1:!selMajor?2:3;
+  return `<div class="obdots">${[0,1,2,3].map(i=>`<span class="${i<at?'done':i===at?'now':''}"></span>`).join('')}</div>`;
+}
 function goHome(){step='ask';S('step','ask');plan_()}
 function nukeAll(){
   if(typeof confirm==='function'&&!confirm('Wipe everything and start from the beginning?'))return;
@@ -1372,10 +1404,10 @@ function shortProg(pname){
 function miniNav(){
   return `<div class="topnav">
     <button class="mlogo" onclick="goHome()">JARVIS</button>
-    <button class="mtab reset" onclick="nukeAll()" title="wipe everything, back to the start">start over</button>
     ${step!=='ask'?`
       <button class="mtab ${step==='options'?'on':''}" onclick="step='options';S('step','options');plan_()">Plans</button>
       <button class="mtab ${step==='board'?'on':''}" onclick="step='board';S('step','board');plan_()">My classes</button>`:''}
+    <button class="mtab reset" onclick="nukeAll()" title="wipe everything, back to the start">start over</button>
   </div>`;
 }
 function progName(id){const p=reqProgram(id);return p?p.name.replace(/\s*\((BA|BS|BFA|Minor)\)\s*$/,''):id}
@@ -1395,7 +1427,7 @@ function renderAsk(){
   const mhits=mq?minors.filter(p=>p.name.toLowerCase().indexOf(mq)>-1&&selMinors.indexOf(p.id)<0).slice(0,5):[];
   V.innerHTML=`<div class="ask">
     <button class="mlogo" style="margin-bottom:20px" onclick="goHome()">JARVIS</button>
-    ${!S('user')?`
+    ${obDots()}${!S('user')?`
     <h1>Hey. What's your name?</h1>
     <p>I build class schedules that knock out the most requirements at once — and keep
        backups ready for when classes fill up.</p>
@@ -1405,7 +1437,15 @@ function renderAsk(){
     <div class="askfoot">Free · no account · data from
       <a href="https://classes.cornell.edu/browse/roster/FA26" target="_blank" rel="noopener noreferrer">Cornell's official Class Roster ↗</a></div>
   </div>`:`
-    <h1>${S('user')}, what are you studying?</h1>
+    ${!S('year')?`
+    <h1>Nice to meet you, ${S('user')}.<br>What year are you?</h1>
+    <p>So I know how to plan for you.</p>
+    ${[['first','First-year'],['soph','Sophomore'],['junior','Junior'],['senior','Senior'],['transfer','Transfer student']]
+      .map(y=>`<div class="pickcard" onclick="S('year','${y[0]}');plan_()"><span class="pickname">${y[1]}</span></div>`).join('')}
+    <div class="askfoot">Free · no account · data from
+      <a href="https://classes.cornell.edu/browse/roster/FA26" target="_blank" rel="noopener noreferrer">Cornell's official Class Roster ↗</a></div>
+  </div>`:`
+    <h1>${S('year')==='transfer'?'Welcome to Cornell, ':''}${S('user')}, what are you studying?</h1>
     <p>Pick your major and I'll do the rest.</p>
 
     ${selMajor?`
@@ -1427,17 +1467,35 @@ function renderAsk(){
         ${selPre?'✓':'+'} Pre-med</button>
       ${selMinors.map(m=>`<button class="chip on" onclick="selMinors=selMinors.filter(x=>x!=='${m}');S('selMinors',selMinors);plan_()">✓ ${progName(m)} minor ✕</button>`).join('')}
       <button class="chip ${showMinorSearch?'on':''}" onclick="showMinorSearch=!showMinorSearch;minorQ='';plan_()">+ Add a minor</button>
+      <button class="chip ${showDoneSearch?'on':''}" onclick="showDoneSearch=!showDoneSearch;doneQ='';plan_()">+ Classes I've taken</button>
     </div>
+    ${doneCourses.length?`<div class="chips" style="margin-top:2px">${doneCourses.map(c=>
+      `<button class="chip done" onclick="doneCourses=doneCourses.filter(x=>x!=='${c}');S('done',doneCourses);plan_()">${c} ✕</button>`).join('')}</div>`:''}
+    ${showDoneSearch?`<input type="text" id="doneQ" placeholder="Type anything you've finished or transferred — ANTH 1001, CHEM…"
+        value="${doneQ}" autocomplete="off"
+        oninput="doneQ=this.value;renderAsk();const e=document.getElementById('doneQ');if(e){e.focus();if(e.setSelectionRange)e.setSelectionRange(e.value.length,e.value.length)}">
+      <div class="fine" style="margin-top:6px">I won't recommend these again, and they count toward your requirements.</div>
+      ${doneHits().map(r=>`<div class="pickcard" onclick="doneCourses.push(codeOf(rec('${codeOf(r)}')));S('done',doneCourses);doneQ='';plan_()">
+        <span class="pickname" style="font-size:15px">${codeOf(r)} <span class="fine">${r[2]}</span></span></div>`).join('')}`:''}
     ${showMinorSearch?`<input type="text" id="minQ" placeholder="Type a minor — data science, music…"
         value="${minorQ}" autocomplete="off"
         oninput="minorQ=this.value;renderAsk();const e=document.getElementById('minQ');if(e){e.focus();if(e.setSelectionRange)e.setSelectionRange(e.value.length,e.value.length)}">
       ${mhits.map(p=>`<div class="pickcard" onclick="selMinors.push('${p.id}');S('selMinors',selMinors);minorQ='';showMinorSearch=false;plan_()">
         <span class="pickname">${progName(p.id)}</span></div>`).join('')}`:''}
-    <button class="go" onclick="buildPrograms();step='options';S('step','options');options=null;plan_()">Show my options →</button>`
+    <div class="fork">
+      <div class="forkcard" onclick="buildPrograms();plan=[];S('plan',plan);step='board';S('step','board');plan_()">
+        <div class="forkname">I already picked my classes</div>
+        <div class="forkwhy">Put them in — I'll check seats and line up backups for each.</div>
+      </div>
+      <div class="forkcard main" onclick="buildPrograms();step='options';S('step','options');options=null;plan_()">
+        <div class="forkname">Build it for me</div>
+        <div class="forkwhy">I'll make you a few semesters to compare, ready in a second.</div>
+      </div>
+    </div>`
     :`<div class="askfoot" style="margin-top:26px"><a href="#" onclick="selMajor='';buildPrograms();step='options';S('step','options');options=null;plan_();return false">I'm undecided — show me options anyway</a></div>`}
     <div class="askfoot">Free · no account · data from
       <a href="https://classes.cornell.edu/browse/roster/FA26" target="_blank" rel="noopener noreferrer">Cornell's official Class Roster ↗</a></div>
-  </div>`}
+  </div>`}`}
   `;
 }
 function editReqs(){step='ask';S('step','ask');plan_()}

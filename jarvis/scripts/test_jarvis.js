@@ -69,7 +69,11 @@ ok(/What's your name\?/.test(askHTML), 'J1: greets a stranger by asking their na
 ok(!/What are you studying/.test(askHTML), 'J1: one question at a time — no major picker yet');
 run(`S('user','Test');plan_()`);
 askHTML = run(`V.innerHTML`);
-ok(/Test, what are you studying\?/.test(askHTML), 'J1: uses the name it was given');
+ok(/Nice to meet you, Test/.test(askHTML) && /What year are you\?/.test(askHTML), 'J1: asks the year next, by name');
+ok(/First-year/.test(askHTML) && /Transfer student/.test(askHTML), 'J1: year options include transfer');
+run(`S('year','transfer');plan_()`);
+askHTML = run(`V.innerHTML`);
+ok(/Welcome to Cornell, Test, what are you studying\?/.test(askHTML), 'J1: transfer students get a welcome; majors come next');
 ok(typeof run(`typeof nukeAll`)==='string' && run(`typeof nukeAll`)==='function', 'J1: the kill switch exists');
 ok((askHTML.match(/<select/g)||[]).length <= 1, 'J1: no dropdown farm');
 ok(!/A&S Distribution/.test(askHTML), 'J1: no jargon before a choice is made');
@@ -78,6 +82,14 @@ run(`reqQ='history';renderAsk()`);
 ok(/History/.test(run(`V.innerHTML`)), 'J1: typing a major finds it');
 run(`selMajor=REQS.filter(function(p){return p.name==='History (BA)'})[0].id;S('selMajor',selMajor);reqQ='';plan_()`);
 ok(/Pre-med/.test(run(`V.innerHTML`)) && /Add a minor/.test(run(`V.innerHTML`)), 'J1: chips appear after the major');
+ok(/I already picked my classes/.test(run(`V.innerHTML`)) && /Build it for me/.test(run(`V.innerHTML`)),
+   'J1: the fork asks whether classes are already planned');
+ok(/Classes I've taken/.test(run(`V.innerHTML`)), 'J1: asks what you have already taken');
+run(`doneCourses=['ANTHR 1700'];S('done',doneCourses);buildPrograms()`);
+const owedBefore=run(`openSlots().reduce(function(a,s){return a+s.left},0)`);
+run(`doneCourses=[];S('done',doneCourses)`);
+const owedAfter=run(`openSlots().reduce(function(a,s){return a+s.left},0)`);
+ok(owedBefore < owedAfter, `J1: completed classes reduce what is owed (${owedBefore} < ${owedAfter})`);
 run(`selPre=true;S('selPre',selPre);buildPrograms()`);
 ok(run(`myPrograms.indexOf('as-distr')>-1`), 'J1: college requirements are included automatically, not asked about');
 ok(run(`myPrograms.indexOf(selMajor)>-1 && myPrograms.indexOf('premed')>-1`), 'J1: major and pre-med chip are tracked');
