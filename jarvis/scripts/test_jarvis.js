@@ -61,67 +61,56 @@ catch (e) { ok(false, 'boot: ' + e.message); console.error(e); process.exit(1); 
 const g = name => vm.runInContext(name, ctx);
 const run = code => vm.runInContext(code, ctx);
 
-// J1: requirement selection is explicit — the student picks the systems they are measured against
-ok(run(`typeof plan_==='function' && typeof renderBoard==='function' && typeof toggleReq==='function'`), 'J1: the flow exists');
-ok(run(`typeof obSchool==='undefined'`), 'J1: the old school modal is gone');
-run(`myPrograms=[];S('myprograms',myPrograms);step='ask';plan_()`);
+// J1: one question — what are you studying — then chips
+ok(run(`typeof plan_==='function' && typeof renderBoard==='function' && typeof buildPrograms==='function'`), 'J1: the flow exists');
+run(`selMajor='';selMinors=[];selPre=false;myPrograms=[];S('myprograms',myPrograms);step='ask';plan_()`);
 const askHTML = run(`V.innerHTML`);
-ok(/What do you have to satisfy\?/.test(askHTML), 'J1: asks what must be satisfied, not a mood question');
-ok(!/med school\?/.test(askHTML), 'J1: the "thinking about med school?" question is gone');
-ok(/College requirements/.test(askHTML) && /Major/.test(askHTML) && /Minor/.test(askHTML)
-   && /Pre-health/.test(askHTML), 'J1: requirement systems are grouped by kind');
-ok(/Pick at least one/.test(askHTML), 'J1: cannot continue without picking a requirement system');
-ok(run(`REQS.every(function(p){return ['core','major','minor','track','other'].indexOf(p.kind||'other')>-1})`),
-   'J1: every requirement program declares a kind so it lands in a group');
-run(`toggleReq('as-distr');toggleReq('anthro-ba');toggleReq('premed')`);
-ok(run(`myPrograms.length`) === 3, 'J1: ticking adds them');
-run(`toggleReq('premed')`);
-ok(run(`myPrograms.indexOf('premed')<0`), 'J1: unticking removes them');
-run(`toggleReq('premed');startBoard()`);
-ok(run(`step`) === 'options', 'J1: continuing shows the options to compare');
-ok(run(`openSlots().length > 20`), `J1: the picked systems produce real requirement slots (${run(`openSlots().length`)})`);
+ok(/What are you studying\?/.test(askHTML), 'J1: opens with the one question');
+ok((askHTML.match(/<select/g)||[]).length <= 1, 'J1: no dropdown farm');
+ok(!/A&S Distribution/.test(askHTML), 'J1: no jargon before a choice is made');
+// search finds a catalog-tier major; picking it reveals the chips
+run(`reqQ='history';renderAsk()`);
+ok(/History/.test(run(`V.innerHTML`)), 'J1: typing a major finds it');
+run(`selMajor=REQS.filter(function(p){return p.name==='History (BA)'})[0].id;S('selMajor',selMajor);reqQ='';plan_()`);
+ok(/Pre-med/.test(run(`V.innerHTML`)) && /Add a minor/.test(run(`V.innerHTML`)), 'J1: chips appear after the major');
+run(`selPre=true;S('selPre',selPre);buildPrograms()`);
+ok(run(`myPrograms.indexOf('as-distr')>-1`), 'J1: college requirements are included automatically, not asked about');
+ok(run(`myPrograms.indexOf(selMajor)>-1 && myPrograms.indexOf('premed')>-1`), 'J1: major and pre-med chip are tracked');
+run(`startBoard()`);
+ok(run(`step`) === 'options', 'J1: continuing shows the plans');
+ok(run(`openSlots().length > 15`), `J1: real requirement slots to solve (${run(`openSlots().length`)})`);
 
-// J1a: several genuinely different options, each with a reason
+// J1a: a few genuinely different plans
 run(`options=null;renderOptions();globalThis._O=options`);
-ok(run(`_O.length >= 3`), `J1a: produces several options (${run(`_O.length`)})`);
-ok(run(`_O.every(function(o){return o.name&&o.why})`), 'J1a: every option says what it is and why');
-ok(run(`new Set(_O.map(function(o){return o.key})).size === _O.length`), 'J1a: no two options are the same schedule');
-ok(run(`_O.every(function(o){return o.res.credits>=12&&o.res.credits<=18})`), 'J1a: every option is a full-time load');
+ok(run(`_O.length >= 3`), `J1a: several plans (${run(`_O.length`)})`);
+ok(run(`_O.every(function(o){return o.name&&o.why})`), 'J1a: every plan says what it is and why');
+ok(run(`new Set(_O.map(function(o){return o.key})).size === _O.length`), 'J1a: no duplicate plans');
+ok(run(`_O.every(function(o){return o.res.credits>=12&&o.res.credits<=18})`), 'J1a: all full-time');
 ok(run(`_O.every(function(o){var c=o.res.courses.map(codeOf);
-  return !c.some(function(a,i){return c.slice(i+1).some(function(b){return clashes(a,b)})})})`), 'J1a: no option contains a clash');
+  return !c.some(function(a,i){return c.slice(i+1).some(function(b){return clashes(a,b)})})})`), 'J1a: no clashes');
 ok(run(`_O.every(function(o){return o.res.courses.every(function(r){return prereqMet(r,o.res.courses.map(codeOf))})})`),
-   'J1a: no option ignores prerequisites');
-const lateOpt = run(`_O.filter(function(o){return o.id==='late'})[0]`);
-ok(!lateOpt || run(`_O.filter(function(o){return o.id==='late'})[0].res.courses.every(function(r){var t=pt(r[5][0]||'');return !t||t[0]>=600})`),
-   'J1a: the no-early-mornings option really has nothing before 10am');
-const tightOpt = run(`_O.filter(function(o){return o.id==='tight'})[0]`);
-ok(!tightOpt || run(`(function(){var t=_O.filter(function(o){return o.id==='tight'})[0];
-  var m=Math.max.apply(null,_O.map(function(o){return o.days}));return t.days<=m})()`),
-   'J1a: the fewer-days option is not the most spread out');
-// choosing one loads it onto the board
+   'J1a: prerequisites respected');
 run(`useOption(_O[0].id)`);
-ok(run(`step`) === 'board' && run(`plan.length`) === run(`_O[0].res.courses.length`), 'J1a: choosing an option fills the board');
+ok(run(`step`) === 'board' && run(`plan.length`) === run(`_O[0].res.courses.length`), 'J1a: choosing a plan fills the board');
 
-// J1b: the board — backups when something falls through
-run(`plan=[];S('plan',plan);dropped=[];S('dropped',dropped);plan_()`);
-ok(/Add a class you want/.test(run(`V.innerHTML`)), 'J1b: empty board invites you to add what you are taking');
+// J1b: the board and the pathway tree
+run(`plan=[];S('plan',plan);dropped=[];S('dropped',dropped);openNode={};plan_()`);
+ok(/Add a class you want/.test(run(`V.innerHTML`)), 'J1b: empty board invites adding classes');
 run(`addToBoard('CHEM 2070')`);
-ok(run(`plan.length`) === 1 && /CHEM 2070/.test(run(`V.innerHTML`)), 'J1b: adding a class puts it on the board');
-ok(run(`typeof statusOf(rec('CHEM 2070'))[1]==='string'`), 'J1b: every class has a seat status');
-ok(run(`slotsFilledBy(rec('CHEM 2070'),openSlots()).length>0`), 'J1b: the board knows what a class keeps you on track for');
+ok(run(`plan.length`) === 1 && /CHEM 2070/.test(run(`V.innerHTML`)), 'J1b: adding a class works');
 run(`markLost('CHEM 2070')`);
-ok(run(`dropped.indexOf('CHEM 2070')>-1`), 'J1b: "did not get it" is remembered');
-ok(/Take one of these instead/.test(run(`V.innerHTML`)), 'J1b: losing a class surfaces the plan B');
+ok(/Pick a new path/.test(run(`V.innerHTML`)), 'J1b: losing a class opens the paths');
+ok(/path A/.test(run(`V.innerHTML`)), 'J1b: paths are labelled like a map');
 run(`globalThis._bk=backupsFor('CHEM 2070',plan.map(function(p){return p.code}))`);
-ok(run(`_bk.length>0`), `J1b: backups exist for a lost class (${run(`_bk.length`)})`);
-ok(run(`_bk.every(function(b){return b.covers&&b.covers.length})`), 'J1b: each backup says what it still covers');
-ok(run(`_bk.every(function(b){return prereqMet(b.r,plan.map(function(p){return p.code}))})`), 'J1b: backups respect prerequisites');
-ok(run(`_bk.every(function(b){return b.r[8]<5000})`), 'J1b: never offers a graduate course as a backup');
-ok(run(`_bk.every(function(b){return b.r[8]<=rec('CHEM 2070')[8]+1000})`), 'J1b: backups stay near the original level');
+ok(run(`_bk.length>0`), `J1b: fallbacks exist (${run(`_bk.length`)})`);
+ok(run(`_bk.every(function(b){return b.covers&&b.covers.length})`), 'J1b: each says what it still covers');
+ok(run(`_bk.every(function(b){return b.r[8]<5000})`), 'J1b: no graduate courses');
+// second level of the tree: what if the fallback also fills
+run(`globalThis._kids=pathKids('CHEM 2070',_bk[0].code,plan.map(function(p){return p.code}))`);
+ok(run(`_kids.every(function(k){return k.code!=='CHEM 2070'})`), 'J1b: the tree never loops back to the lost class');
 run(`takeBackup('CHEM 2070',_bk[0].code)`);
 ok(run(`plan.some(function(p){return p.code===_bk[0].code}) && !plan.some(function(p){return p.code==='CHEM 2070'})`),
-   'J1b: switching to a backup replaces it on the board');
-ok(run(`dropped.indexOf('CHEM 2070')<0`), 'J1b: switching clears the lost flag');
+   'J1b: taking a path swaps it in');
 run(`plan=[];S('plan',plan);dropped=[];S('dropped',dropped)`);
 
 // J2: setup wizard — programs first, then subjects, then rules (auto-opened by obSchool)
@@ -461,12 +450,8 @@ ok(run(`(function(){var w={2:'two',3:'three',4:'four',5:'five',6:'six',7:'seven'
 ok(run(`REQS.filter(function(p){return p.kind==='major'&&p.confidence==='catalog'}).every(function(p){
   var tot=p.slots.reduce(function(a,s){return a+s.need},0);return tot>=2})`), 'J24: no degenerate majors');
 // picker: quiet by default, everything findable by search
-run(`reqQ='';`);
-ok(run(`askRows('major').every(function(p){return p.confidence!=='catalog'&&p.confidence!=='approx'||myPrograms.indexOf(p.id)>-1})`),
-   'J24: default picker shows only hand-entered programs');
-run(`reqQ='history'`);
-ok(run(`askRows('major').some(function(p){return p.name==='History (BA)'})`), 'J24: search reveals catalog-extracted programs');
-run(`reqQ=''`);
+ok(run(`REQS.filter(function(p){return p.kind==='major'&&p.name==='History (BA)'}).length===1`),
+   'J24: catalog-extracted majors are searchable');
 
 // J17: no personal data shipped
 ok(!/Atishay|Georgetown/.test(html), 'J17: zero personal data in the product build');

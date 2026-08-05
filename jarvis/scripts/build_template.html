@@ -220,6 +220,42 @@ body.focus main{padding:0}
 .params select:focus{border-color:var(--accent);outline:none}
 .chain-step{border-left:3px solid rgba(var(--amber-rgb),.45);padding-left:13px;margin-left:4px}
 .chain-if{font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--amber);font-weight:700;padding-top:8px}
+/* requirement picker */
+.rgroup{margin-bottom:22px}
+.rglabel{font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--purple);font-weight:700}
+.rghint{font-size:13.5px;color:var(--dim);margin:3px 0 10px;line-height:1.5}
+.rgrow{display:flex;gap:12px;align-items:flex-start;padding:14px 15px;border:2px solid var(--line);
+  border-radius:13px;margin-bottom:8px;cursor:pointer;background:var(--panel)}
+.rgrow:hover{border-color:var(--accent)}
+.rgrow.on{border-color:var(--accent);background:rgba(var(--accent-rgb),.07)}
+.rgrow input{width:20px;height:20px;margin-top:2px;accent-color:var(--accent);flex-shrink:0}
+.pickcard{display:flex;align-items:center;gap:10px;padding:16px 18px;border:2px solid var(--line);
+  border-radius:14px;margin-top:9px;cursor:pointer;background:var(--panel)}
+.pickcard:hover{border-color:var(--accent)}
+.pickcard.on{border-color:var(--accent);background:rgba(var(--accent-rgb),.08)}
+.pickname{flex:1;font-size:18px;font-weight:640}
+.picktag{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--amber);font-weight:700}
+.pickx{background:none;border:none;color:var(--dim);font-size:17px;cursor:pointer;font-family:inherit;padding:4px 8px}
+.pickx:hover{color:var(--red)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 4px}
+.chip{font-family:inherit;font-size:14.5px;font-weight:620;padding:10px 16px;border-radius:99px;
+  border:2px solid var(--line);background:var(--panel);color:var(--txt);cursor:pointer}
+.chip.on{border-color:var(--purple);background:rgba(var(--purple-rgb),.14);color:var(--purple)}
+.ask input[type=text]{width:100%;font-family:inherit;font-size:17px;padding:16px 18px;border:2px solid var(--line);
+  border-radius:14px;background:var(--panel);color:var(--txt);margin-top:4px}
+.ask input[type=text]:focus{border-color:var(--accent);outline:none}
+.tree{padding:4px 0 2px}
+.tnode{display:flex;align-items:center;gap:9px;padding:11px 13px;border:2px solid var(--line);
+  border-radius:12px;background:var(--panel);margin:6px 0 0;cursor:pointer}
+.tnode:hover{border-color:var(--accent)}
+.tname{flex:1;font-size:14.5px;font-weight:620;line-height:1.35}
+.tbranch{margin-left:14px;padding-left:13px;border-left:3px solid rgba(var(--accent-rgb),.55)}
+.tbranch.d2{border-left-color:rgba(var(--purple-rgb),.6)}
+.tif{font-size:11px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--amber);margin-top:10px}
+.tgo{background:var(--accent);color:#fff;border:none;border-radius:9px;font-family:inherit;
+  font-size:12.5px;font-weight:650;padding:8px 12px;cursor:pointer;white-space:nowrap}
+.rgname{font-size:16.5px;font-weight:620;line-height:1.35}
+.rgmeta{display:block;font-size:13px;font-weight:400;color:var(--dim);margin-top:3px}
 @media (max-width:760px){.ask,.result{padding-left:16px;padding-right:16px}}
 /* --- hero --- */
 .hero{max-width:640px;padding:26px 0 8px}
@@ -1184,7 +1220,7 @@ function generateSchedule(opts){
     chosen.push(best);cr+=creditsOf(best);
     slotsFilledBy(best,slots).forEach(sl=>{const k=sl.pid+'.'+sl.sid;if(need[k]>0)need[k]--});
     if(cr>=target)break;
-    if(cr>=target-1)break;            // 14 is closer to a 15 target than 17 is
+    if(cr>=target-1&&cr>=12)break;    // stop near the target, but never below full-time
   }
   return{courses:chosen,slots:slots,credits:cr,
          covered:slots.length-Object.values(need).filter(v=>v>0).length};
@@ -1212,6 +1248,7 @@ function generateOptions(){
     const base={maxLevel:3999,credits:k.opts.light?Math.max(12,targetCr-3):targetCr};
     const r=generateSchedule(Object.assign(base,k.opts));
     if(!r.courses.length)return;
+    if(r.credits<12)return;           // an under-full-time plan is not a plan
     const key=r.courses.map(codeOf).sort().join('|');
     if(out.some(o=>o.key===key))return;      // do not show the same schedule twice
     const days=new Set();r.courses.forEach(c=>[...(c[4][0]||'')].forEach(d=>days.add(d)));
@@ -1263,7 +1300,12 @@ function backupsFor(code,chosen){
    fallbacks that keep the same requirement. Coursicle tells you when a seat frees up;
    nothing tells you what to take instead that still counts. That is the gap. */
 let dropped=S('dropped')||[];
-let openChain={};        // courses you tried for and did not get
+let openChain={}, openNode={};
+/* one more level down: what covers the requirement if the first fallback ALSO fills */
+function pathKids(orig,mid,codes){
+  const swapped=codes.map(c=>c===orig?mid:c);
+  return backupsFor(mid,swapped).filter(k=>k.code!==orig).slice(0,2);
+}        // courses you tried for and did not get
 let boardQ='', step=(S('myprograms')||[]).length?(S('step')||'board'):'ask';
 let openWhy={};
 
@@ -1274,95 +1316,76 @@ function plan_(){
   renderBoard();
 }
 
-/* Requirement selection is explicit, not inferred from a mood question. A student picks
-   exactly which systems they are being measured against — college distribution, major,
-   minor, pre-health, anything else — because that is what determines whether a backup
-   actually keeps them on track. Grouped by kind so the list reads as a checklist of the
-   things a real advisor would ask about. */
-const REQ_GROUPS=[
-  ['core',  'College requirements', 'Everyone in your college has to finish these.'],
-  ['major', 'Major',                'What you are declaring, or plan to.'],
-  ['minor', 'Minor',                'Optional — add one or more.'],
-  ['track', 'Pre-health / pre-professional', 'Course sets med, dental or vet schools expect.'],
-  ['other', 'Other',                'Anything else you are tracking.']
-];
-function reqsOfKind(k){return REQS.filter(p=>(p.kind||'other')===k)}
+/* One question: what are you studying? Search, tap your major, done. College
+   requirements are included automatically because they are not a choice; pre-med and
+   minors are one-tap chips after. The previous screen asked eight things in jargon —
+   every removed decision is the point. */
+let selMajor=S('selMajor')||'', selMinors=S('selMinors')||[], selPre=S('selPre')||false;
+let reqQ='', minorQ='', showMinorSearch=false;
+function progName(id){const p=reqProgram(id);return p?p.name.replace(/\s*\((BA|BS|BFA|Minor)\)\s*$/,''):id}
 
-let reqQ='';
-function askRows(kind){
-  const list=reqsOfKind(kind);
-  const q=reqQ.trim().toLowerCase();
-  if(q)return list.filter(p=>p.name.toLowerCase().indexOf(q)>-1).slice(0,8);
-  // no search: only the hand-checked entries plus anything already ticked — 200+ rows
-  // of auto-extracted programs would be the wall of majors this screen replaced
-  // hand-entered tiers (official/curated/partial) show by default; the 200 auto-extracted
-  // ones stay behind search
-  return list.filter(p=>p.confidence!=='catalog'&&p.confidence!=='approx'||myPrograms.indexOf(p.id)>-1);
+function buildPrograms(){
+  myPrograms=['as-distr'];
+  if(selMajor)myPrograms.push(selMajor);
+  selMinors.forEach(m=>myPrograms.push(m));
+  if(selPre)myPrograms.push('premed');
+  S('myprograms',myPrograms);
 }
 function renderAsk(){
-  const picked=myPrograms.length;
+  const majors=REQS.filter(p=>p.kind==='major');
+  const minors=REQS.filter(p=>p.kind==='minor');
+  const q=reqQ.trim().toLowerCase(), mq=minorQ.trim().toLowerCase();
+  const hits=q?majors.filter(p=>p.name.toLowerCase().indexOf(q)>-1).slice(0,6):[];
+  const mhits=mq?minors.filter(p=>p.name.toLowerCase().indexOf(mq)>-1&&selMinors.indexOf(p.id)<0).slice(0,5):[];
   V.innerHTML=`<div class="ask">
     <div class="asklogo">Jarvis</div>
-    <h1>What do you have to satisfy?</h1>
-    <p>Pick everything you're being measured against. This is what decides whether a
-       backup class actually keeps you on track.</p>
+    <h1>What are you studying?</h1>
+    <p>I'll build you a semester that knocks out the most requirements — with backups for
+       when classes fill up.</p>
 
-    <label class="q" style="margin-bottom:26px">
-      <span class="qtext" style="margin-left:0">Where do you go?</span>
-      <select onchange="S('school',this.value)">
-        <option value="cornell">Cornell</option>
-        <option value="other" ${S('school')==='other'?'selected':''}>Somewhere else — not built yet</option>
-      </select>
-    </label>
+    ${selMajor?`
+      <div class="pickcard on">
+        <span class="pickname">${progName(selMajor)}</span>
+        <button class="pickx" onclick="selMajor='';S('selMajor','');plan_()" aria-label="remove">✕</button>
+      </div>`
+    :`<input type="text" id="majQ" placeholder="Type your major — history, econ, biology…"
+        value="${reqQ}" autocomplete="off"
+        oninput="reqQ=this.value;renderAsk();const e=document.getElementById('majQ');if(e){e.focus();if(e.setSelectionRange)e.setSelectionRange(e.value.length,e.value.length)}">
+      ${hits.map(p=>`<div class="pickcard" onclick="selMajor='${p.id}';S('selMajor',selMajor);reqQ='';plan_()">
+        <span class="pickname">${progName(p.id)}</span>
+        ${p.confidence==='approx'||p.confidence==='partial'?'<span class="picktag">approximate</span>':''}
+      </div>`).join('')||(q?'<div class="askfoot" style="text-align:left">Nothing matches — try fewer letters.</div>':'')}`}
 
-    <div class="q" style="margin-bottom:20px">
-      <input type="text" placeholder="Find your major or minor — try history, econ, physics…"
-        id="reqSearch" value="${reqQ}" oninput="reqQ=this.value;renderAsk();const e=document.getElementById('reqSearch');if(e&&e.focus){e.focus();if(e.setSelectionRange)e.setSelectionRange(e.value.length,e.value.length)}"
-        style="width:100%;font-family:inherit;font-size:16.5px;padding:15px 17px;border:2px solid var(--line);border-radius:13px;background:var(--panel);color:var(--txt)">
+    ${selMajor?`
+    <div class="chips">
+      <button class="chip ${selPre?'on':''}" onclick="selPre=!selPre;S('selPre',selPre);plan_()">
+        ${selPre?'✓':'+'} Pre-med</button>
+      ${selMinors.map(m=>`<button class="chip on" onclick="selMinors=selMinors.filter(x=>x!=='${m}');S('selMinors',selMinors);plan_()">✓ ${progName(m)} minor ✕</button>`).join('')}
+      <button class="chip ${showMinorSearch?'on':''}" onclick="showMinorSearch=!showMinorSearch;minorQ='';plan_()">+ Add a minor</button>
     </div>
-
-    ${REQ_GROUPS.map(([kind,label,hint])=>{
-      const list=askRows(kind);
-      if(!list.length)return '';
-      return `<div class="rgroup">
-        <div class="rglabel">${label}</div>
-        <div class="rghint">${hint}</div>
-        ${list.map(p=>`<label class="rgrow ${myPrograms.indexOf(p.id)>-1?'on':''}">
-          <input type="checkbox" ${myPrograms.indexOf(p.id)>-1?'checked':''} onchange="toggleReq('${p.id}')">
-          <span class="rgname">${p.name}
-            <span class="rgmeta">${p.slots.length} requirement${p.slots.length>1?'s':''}${
-              p.confidence==='official'?' · from Cornell\'s own data':
-              p.confidence==='partial'?' · course list not confirmed yet':
-              p.confidence==='approx'?' · approximate — confirm with the department':
-              p.confidence==='catalog'?' · read from the official page':''}</span></span>
-        </label>`).join('')}
-      </div>`;
-    }).join('')}
-
-    <div class="rgroup"><div class="rghint">${reqQ?'':'Type above to search all '+REQS.length+' programs — every Cornell major and minor that maps to a subject is in here.'}</div></div>
-
-    <button class="go" ${picked?'':'disabled'} onclick="startBoard()">
-      ${picked?`Continue with ${picked} selected →`:'Pick at least one'}</button>
-    <div class="askfoot">Free. No account. Nothing leaves your laptop.</div>
+    ${showMinorSearch?`<input type="text" id="minQ" placeholder="Type a minor — data science, music…"
+        value="${minorQ}" autocomplete="off"
+        oninput="minorQ=this.value;renderAsk();const e=document.getElementById('minQ');if(e){e.focus();if(e.setSelectionRange)e.setSelectionRange(e.value.length,e.value.length)}">
+      ${mhits.map(p=>`<div class="pickcard" onclick="selMinors.push('${p.id}');S('selMinors',selMinors);minorQ='';showMinorSearch=false;plan_()">
+        <span class="pickname">${progName(p.id)}</span></div>`).join('')}`:''}
+    <button class="go" onclick="buildPrograms();step='options';S('step','options');options=null;plan_()">Show my options →</button>`
+    :`<div class="askfoot" style="margin-top:26px"><a href="#" onclick="selMajor='';buildPrograms();step='options';S('step','options');options=null;plan_();return false">Skip — just my college requirements</a></div>`}
+    <div class="askfoot">Free · no account · Cornell Fall 2026</div>
   </div>`;
 }
-function toggleReq(id){
-  const i=myPrograms.indexOf(id);
-  i>-1?myPrograms.splice(i,1):myPrograms.push(id);
-  S('myprograms',myPrograms);renderAsk();
-}
-function startBoard(){
-  if(!myPrograms.length)return;
-  S('myprograms',myPrograms);
-  step='options';S('step','options');plan_();
-}
-/* ---- compare a handful of ways to do the semester ---- */
-let options=null, openOpt={};
+function editReqs(){step='ask';S('step','ask');plan_()}
+function startBoard(){buildPrograms();step='options';S('step','options');options=null;plan_()}
+/* kept for older callers/tests */
+function toggleReq(id){const i=myPrograms.indexOf(id);i>-1?myPrograms.splice(i,1):myPrograms.push(id);S('myprograms',myPrograms)}
+
+/* ---- pick a semester: a few ready-made plans, params tucked away ---- */
+let options=null, openOpt={}, showParams=false;
 let targetCr=S('targetCr')||15;
 function setParam(fn){fn();S('prefs',prefs);S('targetCr',targetCr);options=null;renderOptions()}
 function paramsBar(){
+  if(!showParams)return `<div style="margin-bottom:14px"><button class="chip" onclick="showParams=true;renderOptions()">⚙ Times, days &amp; credits</button></div>`;
   const sel=(v,cur)=>v===cur?'selected':'';
-  return `<div class="params">
+  return `<div style="margin-bottom:6px"><button class="chip on" onclick="showParams=false;renderOptions()">✓ Done</button></div><div class="params">
     <select onchange="setParam(()=>prefs.noBefore=+this.value)">
       ${[[0,'Start any time'],[540,'Nothing before 9am'],[600,'Nothing before 10am'],[660,'Nothing before 11am']]
         .map(o=>`<option value="${o[0]}" ${sel(o[0],prefs.noBefore||0)}>${o[1]}</option>`).join('')}</select>
@@ -1381,9 +1404,9 @@ function renderOptions(){
   const DAY={M:'Mon',T:'Tue',W:'Wed',R:'Thu',F:'Fri'};
   V.innerHTML=`<div class="board">
     <div class="bhead">
-      <div class="btitle2">${options.length} ways to do your semester</div>
-      <div class="bsub">Built from what you picked. Choose one — you can change it after.</div>
-      <div class="bstamp">Seats checked ${BUILT} · <a href="#" onclick="editReqs();return false">change requirements</a></div>
+      <div class="btitle2">Pick your semester.</div>
+      <div class="bsub">Tap a plan to see its classes. You can change anything after.</div>
+      <div class="bstamp">Seats checked ${BUILT} · <a href="#" onclick="editReqs();return false">change what I'm studying</a></div>
     </div>
     ${paramsBar()}
     ${options.length?options.map(o=>`<div class="optcard ${openOpt[o.id]?'open':''}">
@@ -1395,7 +1418,7 @@ function renderOptions(){
             <span><b>${o.res.courses.length}</b> classes</span>
             <span><b>${o.res.credits}</b> credits</span>
             <span><b>${o.fills}</b> requirements</span>
-            <span><b>${o.days}</b> day${o.days===1?'':'s'} a week</span>
+            <span><b>${o.days}</b> day${o.days===1?'':'s'}/week</span>
             ${o.allOpen?`<span class="ok">all have seats</span>`:''}
           </div>
         </div>
@@ -1408,12 +1431,10 @@ function renderOptions(){
               <div class="opt-when">${[...(r[4][0]||'')].map(d=>DAY[d]||d).join(' ')} · ${r[5][0]||'time TBA'}</div>
               <div class="opt-keeps">${slotsFilledBy(r,o.res.slots).map(k=>k.sname).join(' · ')||'no tracked requirement'}</div></div>
             <span class="pill ${st[2]}">${st[1]}</span></div>`}).join('')}
-        <button class="go" style="margin-top:16px" onclick="useOption('${o.id}')">Use this one →</button>
+        <button class="go" style="margin-top:16px" onclick="useOption('${o.id}')">Use this plan →</button>
       </div>`:''}
-    </div>`).join(''):`<div class="bempty">Nothing fits those requirements this term.<br>
-        <span class="dim">Try selecting fewer, or check with your advisor.</span></div>`}
-    <div class="askfoot" style="margin-top:22px">
-      <a href="#" onclick="options=null;renderOptions();return false">rebuild the options</a></div>
+    </div>`).join(''):`<div class="bempty">Nothing fits right now.<br>
+        <span class="dim">Try loosening times or days in ⚙ above.</span></div>`}
   </div>`;
 }
 function useOption(id){
@@ -1421,10 +1442,8 @@ function useOption(id){
   plan=o.res.courses.map(r=>({code:codeOf(r),pat:0}));S('plan',plan);
   dropped=[];S('dropped',dropped);
   step='board';S('step','board');plan_();
-  toast('Saved — now check your backups');
+  toast('Saved — these are your classes now');
 }
-function editReqs(){step='ask';S('step','ask');plan_()}
-
 function statusOf(r){return isOpen(r)?['open','Open','st-open']:(r[11]==='W'?['wait','Waitlist','st-wait']:['full','Full','st-full'])}
 
 function renderBoard(){
@@ -1506,21 +1525,28 @@ function boardCard(r,slots,mine){
       `<div class="bc-keeps dim">Doesn't count toward anything you're tracking.</div>`}
 
     ${(lost||!isOpen(r)||openChain[code])?`<div class="plan-b">
-      <div class="pb-head">${lost?'Take one of these instead':'Your pathway if it fills'}</div>
-      ${bk.length?bk.slice(0,3).map((b,bi)=>{const bs=statusOf(b.r);
-        return`<div class="chain-step">
-          <div class="chain-if">${bi===0?(lost?'first choice →':'if it\'s full →'):bi===1?'if that\'s full too →':'and if that one\'s full →'}</div>
-          <div class="pb-row">
-          <div style="flex:1"><b>${b.code}</b> ${b.r[2]}
-            <div class="pb-keeps">still covers ${b.covers.join(' · ')}</div></div>
-          <span class="pill ${bs[2]}">${bs[1]}</span>
-          <button class="mini" onclick="takeBackup('${code}','${b.code}')">switch</button>
-        </div></div>`}).join(''):
+      <div class="pb-head">${lost?'Pick a new path':'Your paths if it fills'}</div>
+      ${bk.length?`<div class="tree">${bk.slice(0,3).map((b,bi)=>{
+        const bs=statusOf(b.r), nk=code+'|'+b.code, kids=openNode[nk]?pathKids(code,b.code,codes):null;
+        return`<div class="tif">path ${String.fromCharCode(65+bi)}${bi===0?" — if it's full":''}</div>
+        <div class="tbranch">
+          <div class="tnode" onclick="openNode['${nk}']=!openNode['${nk}'];plan_()">
+            <span class="tname">${b.code} <span class="fine">${b.r[2]}</span>
+              <div class="pb-keeps">keeps ${b.covers.join(' · ')} · ${openNode[nk]?'▲':'▼ what if this fills too?'}</div></span>
+            <span class="pill ${bs[2]}">${bs[1]}</span>
+            <button class="tgo" onclick="event.stopPropagation();takeBackup('${code}','${b.code}')">take it</button>
+          </div>
+          ${kids?(kids.length?kids.map(k2=>{const ks=statusOf(k2.r);
+            return`<div class="tif">then</div><div class="tbranch d2"><div class="tnode" onclick="event.stopPropagation()">
+              <span class="tname">${k2.code} <span class="fine">${k2.r[2]}</span></span>
+              <span class="pill ${ks[2]}">${ks[1]}</span>
+              <button class="tgo" onclick="event.stopPropagation();takeBackup('${code}','${k2.code}')">take it</button>
+            </div></div>`}).join(''):`<div class="tif" style="color:var(--dim)">end of this path — nothing else covers it</div>`):''}
+        </div>`}).join('')}</div>`:
         `<div class="pb-row dim">No backup covers the same requirement and fits your week. Worth asking your advisor.</div>`}
     </div>`:''}
-
     <div class="bc-foot">
-      ${(!lost&&isOpen(r))?`<a href="#" onclick="openChain['${code}']=!openChain['${code}'];plan_();return false">${openChain[code]?'hide pathway':'see the pathway'}</a>`:''}
+      ${(!lost&&isOpen(r))?`<a href="#" onclick="openChain['${code}']=!openChain['${code}'];plan_();return false">${openChain[code]?'hide paths':'see my paths'}</a>`:''}
       ${lost?`<a href="#" onclick="dropped=dropped.filter(c=>c!=='${code}');S('dropped',dropped);plan_();return false">actually I got it</a>`
             :`<a href="#" onclick="markLost('${code}');return false">didn't get this one</a>`}
       <a href="#" onclick="removeFromBoard('${code}');return false">remove</a>
