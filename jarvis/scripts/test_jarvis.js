@@ -440,6 +440,34 @@ ok(run(`!_ch || _BK.every(function(b){return b.covers && b.covers.length})`), 'J
 ok(run(`!_ch || (function(){var s=_BK.map(function(b){return b.spec});
   return s.join('')===s.slice().sort().reverse().join('')})()`), 'J23: backups sharing a specific requirement rank above distribution-only ones');
 
+// J24: the catalog-wide requirement models — verified facts stay verified
+ok(run(`REQS.length`) > 180, `J24: catalog-wide coverage shipped (${run(`REQS.length`)} programs)`);
+ok(run(`REQS.every(function(p){return p.slots&&p.slots.length&&p.confidence&&p.source!==undefined})`),
+   'J24: every program has slots, confidence and a source');
+ok(run(`REQS.every(function(p){return p.slots.every(function(s){return s.need>=1&&s.match&&(s.match.attr||s.match.from||s.match.pred)})})`),
+   'J24: every slot is usable by the engine');
+// ground truth we verified by hand against the official page
+ok(run(`(function(){var p=REQS.filter(function(x){return x.name==='Anthropology (Minor)'})[0];
+  return p&&p.slots[0].need===5&&p.slots[0].match.pred&&p.slots[0].match.pred.subjects[0]==='ANTHR'})()`),
+   'J24: Anthropology (Minor) = five ANTHR courses, as its page states');
+// shipped evidence must stay self-consistent with the count it justifies
+ok(run(`(function(){var w={2:'two',3:'three',4:'four',5:'five',6:'six',7:'seven',8:'eight',9:'nine',10:'ten',11:'eleven',12:'twelve'};
+  return REQS.filter(function(p){return p.confidence==='catalog'&&p.evidence&&p.evidence.count}).every(function(p){
+    var n=null;p.slots.forEach(function(s){if(s.id!=='named'&&s.need>1)n=n||s.need;if(s.id==='breadth')n=n||s.need});
+    if(!n)return true;var ev=p.evidence.count.toLowerCase();
+    return ev.indexOf(String(n))>-1||ev.indexOf(w[n]||'~~')>-1})})()`),
+   'J24: every shipped count evidence contains its number');
+// no boilerplate-sized majors survived the gates
+ok(run(`REQS.filter(function(p){return p.kind==='major'&&p.confidence==='catalog'}).every(function(p){
+  var tot=p.slots.reduce(function(a,s){return a+s.need},0);return tot>=2})`), 'J24: no degenerate majors');
+// picker: quiet by default, everything findable by search
+run(`reqQ='';`);
+ok(run(`askRows('major').every(function(p){return p.confidence!=='catalog'&&p.confidence!=='approx'||myPrograms.indexOf(p.id)>-1})`),
+   'J24: default picker shows only hand-entered programs');
+run(`reqQ='history'`);
+ok(run(`askRows('major').some(function(p){return p.name==='History (BA)'})`), 'J24: search reveals catalog-extracted programs');
+run(`reqQ=''`);
+
 // J17: no personal data shipped
 ok(!/Atishay|Georgetown/.test(html), 'J17: zero personal data in the product build');
 

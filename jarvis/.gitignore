@@ -10,3 +10,5 @@ student_profile.json
 # directory is itself excluded, so the negation below is silently ignored otherwise.
 data/*
 !data/requirements.json
+!data/requirements_catalog.json
+!data/programs_report.json

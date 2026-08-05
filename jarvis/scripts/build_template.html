@@ -214,6 +214,12 @@ body.focus main{padding:0}
 .opt-row:last-of-type{border-bottom:none}
 .opt-when{font-size:13.5px;color:var(--dim);margin-top:3px}
 .opt-keeps{font-size:13px;color:var(--purple);margin-top:3px}
+.params{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.params select{font-family:inherit;font-size:14px;font-weight:550;padding:11px 12px;border:2px solid var(--line);
+  border-radius:11px;background:var(--panel);color:var(--txt);cursor:pointer}
+.params select:focus{border-color:var(--accent);outline:none}
+.chain-step{border-left:3px solid rgba(var(--amber-rgb),.45);padding-left:13px;margin-left:4px}
+.chain-if{font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--amber);font-weight:700;padding-top:8px}
 @media (max-width:760px){.ask,.result{padding-left:16px;padding-right:16px}}
 /* --- hero --- */
 .hero{max-width:640px;padding:26px 0 8px}
@@ -1190,20 +1196,21 @@ function generateSchedule(opts){
    actually cares about. */
 const OPTION_KINDS=[
   {id:'max',   name:'Knocks out the most',   why:'Every class here counts toward several things at once.',
-   opts:{credits:15}},
+   opts:{}},
   {id:'open',  name:'Everything has seats',  why:'Only classes with room right now — the safest to actually get.',
-   opts:{credits:15,onlyOpen:true}},
+   opts:{onlyOpen:true}},
   {id:'light', name:'Lighter load',          why:'Still full-time, but the smallest credit count that works.',
-   opts:{credits:12}},
+   opts:{light:true}},
   {id:'late',  name:'No early mornings',     why:'Nothing starts before 10am.',
-   opts:{credits:15,notBefore:600}},
+   opts:{notBefore:600}},
   {id:'tight', name:'Fewer days on campus',  why:'Classes packed into as few days as possible.',
-   opts:{credits:15,compact:true}}
+   opts:{compact:true}}
 ];
 function generateOptions(){
   const out=[];
   OPTION_KINDS.forEach(k=>{
-    const r=generateSchedule(Object.assign({maxLevel:3999},k.opts));
+    const base={maxLevel:3999,credits:k.opts.light?Math.max(12,targetCr-3):targetCr};
+    const r=generateSchedule(Object.assign(base,k.opts));
     if(!r.courses.length)return;
     const key=r.courses.map(codeOf).sort().join('|');
     if(out.some(o=>o.key===key))return;      // do not show the same schedule twice
@@ -1255,7 +1262,8 @@ function backupsFor(code,chosen){
    contingency board. Your intended courses, what is open, and for each one the ranked
    fallbacks that keep the same requirement. Coursicle tells you when a seat frees up;
    nothing tells you what to take instead that still counts. That is the gap. */
-let dropped=S('dropped')||[];        // courses you tried for and did not get
+let dropped=S('dropped')||[];
+let openChain={};        // courses you tried for and did not get
 let boardQ='', step=(S('myprograms')||[]).length?(S('step')||'board'):'ask';
 let openWhy={};
 
@@ -1280,6 +1288,17 @@ const REQ_GROUPS=[
 ];
 function reqsOfKind(k){return REQS.filter(p=>(p.kind||'other')===k)}
 
+let reqQ='';
+function askRows(kind){
+  const list=reqsOfKind(kind);
+  const q=reqQ.trim().toLowerCase();
+  if(q)return list.filter(p=>p.name.toLowerCase().indexOf(q)>-1).slice(0,8);
+  // no search: only the hand-checked entries plus anything already ticked — 200+ rows
+  // of auto-extracted programs would be the wall of majors this screen replaced
+  // hand-entered tiers (official/curated/partial) show by default; the 200 auto-extracted
+  // ones stay behind search
+  return list.filter(p=>p.confidence!=='catalog'&&p.confidence!=='approx'||myPrograms.indexOf(p.id)>-1);
+}
 function renderAsk(){
   const picked=myPrograms.length;
   V.innerHTML=`<div class="ask">
@@ -1296,8 +1315,14 @@ function renderAsk(){
       </select>
     </label>
 
+    <div class="q" style="margin-bottom:20px">
+      <input type="text" placeholder="Find your major or minor — try history, econ, physics…"
+        id="reqSearch" value="${reqQ}" oninput="reqQ=this.value;renderAsk();const e=document.getElementById('reqSearch');if(e&&e.focus){e.focus();if(e.setSelectionRange)e.setSelectionRange(e.value.length,e.value.length)}"
+        style="width:100%;font-family:inherit;font-size:16.5px;padding:15px 17px;border:2px solid var(--line);border-radius:13px;background:var(--panel);color:var(--txt)">
+    </div>
+
     ${REQ_GROUPS.map(([kind,label,hint])=>{
-      const list=reqsOfKind(kind);
+      const list=askRows(kind);
       if(!list.length)return '';
       return `<div class="rgroup">
         <div class="rglabel">${label}</div>
@@ -1307,17 +1332,14 @@ function renderAsk(){
           <span class="rgname">${p.name}
             <span class="rgmeta">${p.slots.length} requirement${p.slots.length>1?'s':''}${
               p.confidence==='official'?' · from Cornell\'s own data':
-              p.confidence==='partial'?' · course list not confirmed yet':''}</span></span>
+              p.confidence==='partial'?' · course list not confirmed yet':
+              p.confidence==='approx'?' · approximate — confirm with the department':
+              p.confidence==='catalog'?' · read from the official page':''}</span></span>
         </label>`).join('')}
       </div>`;
     }).join('')}
 
-    <div class="rgroup">
-      <div class="rglabel">Not listed?</div>
-      <div class="rghint">Only a few programs are built so far. If yours is missing, Jarvis can still
-        track your college distribution requirements — the rest will show as "doesn't count toward
-        anything you're tracking" rather than guessing.</div>
-    </div>
+    <div class="rgroup"><div class="rghint">${reqQ?'':'Type above to search all '+REQS.length+' programs — every Cornell major and minor that maps to a subject is in here.'}</div></div>
 
     <button class="go" ${picked?'':'disabled'} onclick="startBoard()">
       ${picked?`Continue with ${picked} selected →`:'Pick at least one'}</button>
@@ -1336,6 +1358,24 @@ function startBoard(){
 }
 /* ---- compare a handful of ways to do the semester ---- */
 let options=null, openOpt={};
+let targetCr=S('targetCr')||15;
+function setParam(fn){fn();S('prefs',prefs);S('targetCr',targetCr);options=null;renderOptions()}
+function paramsBar(){
+  const sel=(v,cur)=>v===cur?'selected':'';
+  return `<div class="params">
+    <select onchange="setParam(()=>prefs.noBefore=+this.value)">
+      ${[[0,'Start any time'],[540,'Nothing before 9am'],[600,'Nothing before 10am'],[660,'Nothing before 11am']]
+        .map(o=>`<option value="${o[0]}" ${sel(o[0],prefs.noBefore||0)}>${o[1]}</option>`).join('')}</select>
+    <select onchange="setParam(()=>prefs.noAfter=+this.value)">
+      ${[[0,'End any time'],[960,'Done by 4pm'],[1020,'Done by 5pm'],[1080,'Done by 6pm']]
+        .map(o=>`<option value="${o[0]}" ${sel(o[0],prefs.noAfter||0)}>${o[1]}</option>`).join('')}</select>
+    <select onchange="setParam(()=>prefs.daysOff=this.value?[this.value]:[])">
+      ${[['','No day off needed'],['M','Mondays free'],['T','Tuesdays free'],['W','Wednesdays free'],['R','Thursdays free'],['F','Fridays free']]
+        .map(o=>`<option value="${o[0]}" ${sel(o[0],(prefs.daysOff||[])[0]||'')}>${o[1]}</option>`).join('')}</select>
+    <select onchange="setParam(()=>targetCr=+this.value)">
+      ${[12,13,14,15,16,17,18].map(c=>`<option value="${c}" ${sel(c,targetCr)}>${c} credits</option>`).join('')}</select>
+  </div>`;
+}
 function renderOptions(){
   if(!options)options=generateOptions();
   const DAY={M:'Mon',T:'Tue',W:'Wed',R:'Thu',F:'Fri'};
@@ -1345,6 +1385,7 @@ function renderOptions(){
       <div class="bsub">Built from what you picked. Choose one — you can change it after.</div>
       <div class="bstamp">Seats checked ${BUILT} · <a href="#" onclick="editReqs();return false">change requirements</a></div>
     </div>
+    ${paramsBar()}
     ${options.length?options.map(o=>`<div class="optcard ${openOpt[o.id]?'open':''}">
       <div class="opt-top" onclick="openOpt['${o.id}']=!openOpt['${o.id}'];renderOptions()">
         <div style="flex:1">
@@ -1450,7 +1491,7 @@ function boardCard(r,slots,mine){
   const code=codeOf(r), st=statusOf(r), lost=dropped.indexOf(code)>-1;
   const keeps=slotsFilledBy(r,slots);
   const codes=mine.map(codeOf);
-  const bk=(lost||!isOpen(r))?backupsFor(code,codes):[];
+  const bk=(lost||!isOpen(r)||openChain[code])?backupsFor(code,codes):[];
   const when=(r[4][0]||'').split('').map(d=>({M:'Mon',T:'Tue',W:'Wed',R:'Thu',F:'Fri'}[d]||d)).join(' ')+' · '+(r[5][0]||'time TBA');
   return `<div class="bcard2 ${lost?'lost':''}">
     <div class="bc-top">
@@ -1464,19 +1505,22 @@ function boardCard(r,slots,mine){
     ${keeps.length?`<div class="bc-keeps">Keeps${keeps.map(k=>` <b>${k.sname}</b>`).join(' ·')}</div>`:
       `<div class="bc-keeps dim">Doesn't count toward anything you're tracking.</div>`}
 
-    ${(lost||!isOpen(r))?`<div class="plan-b">
-      <div class="pb-head">${lost?'Take one of these instead':'If this fills, take'}</div>
-      ${bk.length?bk.slice(0,3).map(b=>{const bs=statusOf(b.r);
-        return`<div class="pb-row">
+    ${(lost||!isOpen(r)||openChain[code])?`<div class="plan-b">
+      <div class="pb-head">${lost?'Take one of these instead':'Your pathway if it fills'}</div>
+      ${bk.length?bk.slice(0,3).map((b,bi)=>{const bs=statusOf(b.r);
+        return`<div class="chain-step">
+          <div class="chain-if">${bi===0?(lost?'first choice →':'if it\'s full →'):bi===1?'if that\'s full too →':'and if that one\'s full →'}</div>
+          <div class="pb-row">
           <div style="flex:1"><b>${b.code}</b> ${b.r[2]}
             <div class="pb-keeps">still covers ${b.covers.join(' · ')}</div></div>
           <span class="pill ${bs[2]}">${bs[1]}</span>
           <button class="mini" onclick="takeBackup('${code}','${b.code}')">switch</button>
-        </div>`}).join(''):
+        </div></div>`}).join(''):
         `<div class="pb-row dim">No backup covers the same requirement and fits your week. Worth asking your advisor.</div>`}
     </div>`:''}
 
     <div class="bc-foot">
+      ${(!lost&&isOpen(r))?`<a href="#" onclick="openChain['${code}']=!openChain['${code}'];plan_();return false">${openChain[code]?'hide pathway':'see the pathway'}</a>`:''}
       ${lost?`<a href="#" onclick="dropped=dropped.filter(c=>c!=='${code}');S('dropped',dropped);plan_();return false">actually I got it</a>`
             :`<a href="#" onclick="markLost('${code}');return false">didn't get this one</a>`}
       <a href="#" onclick="removeFromBoard('${code}');return false">remove</a>

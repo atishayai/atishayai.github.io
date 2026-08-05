@@ -64,6 +64,80 @@ for name, pg in programs.items():
     slim[name] = e
 
 reqs = json.load(open(f"{D}/requirements.json"))
+
+# --- derive an approximate requirement model for every program we can map to a subject ---
+# The curated entries above are exact. For the rest of the catalog, a program whose name
+# matches a roster subject ("History (BA)" -> HIST) gets a two-slot approximation: half its
+# estimated course count at any level, half at 3000+. Clearly labelled approximate — the
+# point is that every mappable major and minor participates in pathways TODAY, and the
+# label tells the student exactly how far to trust it.
+# Tier 2: models extracted from each program's own catalog page (fetch_programs.py).
+# Every count passed a self-consistency gate against the sentence it came from, which is
+# shipped as evidence. Curated entries always win; the name-map approximation is the
+# tier of last resort below.
+try:
+    _catalog = json.load(open(f"{D}/requirements_catalog.json"))
+except FileNotFoundError:
+    _catalog = {}
+_covered = {p["name"] for p in reqs["programs"]}
+for _pname, _cx in sorted(_catalog.items()):
+    if _pname in _covered:
+        continue
+    _kind = "minor" if "minor" in _pname.lower() else "major"
+    _slug = re.sub(r"[^a-z0-9]+", "-", _pname.lower()).strip("-")
+    _ev = _cx.get("evidence", {})
+    _entry = {
+        "id": f"cat-{_slug}", "name": _pname, "kind": _kind, "confidence": "catalog",
+        "source": _cx.get("source", ""), "slots": _cx["slots"],
+        "note": "Read automatically from the official catalog page"
+                + (" (subject inferred from the program name)" if _cx.get("subjectInferred") else "")
+                + " — confirm details with the department.",
+    }
+    if _cx.get("rules"):
+        _entry["rules"] = _cx["rules"]
+    _ship_ev = {}
+    if "count" in _ev:
+        _ship_ev["count"] = _ev["count"][:150]
+    for _k in ("minGrade", "letterOnly", "noSU"):
+        if _k in _ev and len(_ship_ev) < 3:
+            _ship_ev[_k] = _ev[_k][:150]
+    if _ship_ev:
+        _entry["evidence"] = _ship_ev
+    reqs["programs"].append(_entry)
+    _covered.add(_pname)
+print(f"catalog-extracted requirement models: {len(_catalog)} programs")
+
+_name2code = {v.strip().lower(): k for k, v in subjects.items() if isinstance(v, str) and v.strip()}
+def _base(p): return re.sub(r"\s*\(.*?\)\s*$", "", p).strip().lower()
+_derived = 0
+for _pname, _pg in programs.items():
+    if _pname in _covered:
+        continue
+    _b = _base(_pname)
+    _code = _name2code.get(_b)
+    if not _code:
+        for _nm, _c in _name2code.items():
+            if _nm and (_nm.startswith(_b) or _b.startswith(_nm)):
+                _code = _c
+                break
+    if not _code or _code not in courses:
+        continue
+    _n = max(2, min(sum(_it.get("n") or 1 for _it in _pg.get("items", [])), 12))
+    _kind = "minor" if "minor" in _pname.lower() else "major"
+    _lower = (_n + 1) // 2
+    _slug = re.sub(r"[^a-z0-9]+", "-", _pname.lower()).strip("-")
+    _slots = [{"id": "found", "name": f"{_code} courses (any level)", "need": _lower,
+               "match": {"pred": {"subjects": [_code], "minLevel": 1000}}}]
+    if _n - _lower:
+        _slots.append({"id": "upper", "name": f"{_code} upper-level (3000+)", "need": _n - _lower,
+                       "match": {"pred": {"subjects": [_code], "minLevel": 3000}}})
+    reqs["programs"].append({
+        "id": f"auto-{_slug}", "name": _pname, "kind": _kind, "confidence": "approx",
+        "source": _pg.get("source", ""),
+        "note": f"Approximate: treated as {_n} {_code} courses. The real requirements have named slots - check the official page.",
+        "slots": _slots})
+    _derived += 1
+print(f"derived approximate requirements for {_derived} programs (curated entries untouched)")
 data = {"catalog": cat, "programs": slim, "subjectNames": subjects,
         "instructors": INSTR, "requirements": reqs,
         "built": __import__("datetime").date.today().isoformat()}
