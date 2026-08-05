@@ -61,11 +61,23 @@ catch (e) { ok(false, 'boot: ' + e.message); console.error(e); process.exit(1); 
 const g = name => vm.runInContext(name, ctx);
 const run = code => vm.runInContext(code, ctx);
 
-// J1: onboarding asks which school before anything else
+// J1: the whole setup is three dropdowns on one screen — no modal, no wizard
 ok(run(`S('school')`) === null, 'J1: fresh user has no school yet');
-ok(run(`document.getElementById('onboard')!==undefined`), 'J1: onboarding screen is shown');
-run(`obSchool('cornell')`);
-ok(run(`S('school')`) === 'cornell', 'J1: picking a school is remembered');
+ok(run(`typeof plan_==='function' && typeof startPlan==='function'`), 'J1: the simple flow exists');
+ok(run(`typeof obSchool==='undefined'`), 'J1: the old school modal is gone');
+run(`step='ask';plan_()`);
+const askHTML = run(`V.innerHTML`);
+ok(/Where do you go\?/.test(askHTML), 'J1: asks the school');
+ok(/What are you studying\?/.test(askHTML), 'J1: asks the major');
+ok(/med school/.test(askHTML), 'J1: asks about pre-med');
+ok(!/totally free/.test(askHTML), 'J1: no schedule-rules question — kept simple');
+ok((askHTML.match(/<select/g)||[]).length === 3, 'J1: exactly three dropdowns');
+run(`S('school','cornell');ansMajor='anthro-ba';ansPre='maybe';startPlan()`);
+ok(run(`S('school')`) === 'cornell', 'J1: answers are remembered');
+ok(run(`myPrograms.indexOf('as-distr')>-1 && myPrograms.indexOf('anthro-ba')>-1 && myPrograms.indexOf('premed')>-1`),
+   'J1: three dropdowns become the tracked requirement sets');
+ok(run(`planResult && planResult.courses.length>0`), 'J1: one button produces a schedule');
+ok(run(`prefs.daysOff.length===0`), 'J1: no rules were invented on the student behalf');
 
 // J2: setup wizard — programs first, then subjects, then rules (auto-opened by obSchool)
 run(`tgProg(Object.keys(PROGRAMS).find(k=>/Cognitive/i.test(k)))`);

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#F7F5F1">
+<meta name="theme-color" content="#0C0C12">
 <title>Jarvis — your whole college life, one place</title>
 <meta name="description" content="Build your Cornell schedule, track every major and minor requirement, and find the classes that count toward more than one at once. Free, no account, runs in your browser.">
 <!-- Link preview for when this gets shared (Instagram bio, iMessage, Discord).
@@ -20,9 +20,9 @@
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Jarvis — your whole college life, one place">
 <meta name="twitter:description" content="Schedule, degree progress, and a course optimizer. Free, no account.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231F7A70'/%3E%3Ccircle cx='16' cy='16' r='6.5' fill='none' stroke='%23F7F5F1' stroke-width='2.5'/%3E%3Ccircle cx='16' cy='16' r='2' fill='%23F7F5F1'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%234C8DFF'/%3E%3Ccircle cx='16' cy='16' r='6.5' fill='none' stroke='%230C0C12' stroke-width='2.5'/%3E%3Ccircle cx='16' cy='16' r='2' fill='%230C0C12'/%3E%3C/svg%3E">
 <style>
-:root{--bg:#F7F5F1;--panel:#FFFFFF;--panel2:#F1EDE6;--line:#E3DCD1;--line-rgb:227,220,209;--accent:#1F7A70;--accent-rgb:31,122,112;--amber:#9A6B12;--amber-rgb:154,107,18;--red:#B03A38;--red-rgb:176,58,56;--green:#2C7A52;--green-rgb:44,122,82;--dim:#6E7683;--txt:#1C2430;--scrim-rgb:28,36,48;--sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Helvetica,Arial,sans-serif;--mono:'SF Mono',ui-monospace,Menlo,monospace}
+:root{--bg:#0C0C12;--panel:#16161F;--panel2:#1E1E2A;--line:#2B2B3B;--line-rgb:43,43,59;--accent:#4C8DFF;--accent-rgb:76,141,255;--purple:#A855F7;--purple-rgb:168,85,247;--amber:#FFD24C;--amber-rgb:255,210,76;--red:#FF6B6B;--red-rgb:255,107,107;--green:#34D399;--green-rgb:52,211,153;--dim:#9595AB;--txt:#F3F3F9;--scrim-rgb:4,4,9;--sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Helvetica,Arial,sans-serif;--mono:'SF Mono',ui-monospace,Menlo,monospace}
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--bg);color:var(--txt);font-family:var(--sans);font-size:14px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
 header{display:flex;align-items:center;gap:18px;padding:14px 22px;border-bottom:1px solid var(--line)}
@@ -110,6 +110,55 @@ a{color:var(--accent);text-decoration:none}
 #obcard p{font-size:14px;color:var(--dim);line-height:1.8;margin:14px 0 20px}
 #obcard input{text-align:center;font-size:14px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+/* ===== the simple app ===== */
+body.focus header{display:none}            /* no nav until they have an answer */
+body.focus main{padding:0}
+.ask{max-width:520px;margin:0 auto;padding:38px 20px 60px}
+.asklogo{font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:var(--purple);font-weight:700;margin-bottom:22px}
+.ask h1{font-size:clamp(30px,6vw,42px);font-weight:720;letter-spacing:-.025em;line-height:1.12}
+.ask p{font-size:17px;color:var(--dim);line-height:1.6;margin:12px 0 34px}
+.q{display:block;position:relative;margin-bottom:22px}
+.qnum{position:absolute;left:0;top:2px;width:26px;height:26px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--purple));color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.qtext{display:block;font-size:19px;font-weight:620;margin:0 0 10px 38px;line-height:1.35}
+.q select{display:block;width:100%;font-family:inherit;font-size:18px;font-weight:500;
+  padding:16px 18px;border:2px solid var(--line);border-radius:13px;background:var(--panel);
+  color:var(--txt);cursor:pointer;appearance:none;
+  background-image:linear-gradient(45deg,transparent 50%,var(--dim) 50%),linear-gradient(135deg,var(--dim) 50%,transparent 50%);
+  background-position:calc(100% - 22px) 25px,calc(100% - 16px) 25px;background-size:6px 6px,6px 6px;background-repeat:no-repeat}
+.q select:focus{border-color:var(--accent);outline:none}
+.go{display:block;width:100%;background:linear-gradient(135deg,var(--accent),var(--purple));color:#fff;border:none;border-radius:14px;
+  font-family:inherit;font-size:19px;font-weight:680;padding:19px;cursor:pointer;margin-top:32px;
+  box-shadow:0 6px 18px rgba(var(--accent-rgb),.28);transition:transform .12s,box-shadow .12s}
+.go:hover{transform:translateY(-1px);box-shadow:0 9px 24px rgba(var(--accent-rgb),.34)}
+.ghost{display:block;width:100%;background:none;border:2px solid var(--line);border-radius:14px;
+  font-family:inherit;font-size:16px;font-weight:600;padding:15px;cursor:pointer;color:var(--dim);margin-top:10px}
+.askfoot{font-size:13.5px;color:var(--dim);text-align:center;margin-top:22px;line-height:1.8}
+.askfoot a{display:block;margin-top:4px}
+/* result */
+.result{max-width:560px;margin:0 auto;padding:26px 20px 60px}
+.rhead{margin-bottom:22px}
+.rbig{font-size:clamp(27px,5.4vw,36px);font-weight:720;letter-spacing:-.02em}
+.rsub{font-size:16.5px;color:var(--dim);margin-top:9px;line-height:1.55}
+.bcard{border:2px solid var(--line);border-radius:16px;background:var(--panel);margin-bottom:13px;overflow:hidden}
+.bmain{padding:19px 20px;cursor:pointer}
+.bmain:hover{background:rgba(var(--accent-rgb),.035)}
+.bcode{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--accent);letter-spacing:.02em}
+.btitle{font-size:20px;font-weight:640;line-height:1.3;margin:3px 0 7px}
+.bwhen{font-size:16px;color:var(--dim)}
+.btags{display:flex;flex-wrap:wrap;gap:7px;margin-top:13px}
+.tag{font-size:13px;font-weight:600;padding:5px 11px;border-radius:99px;background:var(--panel2);color:var(--dim)}
+.tag-count{background:rgba(var(--purple-rgb),.18);color:var(--purple)}
+.tag-open{background:rgba(var(--green-rgb),.14);color:var(--green)}
+.tag-full{background:rgba(var(--red-rgb),.12);color:var(--red)}
+.bwhy{font-size:14.5px;font-weight:600;color:var(--accent);margin-top:14px}
+.bproof{border-top:2px solid var(--line);background:var(--panel2);padding:15px 20px}
+.pline{padding:8px 0;font-size:15px;line-height:1.5}
+.pline b{display:block;font-weight:640}
+.pline span{color:var(--dim);font-size:14px}
+.pline a{font-size:14px}
+.ractions{margin-top:24px}
+@media (max-width:760px){.ask,.result{padding-left:16px;padding-right:16px}}
 /* --- hero --- */
 .hero{max-width:640px;padding:26px 0 8px}
 .hero h1{font-size:clamp(26px,4.2vw,38px);font-weight:680;letter-spacing:-.02em;line-height:1.15}
@@ -401,7 +450,7 @@ let cur='home';
 document.getElementById('nav').innerHTML=TABS.map(t=>`<button data-t="${t[0]}" onclick="go('${t[0]}')">${t[1]}</button>`).join('')
   +`<span class="morewrap"><button id="moreBtn" onclick="toggleMore(event)">More ▾</button>
      <div id="moreMenu">${MORE.map(t=>`<button data-t="${t[0]}" onclick="go('${t[0]}');toggleMore()">${t[1]}</button>`).join('')}</div></span>`
-  +`<button id="gear" title="my setup: interests · programs · rules" onclick="openSetup()">⚙</button>`;
+  ;
 function toggleMore(e){if(e)e.stopPropagation();const m=document.getElementById('moreMenu');m.classList.toggle('on')}
 if(document.addEventListener)document.addEventListener('click',()=>{const m=document.getElementById('moreMenu');if(m)m.classList.remove('on')});
 function go(t){if(t==='setup'){openSetup();return}if(t==='todo'||t==='note')t='nb';cur=t;document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));({plan_,home,sch,opt,prog,nb,cal,res,brain})[t]()}
@@ -1102,128 +1151,133 @@ function backupsFor(code,chosen){
    .sort((a,b)=>(b.spec-a.spec)||(b.open-a.open)||(b.shared-a.shared)||(b.total-a.total))
    .slice(0,4);
 }
-/* ===== PLAN — the hero =====
-   Answer loud, receipts quiet. One line of verdict per course; proof is one tap away and
-   never on screen uninvited, because dumping the proof rebuilds the overwhelm we removed. */
-let planResult=null, openReceipt={}, openBackup={};
+/* ===== THE APP =====
+   Three dropdowns and a button. Everything else in this file still exists but is reached
+   only from the small "more tools" link — a first-time student should never see it. */
+let planResult=null, openReceipt={}, step='ask';
+let ansMajor=S('ansMajor')||'', ansPre=S('ansPre')||'', ansFree=S('ansFree')||'';
+
+const MAJORS=[['anthro-ba','Anthropology'],['','— my major is not here yet —']];
+const DAYS=[['','No preference'],['M','Mondays'],['T','Tuesdays'],['W','Wednesdays'],['R','Thursdays'],['F','Fridays']];
 
 function plan_(){
-  if(!myPrograms.length){
-    V.innerHTML=`<div class="hero">
-      <h1>What should I take?</h1>
-      <p class="herosub">Tell Jarvis what you're working toward and it builds the schedule for you —
-      the courses that knock out the most requirements at once, around the times you want to keep free.</p>
-      <button class="bigbtn" onclick="openReqPicker()">Choose my programs →</button>
-      <div class="fine" style="margin-top:14px">Takes about a minute. Nothing leaves your device.</div>
-    </div>`;return;
-  }
-  const owed=openSlots();
-  V.innerHTML=`<div class="hero">
-      <h1>What should I take?</h1>
-      <p class="herosub">${myPrograms.map(id=>(reqProgram(id)||{}).name).filter(Boolean).join(' · ')}
-        — <b>${owed.reduce((a,s)=>a+s.left,0)}</b> requirements still owed.</p>
-      <button class="bigbtn" onclick="runPlan()">Build my schedule</button>
-      <div class="fine" style="margin-top:12px"><a href="#" onclick="openReqPicker();return false">change programs</a>
-        · <a href="#" onclick="openSetup();return false">change my rules</a></div>
-    </div><div id="planOut"></div>`;
-  if(planResult)renderPlan();
+  document.body.classList.add('focus');
+  if(step==='done'&&planResult)return renderPlan();
+  V.innerHTML=`<div class="ask">
+    <div class="askhead">
+      <div class="asklogo">Jarvis</div>
+      <h1>Let's pick your classes.</h1>
+      <p>Three quick questions. Then I'll build your whole Fall 2026 schedule.</p>
+    </div>
+
+    <label class="q">
+      <span class="qnum">1</span>
+      <span class="qtext">Where do you go?</span>
+      <select id="qSchool" onchange="S('school',this.value)">
+        <option value="cornell" ${S('school')!=='other'?'selected':''}>Cornell</option>
+        <option value="other" ${S('school')==='other'?'selected':''}>Somewhere else — not built yet</option>
+      </select>
+    </label>
+
+    <label class="q">
+      <span class="qnum">2</span>
+      <span class="qtext">What are you studying?</span>
+      <select id="qMajor" onchange="ansMajor=this.value;S('ansMajor',ansMajor)">
+        <option value="">Choose your major…</option>
+        ${MAJORS.map(m=>`<option value="${m[0]}" ${ansMajor===m[0]&&m[0]?'selected':''}>${m[1]}</option>`).join('')}
+      </select>
+    </label>
+
+    <label class="q">
+      <span class="qnum">3</span>
+      <span class="qtext">Thinking about med school?</span>
+      <select id="qPre" onchange="ansPre=this.value;S('ansPre',ansPre)">
+        <option value="no" ${ansPre==='no'?'selected':''}>No</option>
+        <option value="yes" ${ansPre==='yes'?'selected':''}>Yes</option>
+        <option value="maybe" ${ansPre==='maybe'?'selected':''}>Not sure — keep it open</option>
+      </select>
+    </label>
+
+    <button class="go" onclick="startPlan()">Build my schedule →</button>
+    <div class="askfoot">Free. No account. Nothing leaves your laptop.
+      <a href="#" onclick="document.body.classList.remove('focus');step='done';go('home');return false">skip, just let me look around</a></div>
+  </div>`;
 }
-function runPlan(){planResult=generateSchedule({credits:15,maxLevel:3999});openReceipt={};openBackup={};renderPlan()}
+
+function startPlan(){
+  if(S('school')==='other'){
+    V.innerHTML=`<div class="ask"><div class="asklogo">Jarvis</div>
+      <h1>Only Cornell so far.</h1>
+      <p>Your school's course catalog isn't loaded yet, so I can't build a real schedule for you.
+      Everything here would be Cornell classes — which won't help.</p>
+      <button class="go" onclick="step='ask';plan_()">← Go back</button></div>`;return;
+  }
+  myPrograms=['as-distr'];
+  if(ansMajor)myPrograms.push(ansMajor);
+  if(ansPre==='yes'||ansPre==='maybe')myPrograms.push('premed');
+  S('myprograms',myPrograms);
+  prefs.daysOff=[];prefs.noBefore=0;prefs.noAfter=0;S('prefs',prefs);  // keep it simple: no rules to answer yet
+  planResult=generateSchedule({credits:15,maxLevel:3999});
+  openReceipt={};step='done';
+  plan_();
+}
 
 function renderPlan(){
-  const box=document.getElementById('planOut');if(!box||!planResult)return;
-  const res=planResult, codes=res.courses.map(codeOf);
-  if(!res.courses.length){
-    box.innerHTML=`<div class="empty">Nothing fits your rules right now.<br>
-      <span class="fine">Loosening a day off or a time window usually unblocks it.</span>
-      <div style="margin-top:10px"><button class="b" onclick="openSetup()">change my rules</button></div></div>`;
-    return;
+  const res=planResult;
+  if(!res||!res.courses.length){
+    V.innerHTML=`<div class="ask"><h1>Hmm — nothing fits.</h1>
+      <p>I couldn't find classes that fit. Try a different major.</p>
+      <button class="go" onclick="step='ask';plan_()">← Change my answers</button></div>`;return;
   }
+  const codes=res.courses.map(codeOf);
   const totalFills=res.courses.reduce((a,r)=>a+slotsFilledBy(r,res.slots).length,0);
-  box.innerHTML=`
-    <div class="verdict">
-      <div class="vbig">${res.courses.length} courses · ${res.credits} credits</div>
-      <div class="vsub">Knocks out <b>${totalFills} requirements</b> across ${new Set(res.courses.flatMap(r=>slotsFilledBy(r,res.slots).map(s=>s.pid))).size} programs.
-        Every one fits your rules and nothing clashes.</div>
+  V.innerHTML=`<div class="result">
+    <div class="rhead">
+      <div class="rbig">Here's your semester.</div>
+      <div class="rsub">${res.courses.length} classes · ${res.credits} credits · knocks out <b>${totalFills} requirements</b></div>
     </div>
-    ${res.courses.map((r,i)=>courseCard(r,i,res,codes)).join('')}
-    <div class="row" style="margin-top:16px;flex-wrap:wrap">
-      <button class="b" style="font-size:13px;padding:12px 20px" onclick="acceptPlan()">Put this on my week</button>
-      <button class="b" onclick="runPlan()">try again</button>
+    ${res.courses.map(r=>bigCard(r,res,codes)).join('')}
+    <div class="ractions">
+      <button class="go" onclick="acceptPlan()">Looks good — save it</button>
+      <button class="ghost" onclick="step='ask';plan_()">Change my answers</button>
     </div>
-    <div class="fine" style="margin-top:12px">Seat availability is from ${BUILT||'the last data refresh'} — check the roster before you enroll.</div>`;
+    <div class="askfoot">Seats checked ${BUILT}. Double-check on the roster before you enroll.
+      <a href="#" onclick="document.body.classList.remove('focus');go('home');return false">more tools</a></div>
+  </div>`;
 }
 
-function courseCard(r,i,res,codes){
-  const code=codeOf(r), fills=slotsFilledBy(r,res.slots), open=isOpen(r);
-  const showR=openReceipt[code], showB=openBackup[code];
-  const bk=showB?backupsFor(code,codes):[];
-  return `<div class="pcard">
-    <div class="pcard-top" onclick="openReceipt['${code}']=!openReceipt['${code}'];renderPlan()">
-      <div style="flex:1">
-        <div class="pcode">${code} <span class="ptitle">${r[2]}</span></div>
-        <div class="pmeta">${r[4].map((d,j)=>d+' '+(r[5][j]||'')).slice(0,1).join('')} · ${r[3]} credits
-          · <span class="${open?'seat-o':'seat-c'}">${seatLabel(r)}</span></div>
+function bigCard(r,res,codes){
+  const code=codeOf(r), fills=slotsFilledBy(r,res.slots), open=isOpen(r), shown=openReceipt[code];
+  const day={M:'Mon',T:'Tue',W:'Wed',R:'Thu',F:'Fri'};
+  const when=(r[4][0]||'').split('').map(d=>day[d]||d).join(' ')+' · '+(r[5][0]||'time TBA');
+  return `<div class="bcard">
+    <div class="bmain" onclick="openReceipt['${code}']=!openReceipt['${code}'];renderPlan()">
+      <div class="bcode">${code}</div>
+      <div class="btitle">${r[2]}</div>
+      <div class="bwhen">${when}</div>
+      <div class="btags">
+        <span class="tag tag-count">counts for ${fills.length} requirement${fills.length>1?'s':''}</span>
+        <span class="tag ${open?'tag-open':'tag-full'}">${open?'seats open':'was full'}</span>
+        <span class="tag">${r[3]} credits</span>
       </div>
-      <div class="pfills">Counts for <b>${fills.length}</b><span class="caret">${showR?'▾':'▸'}</span></div>
+      <div class="bwhy">${shown?'hide why ▲':'why this one? ▼'}</div>
     </div>
-    ${showR?`<div class="receipt">
-      ${fills.map(sl=>`<div class="rline"><span class="rtick">✓</span>
-        <span><b>${sl.pname}</b> — ${sl.sname}
-        ${sl.conf==='partial'?'<span class="warnpill">unverified</span>':''}
-        ${sl.note?`<div class="fine">${sl.note}</div>`:''}</span>
-        <a href="${sl.source}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">rule ↗</a></div>`).join('')}
-      <div class="rline"><span class="rtick">✓</span><span>Fits your rules — no clash with the rest of this schedule.</span></div>
-      <div class="rline"><span class="rtick">${open?'✓':'!'}</span><span>${open?'Had open seats':'Was full'} as of ${BUILT}.</span>
-        <a href="https://classes.cornell.edu/search/roster/FA26?q=${encodeURIComponent(code)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">roster ↗</a></div>
-      <div style="margin-top:8px"><button class="b" onclick="event.stopPropagation();openBackup['${code}']=!openBackup['${code}'];renderPlan()">
-        ${showB?'hide backups':'show backups'}</button></div>
-      ${showB?(bk.length?`<div class="backups">
-        <div class="fine" style="margin-bottom:6px">If this fills, these cover the same requirement and still fit your week:</div>
-        ${bk.map(b=>`<div class="bline"><span><b>${b.code}</b> ${b.r[2]}
-            <div class="fine">covers ${b.covers.join(' · ')}</div></span>
-          <span class="${b.open?'seat-o':'seat-c'}">${b.open?'open':'full'}</span>
-          <button class="b" onclick="event.stopPropagation();swapIn('${code}','${b.code}')">swap in</button></div>`).join('')}
-        </div>`:`<div class="fine" style="margin-top:8px">No backup covers this one and still fits your week — worth a plan B with your advisor.</div>`):''}
+    ${shown?`<div class="bproof">
+      ${fills.map(sl=>`<div class="pline"><b>✓ ${sl.sname}</b><span>${sl.pname}</span>
+        <a href="${sl.source}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">see the rule ↗</a></div>`).join('')}
+      <div class="pline"><b>✓ Fits your schedule</b><span>No clash with the rest of these.</span></div>
     </div>`:''}
   </div>`;
 }
-function swapIn(oldCode,newCode){
-  const i=planResult.courses.findIndex(r=>codeOf(r)===oldCode);
-  const r=rec(newCode);if(i<0||!r)return;
-  planResult.courses[i]=r;
-  planResult.credits=planResult.courses.reduce((a,x)=>a+creditsOf(x),0);
-  openReceipt[newCode]=true;delete openReceipt[oldCode];delete openBackup[oldCode];
-  renderPlan();toast(newCode+' swapped in');
-}
+
 function acceptPlan(){
   if(!planResult)return;
   planResult.courses.forEach(r=>{const c=codeOf(r);if(!plan.some(p=>p.code===c))plan.push({code:c,pat:0})});
-  S('plan',plan);toast('Added to My Week');go('sch');
+  S('plan',plan);toast('Saved to your week');
 }
-
-/* program picker — which requirement sets am I working toward */
-function openReqPicker(){
-  const d=document.createElement('div');d.id='reqpick';
-  d.innerHTML=`<div id="reqcard">
-    <h2>What are you working toward?</h2>
-    <p class="fine" style="margin:8px 0 16px">Pick everything that applies. Jarvis looks for courses that satisfy several at once.</p>
-    ${REQS.map(p=>`<div class="reqrow ${myPrograms.indexOf(p.id)>-1?'on':''}" onclick="toggleReqProgram('${p.id}')">
-      <input type="checkbox" ${myPrograms.indexOf(p.id)>-1?'checked':''} onclick="event.stopPropagation();toggleReqProgram('${p.id}')">
-      <span style="flex:1"><b>${p.name}</b>
-        <div class="fine">${(p.slots||[]).length} requirement${p.slots.length>1?'s':''}${p.confidence==='partial'?' · course list not yet verified':p.confidence==='official'?' · from Cornell\'s own data':''}</div></span></div>`).join('')}
-    <div class="row" style="margin-top:18px;justify-content:flex-end">
-      <button class="b" style="font-size:13px;padding:11px 22px" onclick="document.getElementById('reqpick').remove();plan_()">Done</button></div>
-  </div>`;
-  d.onclick=e=>{if(e.target===d){d.remove();plan_()}};
-  document.body.appendChild(d);
-}
-function toggleReqProgram(id){
-  const i=myPrograms.indexOf(id);
-  i>-1?myPrograms.splice(i,1):myPrograms.push(id);
-  S('myprograms',myPrograms);planResult=null;
-  const el=document.getElementById('reqpick');if(el){el.remove();openReqPicker()}
-}
+/* kept so older calls and tests still resolve */
+function runPlan(){startPlan()}
+function openReqPicker(){step='ask';plan_()}
 /* ===== COURSE DETAIL =====
    One panel per course: who teaches it, every section time, and links out to what
    students say. Cornell's own course evaluations and RateMyProfessors are LINKED,
@@ -1371,9 +1425,9 @@ function res(){
 }
 /* ===== BRAIN ===== */
 let selB='root',bView={sc:1,tx:0,ty:0};
-const BCOLORS=['#1F7A70','#2C7A52','#9A6B12','#B03A38','#6B4E9E','#2F6BAD','#B5651D','#3F8F7F'];
+const BCOLORS=['#4C8DFF','#34D399','#FFD24C','#FF6B6B','#A855F7','#38BDF8','#FB923C','#2DD4BF'];
 function bnode(id){return brainN.find(n=>n.id===id)}
-function bcolor(n){return n.color||(n.parent==='root'?BCOLORS[Math.abs(hashId(n.id))%BCOLORS.length]:n.parent?bcolor(bnode(n.parent)||{}):'#1F7A70')}
+function bcolor(n){return n.color||(n.parent==='root'?BCOLORS[Math.abs(hashId(n.id))%BCOLORS.length]:n.parent?bcolor(bnode(n.parent)||{}):'#4C8DFF')}
 function hashId(s){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return h}
 function bTasks(n){return n.tasks||[]}
 function brain(){
@@ -1458,8 +1512,8 @@ function drawB(){
     grp.appendChild(c);
     if(n.emoji){const em=document.createElementNS(NS,'text');em.setAttribute('x',x);em.setAttribute('y',y+r/3);em.setAttribute('text-anchor','middle');em.setAttribute('font-size',r*0.9);em.textContent=n.emoji;grp.appendChild(em)}
     const t=document.createElementNS(NS,'text');t.setAttribute('x',x);t.setAttribute('y',n.id==='root'&&!n.emoji?y+4:y+r+13);t.setAttribute('text-anchor','middle');
-    t.setAttribute('font-size',n.id==='root'?12:n.parent==='root'?10.5:9);t.setAttribute('fill',n.id===selB?col:'#1C2430');t.textContent=n.label;grp.appendChild(t);
-    if(tasks.length){const bd=document.createElementNS(NS,'text');bd.setAttribute('x',x+r-2);bd.setAttribute('y',y-r+4);bd.setAttribute('text-anchor','middle');bd.setAttribute('font-size',9);bd.setAttribute('fill',open?'#9A6B12':'#2C7A52');bd.textContent=open?open:'✓';grp.appendChild(bd)}
+    t.setAttribute('font-size',n.id==='root'?12:n.parent==='root'?10.5:9);t.setAttribute('fill',n.id===selB?col:'#F3F3F9');t.textContent=n.label;grp.appendChild(t);
+    if(tasks.length){const bd=document.createElementNS(NS,'text');bd.setAttribute('x',x+r-2);bd.setAttribute('y',y-r+4);bd.setAttribute('text-anchor','middle');bd.setAttribute('font-size',9);bd.setAttribute('fill',open?'#FFD24C':'#34D399');bd.textContent=open?open:'✓';grp.appendChild(bd)}
     grp.addEventListener('click',e=>{e.stopPropagation();selB=n.id;drawB();drawBPanel()});
     g.appendChild(grp);
   });
@@ -1471,50 +1525,22 @@ function drawB(){
   svg.onmouseup=svg.onmouseleave=()=>{dr=null;svg.classList.remove('g')};
 }
 /* onboarding — first run */
-/* First screen. Asks which school before anything else: most people arriving from a
-   shared link are not at Cornell, and finding that out three screens in feels like a
-   bait-and-switch. Non-Cornell students are told plainly and still let in to look —
-   a hard wall loses them and teaches us nothing. No name prompt: asking who you are
-   before showing anything is friction with no payoff. Name lives in ⚙ instead. */
-function onboard(){
-  const d=document.createElement('div');d.id='onboard';
-  d.innerHTML=`<div id="obcard">
-    <h2>Jarvis</h2>
-    <p>Your whole college life in one place — schedule, degree progress, deadlines and notes.<br>
-    Free, no account, and everything stays on your device.</p>
-    <div class="fine" style="margin:20px 0 10px;text-align:center">Where do you go?</div>
-    <div class="schoolpick">
-      <button class="schoolbtn on" onclick="obSchool('cornell')">
-        <b>Cornell</b><span>Fall 2026 — ${CAT.length} courses, ${Object.keys(PROGRAMS).length} programs, ready now</span></button>
-      <button class="schoolbtn" onclick="obSchool('other')">
-        <b>Somewhere else</b><span>Not built yet — come in and look around</span></button>
-    </div>
-  </div>`;
-  document.body.appendChild(d);
-}
-function obSchool(which){
-  S('school',which);
-  document.getElementById('onboard').remove();
-  greet();
-  if(which==='other'){
-    // Honest about the limit, but still land them somewhere real.
-    toast('Only Cornell’s catalog is loaded — have a look around');
-    go('home');
-    return;
-  }
-  openSetup();
-}
+/* The old school modal and the three-step interest wizard are gone from the normal path.
+   The whole setup is now three dropdowns on one screen. openSetup() still exists for the
+   older tabs behind "more tools", but nothing in the main flow opens it. */
 function greet(){
   const n=S('user');if(!n)return;
   const h=new Date().getHours();
   document.getElementById('greet').textContent=(h<12?'good morning':h<18?'good afternoon':'good evening')+', '+n;
 }
 /* boot */
-crTop();go('plan_');
+crTop();
+if(!S('ansMajor')&&!S('plan'))step='ask';
+go('plan_');
 // Anyone who set up before the school question existed is already a Cornell user;
 // don't make them sit through onboarding again.
 if(!S('school')&&S('user'))S('school','cornell');
-if(!S('school'))onboard();else greet();
+greet();  // the school question now lives on the first screen, not in a modal of its own
 </script>
 </body>
 </html>
