@@ -61,28 +61,54 @@ catch (e) { ok(false, 'boot: ' + e.message); console.error(e); process.exit(1); 
 const g = name => vm.runInContext(name, ctx);
 const run = code => vm.runInContext(code, ctx);
 
-// J1: three dropdowns, then the enrollment board
-ok(run(`typeof plan_==='function' && typeof renderBoard==='function'`), 'J1: the board flow exists');
+// J1: requirement selection is explicit — the student picks the systems they are measured against
+ok(run(`typeof plan_==='function' && typeof renderBoard==='function' && typeof toggleReq==='function'`), 'J1: the flow exists');
 ok(run(`typeof obSchool==='undefined'`), 'J1: the old school modal is gone');
-run(`step='ask';plan_()`);
+run(`myPrograms=[];S('myprograms',myPrograms);step='ask';plan_()`);
 const askHTML = run(`V.innerHTML`);
-ok((askHTML.match(/<select/g)||[]).length === 3, 'J1: exactly three dropdowns');
-ok(!/totally free/.test(askHTML), 'J1: no scheduling-rules question');
-run(`S('school','cornell');ansMajor='anthro-ba';ansPre='maybe';startBoard()`);
-ok(run(`step`) === 'board', 'J1: answering moves you to the board');
-ok(run(`myPrograms.indexOf('as-distr')>-1 && myPrograms.indexOf('anthro-ba')>-1 && myPrograms.indexOf('premed')>-1`),
-   'J1: dropdowns become the tracked requirement sets');
+ok(/What do you have to satisfy\?/.test(askHTML), 'J1: asks what must be satisfied, not a mood question');
+ok(!/med school\?/.test(askHTML), 'J1: the "thinking about med school?" question is gone');
+ok(/College requirements/.test(askHTML) && /Major/.test(askHTML) && /Minor/.test(askHTML)
+   && /Pre-health/.test(askHTML), 'J1: requirement systems are grouped by kind');
+ok(/Pick at least one/.test(askHTML), 'J1: cannot continue without picking a requirement system');
+ok(run(`REQS.every(function(p){return ['core','major','minor','track','other'].indexOf(p.kind||'other')>-1})`),
+   'J1: every requirement program declares a kind so it lands in a group');
+run(`toggleReq('as-distr');toggleReq('anthro-ba');toggleReq('premed')`);
+ok(run(`myPrograms.length`) === 3, 'J1: ticking adds them');
+run(`toggleReq('premed')`);
+ok(run(`myPrograms.indexOf('premed')<0`), 'J1: unticking removes them');
+run(`toggleReq('premed');startBoard()`);
+ok(run(`step`) === 'options', 'J1: continuing shows the options to compare');
+ok(run(`openSlots().length > 20`), `J1: the picked systems produce real requirement slots (${run(`openSlots().length`)})`);
 
-// J1b: the board — this is the product
-run(`plan=[];S('plan',plan);dropped=[];S('dropped',dropped)`);
-run(`plan_()`);
+// J1a: several genuinely different options, each with a reason
+run(`options=null;renderOptions();globalThis._O=options`);
+ok(run(`_O.length >= 3`), `J1a: produces several options (${run(`_O.length`)})`);
+ok(run(`_O.every(function(o){return o.name&&o.why})`), 'J1a: every option says what it is and why');
+ok(run(`new Set(_O.map(function(o){return o.key})).size === _O.length`), 'J1a: no two options are the same schedule');
+ok(run(`_O.every(function(o){return o.res.credits>=12&&o.res.credits<=18})`), 'J1a: every option is a full-time load');
+ok(run(`_O.every(function(o){var c=o.res.courses.map(codeOf);
+  return !c.some(function(a,i){return c.slice(i+1).some(function(b){return clashes(a,b)})})})`), 'J1a: no option contains a clash');
+ok(run(`_O.every(function(o){return o.res.courses.every(function(r){return prereqMet(r,o.res.courses.map(codeOf))})})`),
+   'J1a: no option ignores prerequisites');
+const lateOpt = run(`_O.filter(function(o){return o.id==='late'})[0]`);
+ok(!lateOpt || run(`_O.filter(function(o){return o.id==='late'})[0].res.courses.every(function(r){var t=pt(r[5][0]||'');return !t||t[0]>=600})`),
+   'J1a: the no-early-mornings option really has nothing before 10am');
+const tightOpt = run(`_O.filter(function(o){return o.id==='tight'})[0]`);
+ok(!tightOpt || run(`(function(){var t=_O.filter(function(o){return o.id==='tight'})[0];
+  var m=Math.max.apply(null,_O.map(function(o){return o.days}));return t.days<=m})()`),
+   'J1a: the fewer-days option is not the most spread out');
+// choosing one loads it onto the board
+run(`useOption(_O[0].id)`);
+ok(run(`step`) === 'board' && run(`plan.length`) === run(`_O[0].res.courses.length`), 'J1a: choosing an option fills the board');
+
+// J1b: the board — backups when something falls through
+run(`plan=[];S('plan',plan);dropped=[];S('dropped',dropped);plan_()`);
 ok(/Add a class you want/.test(run(`V.innerHTML`)), 'J1b: empty board invites you to add what you are taking');
-// a course that is FULL should surface backups; an open one should not clutter
 run(`addToBoard('CHEM 2070')`);
-ok(run(`plan.length`) === 1, 'J1b: adding a class puts it on the board');
-ok(/CHEM 2070/.test(run(`V.innerHTML`)), 'J1b: the class shows on the board');
+ok(run(`plan.length`) === 1 && /CHEM 2070/.test(run(`V.innerHTML`)), 'J1b: adding a class puts it on the board');
 ok(run(`typeof statusOf(rec('CHEM 2070'))[1]==='string'`), 'J1b: every class has a seat status');
-// marking one lost must produce a real, requirement-preserving fallback
+ok(run(`slotsFilledBy(rec('CHEM 2070'),openSlots()).length>0`), 'J1b: the board knows what a class keeps you on track for');
 run(`markLost('CHEM 2070')`);
 ok(run(`dropped.indexOf('CHEM 2070')>-1`), 'J1b: "did not get it" is remembered');
 ok(/Take one of these instead/.test(run(`V.innerHTML`)), 'J1b: losing a class surfaces the plan B');
@@ -92,7 +118,6 @@ ok(run(`_bk.every(function(b){return b.covers&&b.covers.length})`), 'J1b: each b
 ok(run(`_bk.every(function(b){return prereqMet(b.r,plan.map(function(p){return p.code}))})`), 'J1b: backups respect prerequisites');
 ok(run(`_bk.every(function(b){return b.r[8]<5000})`), 'J1b: never offers a graduate course as a backup');
 ok(run(`_bk.every(function(b){return b.r[8]<=rec('CHEM 2070')[8]+1000})`), 'J1b: backups stay near the original level');
-// switching actually swaps it on the board and clears the lost flag
 run(`takeBackup('CHEM 2070',_bk[0].code)`);
 ok(run(`plan.some(function(p){return p.code===_bk[0].code}) && !plan.some(function(p){return p.code==='CHEM 2070'})`),
    'J1b: switching to a backup replaces it on the board');

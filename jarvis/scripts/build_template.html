@@ -198,6 +198,22 @@ body.focus main{padding:0}
 .bc-foot{display:flex;gap:16px;padding:11px 18px;border-top:1px solid var(--line);font-size:13.5px}
 .bempty{text-align:center;padding:38px 20px;color:var(--txt);font-size:17px;line-height:1.7;
   border:2px dashed var(--line);border-radius:16px}
+/* option cards */
+.optcard{border:2px solid var(--line);border-radius:16px;background:var(--panel);margin-bottom:12px;overflow:hidden}
+.optcard.open{border-color:var(--accent)}
+.opt-top{display:flex;align-items:flex-start;gap:12px;padding:18px;cursor:pointer}
+.opt-top:hover{background:rgba(var(--accent-rgb),.04)}
+.opt-name{font-size:20px;font-weight:680}
+.opt-why{font-size:14.5px;color:var(--dim);margin-top:4px;line-height:1.5}
+.opt-stats{display:flex;flex-wrap:wrap;gap:14px;margin-top:11px;font-size:13.5px;color:var(--dim)}
+.opt-stats b{color:var(--txt);font-size:15px}
+.opt-stats .ok{color:var(--green);font-weight:650}
+.caret2{color:var(--accent);font-size:14px}
+.opt-body{border-top:2px solid var(--line);background:var(--panel2);padding:14px 18px 18px}
+.opt-row{display:flex;align-items:flex-start;gap:10px;padding:11px 0;border-bottom:1px solid var(--line);font-size:15px}
+.opt-row:last-of-type{border-bottom:none}
+.opt-when{font-size:13.5px;color:var(--dim);margin-top:3px}
+.opt-keeps{font-size:13px;color:var(--purple);margin-top:3px}
 @media (max-width:760px){.ask,.result{padding-left:16px;padding-right:16px}}
 /* --- hero --- */
 .hero{max-width:640px;padding:26px 0 8px}
@@ -1114,6 +1130,8 @@ function generateSchedule(opts){
   // candidates: scheduled, obey the student's rules, not already done, not graduate-level
   const cand=CAT.filter(r=>{
     if(!r[4].length||!r[5].length)return false;
+    if(opts.onlyOpen&&!isOpen(r))return false;
+    if(opts.notBefore){const t=pt(r[5][0]||'');if(!t||t[0]<opts.notBefore)return false}
     if(doneCourses.indexOf(codeOf(r))>-1)return false;
     if(r[8]>=5000)return false;
     if(opts.maxLevel&&r[8]>opts.maxLevel)return false;
@@ -1131,6 +1149,12 @@ function generateSchedule(opts){
     const fills=slotsFilledBy(r,slots);
     fills.forEach(sl=>{if(need[sl.pid+'.'+sl.sid]>0)v++});
     if(!v)return 0;
+    if(opts.compact&&chosen.length){
+      // reward reusing days the schedule already occupies
+      const used={};chosen.forEach(c=>[...(c[4][0]||'')].forEach(d=>used[d]=1));
+      const newDays=[...(r[4][0]||'')].filter(d=>!used[d]).length;
+      v-=newDays*0.5;
+    }
     const sameSubject=chosen.filter(c=>c[0]===r[0]).length;
     v-=sameSubject*0.9;                                  // third course in a subject rarely earns its place
     const progsSoFar={};chosen.forEach(c=>slotsFilledBy(c,slots).forEach(sl=>progsSoFar[sl.pid]=1));
@@ -1158,6 +1182,38 @@ function generateSchedule(opts){
   }
   return{courses:chosen,slots:slots,credits:cr,
          covered:slots.length-Object.values(need).filter(v=>v>0).length};
+}
+
+/* Several options, not one answer. Students plan ahead and want to compare — so each
+   option is generated with a different priority and carries the reason it exists. A list
+   of five near-identical schedules would be useless; these differ in ways a student
+   actually cares about. */
+const OPTION_KINDS=[
+  {id:'max',   name:'Knocks out the most',   why:'Every class here counts toward several things at once.',
+   opts:{credits:15}},
+  {id:'open',  name:'Everything has seats',  why:'Only classes with room right now — the safest to actually get.',
+   opts:{credits:15,onlyOpen:true}},
+  {id:'light', name:'Lighter load',          why:'Still full-time, but the smallest credit count that works.',
+   opts:{credits:12}},
+  {id:'late',  name:'No early mornings',     why:'Nothing starts before 10am.',
+   opts:{credits:15,notBefore:600}},
+  {id:'tight', name:'Fewer days on campus',  why:'Classes packed into as few days as possible.',
+   opts:{credits:15,compact:true}}
+];
+function generateOptions(){
+  const out=[];
+  OPTION_KINDS.forEach(k=>{
+    const r=generateSchedule(Object.assign({maxLevel:3999},k.opts));
+    if(!r.courses.length)return;
+    const key=r.courses.map(codeOf).sort().join('|');
+    if(out.some(o=>o.key===key))return;      // do not show the same schedule twice
+    const days=new Set();r.courses.forEach(c=>[...(c[4][0]||'')].forEach(d=>days.add(d)));
+    out.push({id:k.id,name:k.name,why:k.why,key:key,res:r,
+      days:days.size,
+      allOpen:r.courses.every(isOpen),
+      fills:r.courses.reduce((a,c)=>a+slotsFilledBy(c,r.slots).length,0)});
+  });
+  return out;
 }
 
 /* Backups: same requirement, still open, and it has to actually fit the hole — no clash
@@ -1200,50 +1256,133 @@ function backupsFor(code,chosen){
    fallbacks that keep the same requirement. Coursicle tells you when a seat frees up;
    nothing tells you what to take instead that still counts. That is the gap. */
 let dropped=S('dropped')||[];        // courses you tried for and did not get
-let boardQ='', step=S('ansMajor')?'board':'ask';
-let ansMajor=S('ansMajor')||'', ansPre=S('ansPre')||'';
+let boardQ='', step=(S('myprograms')||[]).length?(S('step')||'board'):'ask';
 let openWhy={};
-const MAJORS=[['anthro-ba','Anthropology'],['','— my major is not here yet —']];
 
 function plan_(){
   document.body.classList.add('focus');
   if(step==='ask')return renderAsk();
+  if(step==='options')return renderOptions();
   renderBoard();
 }
 
+/* Requirement selection is explicit, not inferred from a mood question. A student picks
+   exactly which systems they are being measured against — college distribution, major,
+   minor, pre-health, anything else — because that is what determines whether a backup
+   actually keeps them on track. Grouped by kind so the list reads as a checklist of the
+   things a real advisor would ask about. */
+const REQ_GROUPS=[
+  ['core',  'College requirements', 'Everyone in your college has to finish these.'],
+  ['major', 'Major',                'What you are declaring, or plan to.'],
+  ['minor', 'Minor',                'Optional — add one or more.'],
+  ['track', 'Pre-health / pre-professional', 'Course sets med, dental or vet schools expect.'],
+  ['other', 'Other',                'Anything else you are tracking.']
+];
+function reqsOfKind(k){return REQS.filter(p=>(p.kind||'other')===k)}
+
 function renderAsk(){
+  const picked=myPrograms.length;
   V.innerHTML=`<div class="ask">
     <div class="asklogo">Jarvis</div>
-    <h1>Enrollment day, handled.</h1>
-    <p>Tell me what you're taking. I'll show you what's open, and exactly what to grab
-       instead if something fills.</p>
-    <label class="q"><span class="qnum">1</span><span class="qtext">Where do you go?</span>
+    <h1>What do you have to satisfy?</h1>
+    <p>Pick everything you're being measured against. This is what decides whether a
+       backup class actually keeps you on track.</p>
+
+    <label class="q" style="margin-bottom:26px">
+      <span class="qtext" style="margin-left:0">Where do you go?</span>
       <select onchange="S('school',this.value)">
         <option value="cornell">Cornell</option>
         <option value="other" ${S('school')==='other'?'selected':''}>Somewhere else — not built yet</option>
-      </select></label>
-    <label class="q"><span class="qnum">2</span><span class="qtext">What are you studying?</span>
-      <select onchange="ansMajor=this.value;S('ansMajor',ansMajor)">
-        <option value="">Choose your major…</option>
-        ${MAJORS.map(m=>`<option value="${m[0]}" ${ansMajor===m[0]&&m[0]?'selected':''}>${m[1]}</option>`).join('')}
-      </select></label>
-    <label class="q"><span class="qnum">3</span><span class="qtext">Thinking about med school?</span>
-      <select onchange="ansPre=this.value;S('ansPre',ansPre)">
-        <option value="no" ${ansPre==='no'?'selected':''}>No</option>
-        <option value="yes" ${ansPre==='yes'?'selected':''}>Yes</option>
-        <option value="maybe" ${ansPre==='maybe'?'selected':''}>Not sure — keep it open</option>
-      </select></label>
-    <button class="go" onclick="startBoard()">Next →</button>
+      </select>
+    </label>
+
+    ${REQ_GROUPS.map(([kind,label,hint])=>{
+      const list=reqsOfKind(kind);
+      if(!list.length)return '';
+      return `<div class="rgroup">
+        <div class="rglabel">${label}</div>
+        <div class="rghint">${hint}</div>
+        ${list.map(p=>`<label class="rgrow ${myPrograms.indexOf(p.id)>-1?'on':''}">
+          <input type="checkbox" ${myPrograms.indexOf(p.id)>-1?'checked':''} onchange="toggleReq('${p.id}')">
+          <span class="rgname">${p.name}
+            <span class="rgmeta">${p.slots.length} requirement${p.slots.length>1?'s':''}${
+              p.confidence==='official'?' · from Cornell\'s own data':
+              p.confidence==='partial'?' · course list not confirmed yet':''}</span></span>
+        </label>`).join('')}
+      </div>`;
+    }).join('')}
+
+    <div class="rgroup">
+      <div class="rglabel">Not listed?</div>
+      <div class="rghint">Only a few programs are built so far. If yours is missing, Jarvis can still
+        track your college distribution requirements — the rest will show as "doesn't count toward
+        anything you're tracking" rather than guessing.</div>
+    </div>
+
+    <button class="go" ${picked?'':'disabled'} onclick="startBoard()">
+      ${picked?`Continue with ${picked} selected →`:'Pick at least one'}</button>
     <div class="askfoot">Free. No account. Nothing leaves your laptop.</div>
   </div>`;
 }
-function startBoard(){
-  myPrograms=['as-distr'];
-  if(ansMajor)myPrograms.push(ansMajor);
-  if(ansPre==='yes'||ansPre==='maybe')myPrograms.push('premed');
-  S('myprograms',myPrograms);
-  step='board';plan_();
+function toggleReq(id){
+  const i=myPrograms.indexOf(id);
+  i>-1?myPrograms.splice(i,1):myPrograms.push(id);
+  S('myprograms',myPrograms);renderAsk();
 }
+function startBoard(){
+  if(!myPrograms.length)return;
+  S('myprograms',myPrograms);
+  step='options';S('step','options');plan_();
+}
+/* ---- compare a handful of ways to do the semester ---- */
+let options=null, openOpt={};
+function renderOptions(){
+  if(!options)options=generateOptions();
+  const DAY={M:'Mon',T:'Tue',W:'Wed',R:'Thu',F:'Fri'};
+  V.innerHTML=`<div class="board">
+    <div class="bhead">
+      <div class="btitle2">${options.length} ways to do your semester</div>
+      <div class="bsub">Built from what you picked. Choose one — you can change it after.</div>
+      <div class="bstamp">Seats checked ${BUILT} · <a href="#" onclick="editReqs();return false">change requirements</a></div>
+    </div>
+    ${options.length?options.map(o=>`<div class="optcard ${openOpt[o.id]?'open':''}">
+      <div class="opt-top" onclick="openOpt['${o.id}']=!openOpt['${o.id}'];renderOptions()">
+        <div style="flex:1">
+          <div class="opt-name">${o.name}</div>
+          <div class="opt-why">${o.why}</div>
+          <div class="opt-stats">
+            <span><b>${o.res.courses.length}</b> classes</span>
+            <span><b>${o.res.credits}</b> credits</span>
+            <span><b>${o.fills}</b> requirements</span>
+            <span><b>${o.days}</b> day${o.days===1?'':'s'} a week</span>
+            ${o.allOpen?`<span class="ok">all have seats</span>`:''}
+          </div>
+        </div>
+        <span class="caret2">${openOpt[o.id]?'▲':'▼'}</span>
+      </div>
+      ${openOpt[o.id]?`<div class="opt-body">
+        ${o.res.courses.map(r=>{const st=statusOf(r);
+          return`<div class="opt-row">
+            <div style="flex:1"><b>${codeOf(r)}</b> ${r[2]}
+              <div class="opt-when">${[...(r[4][0]||'')].map(d=>DAY[d]||d).join(' ')} · ${r[5][0]||'time TBA'}</div>
+              <div class="opt-keeps">${slotsFilledBy(r,o.res.slots).map(k=>k.sname).join(' · ')||'no tracked requirement'}</div></div>
+            <span class="pill ${st[2]}">${st[1]}</span></div>`}).join('')}
+        <button class="go" style="margin-top:16px" onclick="useOption('${o.id}')">Use this one →</button>
+      </div>`:''}
+    </div>`).join(''):`<div class="bempty">Nothing fits those requirements this term.<br>
+        <span class="dim">Try selecting fewer, or check with your advisor.</span></div>`}
+    <div class="askfoot" style="margin-top:22px">
+      <a href="#" onclick="options=null;renderOptions();return false">rebuild the options</a></div>
+  </div>`;
+}
+function useOption(id){
+  const o=options.find(x=>x.id===id);if(!o)return;
+  plan=o.res.courses.map(r=>({code:codeOf(r),pat:0}));S('plan',plan);
+  dropped=[];S('dropped',dropped);
+  step='board';S('step','board');plan_();
+  toast('Saved — now check your backups');
+}
+function editReqs(){step='ask';S('step','ask');plan_()}
 
 function statusOf(r){return isOpen(r)?['open','Open','st-open']:(r[11]==='W'?['wait','Waitlist','st-wait']:['full','Full','st-full'])}
 
@@ -1256,7 +1395,9 @@ function renderBoard(){
       <div class="btitle2">Your enrollment board</div>
       <div class="bsub">${mine.length} class${mine.length===1?'':'es'}${
         trouble?` · <b class="warn">${trouble} may be a problem</b>`:mine.length?` · <b class="good">all open right now</b>`:''}</div>
-      <div class="bstamp">Seats checked ${BUILT}</div>
+      <div class="bstamp">Seats checked ${BUILT} ·
+        <a href="#" onclick="options=null;step='options';S('step','options');plan_();return false">see other options</a> ·
+        <a href="#" onclick="editReqs();return false">change requirements</a></div>
     </div>
 
     <div class="addbox">
@@ -1603,7 +1744,6 @@ function greet(){
 }
 /* boot */
 crTop();
-if(!S('ansMajor')&&!S('plan'))step='ask';
 go('plan_');
 // Anyone who set up before the school question existed is already a Cornell user;
 // don't make them sit through onboarding again.
