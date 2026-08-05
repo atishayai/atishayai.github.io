@@ -206,6 +206,9 @@ body.focus main{padding:0}
 .opt-name{font-size:20px;font-weight:680}
 .opt-why{font-size:14.5px;color:var(--dim);margin-top:4px;line-height:1.5}
 .opt-preview{font-family:var(--mono);font-size:12.5px;color:var(--accent);margin-top:9px}
+.vlink{font-family:var(--sans);font-size:11px;font-weight:650;color:var(--dim);border:1px solid var(--line);
+  border-radius:6px;padding:2px 7px;margin-left:8px;vertical-align:middle;white-space:nowrap}
+.vlink:hover{color:var(--accent);border-color:var(--accent)}
 .bc-foot{align-items:center}
 .mtab.reset{margin-left:auto;border-color:transparent;color:var(--dim);font-size:12.5px}
 .mtab.reset:hover{color:var(--red);border-color:rgba(var(--red-rgb),.4)}
@@ -1360,6 +1363,7 @@ function nukeAll(){
   localStorage.clear();
   if(location&&location.reload)location.reload();
 }
+function rosterURL(r){return 'https://classes.cornell.edu/browse/roster/FA26/class/'+r[0]+'/'+r[1]}
 function shortProg(pname){
   if(pname==='A&S Distribution')return 'A&S';
   if(pname==='Pre-Med prerequisites')return 'Pre-med';
@@ -1398,7 +1402,8 @@ function renderAsk(){
     <input type="text" id="nameQ" placeholder="First name is fine" maxlength="24" autocomplete="off"
       onkeydown="if(event.key==='Enter'&&this.value.trim()){S('user',this.value.trim());plan_()}">
     <button class="go" onclick="const e=document.getElementById('nameQ');if(e&&e.value.trim()){S('user',e.value.trim());plan_()}">That's me →</button>
-    <div class="askfoot">Free · no account · Cornell Fall 2026</div>
+    <div class="askfoot">Free · no account · data from
+      <a href="https://classes.cornell.edu/browse/roster/FA26" target="_blank" rel="noopener noreferrer">Cornell's official Class Roster ↗</a></div>
   </div>`:`
     <h1>${S('user')}, what are you studying?</h1>
     <p>Pick your major and I'll do the rest.</p>
@@ -1430,7 +1435,8 @@ function renderAsk(){
         <span class="pickname">${progName(p.id)}</span></div>`).join('')}`:''}
     <button class="go" onclick="buildPrograms();step='options';S('step','options');options=null;plan_()">Show my options →</button>`
     :`<div class="askfoot" style="margin-top:26px"><a href="#" onclick="selMajor='';buildPrograms();step='options';S('step','options');options=null;plan_();return false">I'm undecided — show me options anyway</a></div>`}
-    <div class="askfoot">Free · no account · Cornell Fall 2026</div>
+    <div class="askfoot">Free · no account · data from
+      <a href="https://classes.cornell.edu/browse/roster/FA26" target="_blank" rel="noopener noreferrer">Cornell's official Class Roster ↗</a></div>
   </div>`}
   `;
 }
@@ -1468,7 +1474,8 @@ function renderOptions(){
     <div class="bhead">
       <div class="btitle2">${S('user')?S('user')+', pick your semester.':'Pick your semester.'}</div>
       <div class="bsub">Tap a plan to see its classes. You can change anything after.</div>
-      <div class="bstamp">Seats checked ${BUILT}</div>
+      <div class="bstamp">Seats checked ${BUILT} —
+        <a href="https://classes.cornell.edu/browse/roster/FA26" target="_blank" rel="noopener noreferrer">verify live on the official roster ↗</a></div>
     </div>
     ${paramsBar()}
     ${options.length?options.map(o=>`<div class="optcard ${openOpt[o.id]?'open':''}">
@@ -1491,6 +1498,8 @@ function renderOptions(){
         ${o.res.courses.map(r=>{const st=statusOf(r);
           return`<div class="opt-row">
             <div style="flex:1"><b>${codeOf(r)}</b> ${r[2]}
+              <a class="vlink" href="${rosterURL(r)}" target="_blank" rel="noopener noreferrer"
+                 onclick="event.stopPropagation()">Cornell ↗</a>
               <div class="opt-when">${[...(r[4][0]||'')].map(d=>DAY[d]||d).join(' ')} · ${r[5][0]||'time TBA'}</div>
               <div class="opt-keeps">${slotsFilledBy(r,o.res.slots).map(k=>k.sname).join(' · ')||'no tracked requirement'}</div></div>
             <span class="pill ${st[2]}">${st[1]}</span></div>`}).join('')}
@@ -1522,7 +1531,8 @@ function renderBoard(){
           +(mine.every(isOpen)?`<span class="winchip good">every seat open</span>`:'')})()}</div>`:''}
       <div class="bsub">${mine.length} class${mine.length===1?'':'es'}${
         trouble?` · <b class="warn">${trouble} may be a problem</b>`:mine.length?` · <b class="good">all open right now</b>`:''}</div>
-      <div class="bstamp">Seats checked ${BUILT}</div>
+      <div class="bstamp">Seats checked ${BUILT} —
+        <a href="https://classes.cornell.edu/browse/roster/FA26" target="_blank" rel="noopener noreferrer">verify live on the official roster ↗</a></div>
     </div>
 
     <div class="addbox">
@@ -1580,7 +1590,9 @@ function boardCard(r,slots,mine){
   return `<div class="bcard2 ${lost?'lost':''}">
     <div class="bc-top" onclick="openDetail['${code}']=openChain['${code}']=!(openDetail['${code}']||openChain['${code}']);plan_()">
       <div style="flex:1">
-        <div class="bc-code">${code}</div>
+        <div class="bc-code">${code}
+          <a class="vlink" href="${rosterURL(r)}" target="_blank" rel="noopener noreferrer"
+             onclick="event.stopPropagation()" title="verify on Cornell's official roster">Cornell ↗</a></div>
         <div class="bc-title">${r[2]}</div>
         <div class="bc-when">${when}</div>
       </div>
@@ -1602,14 +1614,20 @@ function boardCard(r,slots,mine){
         return`<div class="tif">path ${String.fromCharCode(65+bi)}${bi===0?" — if it's full":''}</div>
         <div class="tbranch">
           <div class="tnode" onclick="openNode['${nk}']=!openNode['${nk}'];plan_()">
-            <span class="tname">${b.code} <span class="fine">${b.r[2]}</span>
+            <span class="tname">${b.code}
+              <a class="vlink" href="${rosterURL(b.r)}" target="_blank" rel="noopener noreferrer"
+                 onclick="event.stopPropagation()">Cornell ↗</a>
+              <span class="fine">${b.r[2]}</span>
               <div class="pb-keeps">${slotsMatchedBy(b.r,openSlots()).slice(0,3).map(k=>`<b>${shortProg(k.pname)}</b> ${k.sname}`).join(' · ')||('keeps '+b.covers.join(' · '))} · ${openNode[nk]?'▲':'▼ what if this fills too?'}</div></span>
             <span class="pill ${bs[2]}">${bs[1]}</span>
             <button class="tgo" onclick="event.stopPropagation();takeBackup('${code}','${b.code}')">take it</button>
           </div>
           ${kids?(kids.length?kids.map(k2=>{const ks=statusOf(k2.r);
             return`<div class="tif">then</div><div class="tbranch d2"><div class="tnode" onclick="event.stopPropagation()">
-              <span class="tname">${k2.code} <span class="fine">${k2.r[2]}</span></span>
+              <span class="tname">${k2.code}
+                <a class="vlink" href="${rosterURL(k2.r)}" target="_blank" rel="noopener noreferrer"
+                   onclick="event.stopPropagation()">Cornell ↗</a>
+                <span class="fine">${k2.r[2]}</span></span>
               <span class="pill ${ks[2]}">${ks[1]}</span>
               <button class="tgo" onclick="event.stopPropagation();takeBackup('${code}','${k2.code}')">take it</button>
             </div></div>`}).join(''):`<div class="tif" style="color:var(--dim)">end of this path — nothing else covers it</div>`):''}

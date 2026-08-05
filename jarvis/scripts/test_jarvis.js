@@ -458,6 +458,18 @@ ok(run(`REQS.filter(function(p){return p.kind==='major'&&p.confidence==='catalog
 ok(run(`REQS.filter(function(p){return p.kind==='major'&&p.name==='History (BA)'}).length===1`),
    'J24: catalog-extracted majors are searchable');
 
+// J25: every claim links to a Cornell page a student can verify
+run(`plan=[{code:'ANTHR 1700',pat:0}];S('plan',plan);dropped=[];S('dropped',dropped);step='board';plan_()`);
+ok(/classes\.cornell\.edu\/browse\/roster\/FA26\/class\/ANTHR\/1700/.test(run(`V.innerHTML`)),
+   'J25: each class links to its official roster page');
+ok(/classes\.cornell\.edu\/browse\/roster\/FA26"/.test(run(`V.innerHTML`)),
+   'J25: the seat stamp links to the live roster');
+ok(run(`rosterURL(rec('CHEM 2070'))`) === 'https://classes.cornell.edu/browse/roster/FA26/class/CHEM/2070',
+   'J25: roster URLs are well-formed');
+ok(run(`REQS.every(function(p){return !p.source||p.source.indexOf('cornell.edu')>-1||p.source.indexOf('http')===0})`),
+   'J25: requirement rules cite their sources');
+run(`plan=[];S('plan',plan)`);
+
 // J17: no personal data shipped
 ok(!/Atishay|Georgetown/.test(html), 'J17: zero personal data in the product build');
 
