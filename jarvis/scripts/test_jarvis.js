@@ -64,8 +64,13 @@ const run = code => vm.runInContext(code, ctx);
 // J1: one question — what are you studying — then chips
 ok(run(`typeof plan_==='function' && typeof renderBoard==='function' && typeof buildPrograms==='function'`), 'J1: the flow exists');
 run(`selMajor='';selMinors=[];selPre=false;myPrograms=[];S('myprograms',myPrograms);step='ask';plan_()`);
-const askHTML = run(`V.innerHTML`);
-ok(/What are you studying\?/.test(askHTML), 'J1: opens with the one question');
+let askHTML = run(`V.innerHTML`);
+ok(/What's your name\?/.test(askHTML), 'J1: greets a stranger by asking their name first');
+ok(!/What are you studying/.test(askHTML), 'J1: one question at a time — no major picker yet');
+run(`S('user','Test');plan_()`);
+askHTML = run(`V.innerHTML`);
+ok(/Test, what are you studying\?/.test(askHTML), 'J1: uses the name it was given');
+ok(typeof run(`typeof nukeAll`)==='string' && run(`typeof nukeAll`)==='function', 'J1: the kill switch exists');
 ok((askHTML.match(/<select/g)||[]).length <= 1, 'J1: no dropdown farm');
 ok(!/A&S Distribution/.test(askHTML), 'J1: no jargon before a choice is made');
 // search finds a catalog-tier major; picking it reveals the chips

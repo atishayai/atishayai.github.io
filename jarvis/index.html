@@ -205,6 +205,10 @@ body.focus main{padding:0}
 .opt-top:hover{background:rgba(var(--accent-rgb),.04)}
 .opt-name{font-size:20px;font-weight:680}
 .opt-why{font-size:14.5px;color:var(--dim);margin-top:4px;line-height:1.5}
+.opt-preview{font-family:var(--mono);font-size:12.5px;color:var(--accent);margin-top:9px}
+.bc-foot{align-items:center}
+.mtab.reset{margin-left:auto;border-color:transparent;color:var(--dim);font-size:12.5px}
+.mtab.reset:hover{color:var(--red);border-color:rgba(var(--red-rgb),.4)}
 .opt-stats{display:flex;flex-wrap:wrap;gap:14px;margin-top:11px;font-size:13.5px;color:var(--dim)}
 .opt-stats b{color:var(--txt);font-size:15px}
 .opt-stats .ok{color:var(--green);font-weight:650}
@@ -1351,6 +1355,11 @@ function plan_(){
 let selMajor=S('selMajor')||'', selMinors=S('selMinors')||[], selPre=S('selPre')||false;
 let reqQ='', minorQ='', showMinorSearch=false;
 function goHome(){step='ask';S('step','ask');plan_()}
+function nukeAll(){
+  if(typeof confirm==='function'&&!confirm('Wipe everything and start from the beginning?'))return;
+  localStorage.clear();
+  if(location&&location.reload)location.reload();
+}
 function shortProg(pname){
   if(pname==='A&S Distribution')return 'A&S';
   if(pname==='Pre-Med prerequisites')return 'Pre-med';
@@ -1359,6 +1368,7 @@ function shortProg(pname){
 function miniNav(){
   return `<div class="topnav">
     <button class="mlogo" onclick="goHome()">JARVIS</button>
+    <button class="mtab reset" onclick="nukeAll()" title="wipe everything, back to the start">start over</button>
     ${step!=='ask'?`
       <button class="mtab ${step==='options'?'on':''}" onclick="step='options';S('step','options');plan_()">Plans</button>
       <button class="mtab ${step==='board'?'on':''}" onclick="step='board';S('step','board');plan_()">My classes</button>`:''}
@@ -1381,9 +1391,17 @@ function renderAsk(){
   const mhits=mq?minors.filter(p=>p.name.toLowerCase().indexOf(mq)>-1&&selMinors.indexOf(p.id)<0).slice(0,5):[];
   V.innerHTML=`<div class="ask">
     <button class="mlogo" style="margin-bottom:20px" onclick="goHome()">JARVIS</button>
-    <h1>What are you studying?</h1>
-    <p>I'll build you a semester that knocks out the most requirements — with backups for
-       when classes fill up.</p>
+    ${!S('user')?`
+    <h1>Hey. What's your name?</h1>
+    <p>I build class schedules that knock out the most requirements at once — and keep
+       backups ready for when classes fill up.</p>
+    <input type="text" id="nameQ" placeholder="First name is fine" maxlength="24" autocomplete="off"
+      onkeydown="if(event.key==='Enter'&&this.value.trim()){S('user',this.value.trim());plan_()}">
+    <button class="go" onclick="const e=document.getElementById('nameQ');if(e&&e.value.trim()){S('user',e.value.trim());plan_()}">That's me →</button>
+    <div class="askfoot">Free · no account · Cornell Fall 2026</div>
+  </div>`:`
+    <h1>${S('user')}, what are you studying?</h1>
+    <p>Pick your major and I'll do the rest.</p>
 
     ${selMajor?`
       <div class="pickcard on">
@@ -1395,7 +1413,7 @@ function renderAsk(){
         oninput="reqQ=this.value;renderAsk();const e=document.getElementById('majQ');if(e){e.focus();if(e.setSelectionRange)e.setSelectionRange(e.value.length,e.value.length)}">
       ${hits.map(p=>`<div class="pickcard" onclick="selMajor='${p.id}';S('selMajor',selMajor);reqQ='';plan_()">
         <span class="pickname">${progName(p.id)}</span>
-        ${p.confidence==='approx'||p.confidence==='partial'?'<span class="picktag">approximate</span>':''}
+        ${p.confidence==='approx'||p.confidence==='partial'?'<span class="picktag" title="auto-read from the catalog — double-check with your department">approximate — double-check</span>':''}
       </div>`).join('')||(q?'<div class="askfoot" style="text-align:left">Nothing matches — try fewer letters.</div>':'')}`}
 
     ${selMajor?`
@@ -1411,9 +1429,10 @@ function renderAsk(){
       ${mhits.map(p=>`<div class="pickcard" onclick="selMinors.push('${p.id}');S('selMinors',selMinors);minorQ='';showMinorSearch=false;plan_()">
         <span class="pickname">${progName(p.id)}</span></div>`).join('')}`:''}
     <button class="go" onclick="buildPrograms();step='options';S('step','options');options=null;plan_()">Show my options →</button>`
-    :`<div class="askfoot" style="margin-top:26px"><a href="#" onclick="selMajor='';buildPrograms();step='options';S('step','options');options=null;plan_();return false">Skip — just my college requirements</a></div>`}
+    :`<div class="askfoot" style="margin-top:26px"><a href="#" onclick="selMajor='';buildPrograms();step='options';S('step','options');options=null;plan_();return false">I'm undecided — show me options anyway</a></div>`}
     <div class="askfoot">Free · no account · Cornell Fall 2026</div>
-  </div>`;
+  </div>`}
+  `;
 }
 function editReqs(){step='ask';S('step','ask');plan_()}
 function startBoard(){buildPrograms();step='options';S('step','options');options=null;plan_()}
@@ -1447,9 +1466,9 @@ function renderOptions(){
   V.innerHTML=`<div class="board">
     ${miniNav()}
     <div class="bhead">
-      <div class="btitle2">Pick your semester.</div>
+      <div class="btitle2">${S('user')?S('user')+', pick your semester.':'Pick your semester.'}</div>
       <div class="bsub">Tap a plan to see its classes. You can change anything after.</div>
-      <div class="bstamp">Seats checked ${BUILT} · <a href="#" onclick="editReqs();return false">change what I'm studying</a></div>
+      <div class="bstamp">Seats checked ${BUILT}</div>
     </div>
     ${paramsBar()}
     ${options.length?options.map(o=>`<div class="optcard ${openOpt[o.id]?'open':''}">
@@ -1457,6 +1476,7 @@ function renderOptions(){
         <div style="flex:1">
           <div class="opt-name">${o.name}</div>
           <div class="opt-why">${o.why}</div>
+          <div class="opt-preview">${o.res.courses.slice(0,3).map(codeOf).join(' · ')}${o.res.courses.length>3?' · +'+(o.res.courses.length-3):''}</div>
           <div class="opt-stats">
             <span><b>${o.res.courses.length}</b> classes</span>
             <span><b>${o.res.credits}</b> credits</span>
@@ -1496,15 +1516,13 @@ function renderBoard(){
   V.innerHTML=`<div class="board">
     ${miniNav()}
     <div class="bhead">
-      <div class="btitle2">Your classes</div>
+      <div class="btitle2">${S('user')?S('user')+"'s classes":'Your classes'}</div>
       ${mine.length?`<div class="winrow">${(()=>{const tot=mine.reduce((a,r)=>a+slotsFilledBy(r,slots).length,0);
         return `<span class="winchip">${tot} requirement${tot===1?'':'s'} handled</span>`
           +(mine.every(isOpen)?`<span class="winchip good">every seat open</span>`:'')})()}</div>`:''}
       <div class="bsub">${mine.length} class${mine.length===1?'':'es'}${
         trouble?` · <b class="warn">${trouble} may be a problem</b>`:mine.length?` · <b class="good">all open right now</b>`:''}</div>
-      <div class="bstamp">Seats checked ${BUILT} ·
-        <a href="#" onclick="options=null;step='options';S('step','options');plan_();return false">see other options</a> ·
-        <a href="#" onclick="editReqs();return false">change requirements</a></div>
+      <div class="bstamp">Seats checked ${BUILT}</div>
     </div>
 
     <div class="addbox">
@@ -1560,7 +1578,7 @@ function boardCard(r,slots,mine){
   const bk=(lost||!isOpen(r)||openChain[code])?backupsFor(code,codes):[];
   const when=(r[4][0]||'').split('').map(d=>({M:'Mon',T:'Tue',W:'Wed',R:'Thu',F:'Fri'}[d]||d)).join(' ')+' · '+(r[5][0]||'time TBA');
   return `<div class="bcard2 ${lost?'lost':''}">
-    <div class="bc-top">
+    <div class="bc-top" onclick="openDetail['${code}']=openChain['${code}']=!(openDetail['${code}']||openChain['${code}']);plan_()">
       <div style="flex:1">
         <div class="bc-code">${code}</div>
         <div class="bc-title">${r[2]}</div>
@@ -1599,8 +1617,7 @@ function boardCard(r,slots,mine){
         `<div class="pb-row dim">No backup covers the same requirement and fits your week. Worth asking your advisor.</div>`}
     </div>`:''}
     <div class="bc-foot">
-      ${(!lost&&isOpen(r))?`<a href="#" onclick="openChain['${code}']=!openChain['${code}'];plan_();return false">${openChain[code]?'hide paths':'see my paths'}</a>`:''}
-      <a href="#" onclick="openDetail['${code}']=!openDetail['${code}'];plan_();return false">${openDetail[code]?'less':'details'}</a>
+      <span class="fine" style="flex:1">${(openDetail[code]||openChain[code])?'tap the card to close':'tap the card for details & paths'}</span>
       ${lost?`<a href="#" onclick="dropped=dropped.filter(c=>c!=='${code}');S('dropped',dropped);plan_();return false">actually I got it</a>`
             :`<a href="#" onclick="markLost('${code}');return false">didn't get this one</a>`}
       <a href="#" onclick="removeFromBoard('${code}');return false">remove</a>
