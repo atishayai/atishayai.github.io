@@ -292,6 +292,8 @@ body.focus main{padding:0}
 .winchip{font-size:13.5px;font-weight:650;padding:7px 13px;border-radius:99px;
   background:rgba(var(--purple-rgb),.14);color:var(--txt);border:1px solid rgba(var(--purple-rgb),.35)}
 .winchip.good{background:rgba(var(--green-rgb),.12);border-color:rgba(var(--green-rgb),.35)}
+.winchip.score{background:linear-gradient(135deg,rgba(var(--accent-rgb),.25),rgba(var(--purple-rgb),.25));
+  border-color:rgba(var(--purple-rgb),.5);font-size:15px}
 .topnav{display:flex;align-items:center;gap:8px;margin-bottom:18px}
 .mlogo{background:none;border:none;font-family:inherit;font-size:15px;letter-spacing:.13em;
   font-weight:800;color:var(--purple);cursor:pointer;padding:4px 0;text-transform:uppercase}
@@ -1600,6 +1602,114 @@ function useOption(id){
 }
 function statusOf(r){return isOpen(r)?['open','Open','st-open']:(r[11]==='W'?['wait','Waitlist','st-wait']:['full','Full','st-full'])}
 
+/* Schedule Score: 50 points per requirement-fill per course, capped at 100.
+   An average of one fill per course scores 50; two per course maxes it. The number is
+   the competition — no leaderboard, nothing to game, nobody ranked at the bottom. */
+function scheduleScore(courses,slots){
+  if(!courses.length)return 0;
+  const fills=courses.reduce((a,r)=>a+slotsFilledBy(r,slots).length,0);
+  return Math.min(100,Math.round(50*fills/courses.length));
+}
+/* Share: the whole schedule rides in the URL hash — no server, no account. */
+function shareLink(){
+  const codes=plan.map(p=>p.code.replace(' ','-')).join('.');
+  return location.origin+location.pathname+'#s='+codes;
+}
+function copyShare(){
+  const u=shareLink();
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(u);
+  toast('Link copied — send it to a friend');
+}
+function sharedCodes(){
+  const m=(location.hash||'').match(/#s=([A-Z0-9.\-]+)/i);
+  if(!m)return null;
+  return m[1].split('.').map(c=>c.replace('-',' ')).map(c=>rec(c)?c:null).filter(Boolean);
+}
+/* A shared schedule is re-scored against the VIEWER's programs — "Sam's schedule, but
+   would it graduate YOU?" Every link is a personalized demo. */
+function renderShared(codes){
+  document.body.classList.add('focus');
+  const rs=codes.map(rec).filter(Boolean);
+  const slots=openSlots();
+  const score=scheduleScore(rs,slots);
+  const mineCodes=plan.map(p=>p.code);
+  const both=codes.filter(c=>mineCodes.indexOf(c)>-1);
+  const myGaps=slots.filter(sl=>sl.left>0);
+  const together=[];
+  if(mineCodes.length){
+    // classes that fill a slot BOTH of you still owe
+    CAT.slice(0,0); // no-op
+  }
+  V.innerHTML=`<div class="board">
+    ${miniNav()}
+    <div class="bhead">
+      <div class="btitle2">A friend sent you a schedule.</div>
+      <div class="bsub">${myPrograms.length?`Scored against <b>your</b> requirements${S('user')?', '+S('user'):''}:`:
+        `Tell me your major and I'll score it against <b>your</b> requirements.`}</div>
+      ${myPrograms.length?`<div class="winrow"><span class="winchip">score for you: ${score}</span>
+        ${both.length?`<span class="winchip good">${both.length} class${both.length>1?'es':''} you're both in</span>`:''}</div>`:
+        `<div style="margin-top:10px"><button class="go" style="width:auto;padding:13px 22px" onclick="location.hash='';step='ask';S('step','ask');plan_()">Set up my majors first →</button></div>`}
+    </div>
+    ${rs.map(r=>{const st=statusOf(r),f=slotsFilledBy(r,slots),mine=mineCodes.indexOf(codeOf(r))>-1;
+      return`<div class="bcard2">
+      <div class="bc-top">
+        <div style="flex:1">
+          <div class="bc-code">${codeOf(r)}${mine?' <span class="picktag" style="color:var(--green)">you have this too</span>':''}</div>
+          <div class="bc-title">${r[2]}</div>
+          <div class="bc-when">${r[4][0]||''} · ${r[5][0]||'TBA'}</div>
+        </div>
+        <span class="pill ${st[2]}">${st[1]}</span>
+      </div>
+      <div class="bc-keeps">${f.length?f.map(k=>`<span class="kchip"><b>${shortProg(k.pname)}</b> ${k.sname}</span>`).join(''):
+        `<span class="dim">counts toward nothing you're tracking</span>`}</div>
+    </div>`}).join('')}
+    <div class="ractions">
+      <button class="go" onclick="location.hash='';plan_()">Build my own →</button>
+    </div>
+    <div class="askfoot">Jarvis · free · no account · www.atishay.io/jarvis</div>
+  </div>`;
+}
+/* Brag card: an IG-story-sized PNG drawn on canvas. The score is the headline. */
+function bragCard(){
+  const c=document.createElement('canvas');
+  if(!c.getContext){toast('Not supported here');return}
+  c.width=1080;c.height=1920;
+  const x=c.getContext('2d');
+  x.fillStyle='#0C0C12';x.fillRect(0,0,1080,1920);
+  const g1=x.createRadialGradient(140,80,0,140,80,700);
+  g1.addColorStop(0,'rgba(76,141,255,.28)');g1.addColorStop(1,'rgba(76,141,255,0)');
+  x.fillStyle=g1;x.fillRect(0,0,1080,900);
+  const g2=x.createRadialGradient(980,120,0,980,120,700);
+  g2.addColorStop(0,'rgba(168,85,247,.25)');g2.addColorStop(1,'rgba(168,85,247,0)');
+  x.fillStyle=g2;x.fillRect(0,0,1080,900);
+  x.fillStyle='#A855F7';x.font='700 44px -apple-system,Helvetica';x.fillText('J A R V I S',80,140);
+  x.fillStyle='#F3F3F9';x.font='800 96px -apple-system,Helvetica';
+  x.fillText((S('user')?S('user')+"'s":'My')+' semester',80,300);
+  const rs=plan.map(p=>rec(p.code)).filter(Boolean), slots=openSlots();
+  const score=scheduleScore(rs,slots);
+  const fills=rs.reduce((a,r)=>a+slotsFilledBy(r,slots).length,0);
+  const cr=rs.reduce((a,r)=>a+creditsOf(r),0);
+  const grad=x.createLinearGradient(80,380,700,620);
+  grad.addColorStop(0,'#4C8DFF');grad.addColorStop(1,'#A855F7');
+  x.fillStyle=grad;x.font='800 340px -apple-system,Helvetica';x.fillText(String(score),80,700);
+  x.fillStyle='#9595AB';x.font='600 52px -apple-system,Helvetica';x.fillText('schedule score',90,780);
+  x.fillStyle='#F3F3F9';x.font='600 54px -apple-system,Helvetica';
+  x.fillText(rs.length+' classes · '+cr+' credits · '+fills+' requirements handled',80,900);
+  let y=1010;
+  rs.slice(0,7).forEach(r=>{
+    x.fillStyle='#4C8DFF';x.font='700 46px Menlo,monospace';x.fillText(codeOf(r),80,y);
+    x.fillStyle='#9595AB';x.font='500 40px -apple-system,Helvetica';
+    x.fillText((r[2]||'').slice(0,32),400,y);
+    y+=86;
+  });
+  x.fillStyle='#34D399';x.font='700 46px -apple-system,Helvetica';
+  x.fillText(rs.every(isOpen)?'every seat open':'', 80, y+40);
+  x.fillStyle='#9595AB';x.font='600 44px -apple-system,Helvetica';
+  x.fillText('beat it: www.atishay.io/jarvis',80,1830);
+  const a=document.createElement('a');
+  a.download='jarvis-schedule.png';a.href=c.toDataURL('image/png');a.click();
+  toast('Card saved — post it');
+}
 function renderBoard(){
   const mine=plan.map(p=>rec(p.code)).filter(Boolean);
   const slots=openSlots();
@@ -1608,9 +1718,15 @@ function renderBoard(){
     ${miniNav()}
     <div class="bhead">
       <div class="btitle2">${S('user')?S('user')+"'s classes":'Your classes'}</div>
-      ${mine.length?`<div class="winrow">${(()=>{const tot=mine.reduce((a,r)=>a+slotsFilledBy(r,slots).length,0);
+      ${mine.length?`<div class="winrow">
+        <span class="winchip score">score ${scheduleScore(mine,slots)}</span>
+        ${(()=>{const tot=mine.reduce((a,r)=>a+slotsFilledBy(r,slots).length,0);
         return `<span class="winchip">${tot} requirement${tot===1?'':'s'} handled</span>`
-          +(mine.every(isOpen)?`<span class="winchip good">every seat open</span>`:'')})()}</div>`:''}
+          +(mine.every(isOpen)?`<span class="winchip good">every seat open</span>`:'')})()}</div>
+      <div class="row" style="gap:8px;margin-top:10px">
+        <button class="chip" onclick="copyShare()">Share my schedule</button>
+        <button class="chip" onclick="bragCard()">Save the brag card</button>
+      </div>`:''}
       <div class="bsub">${mine.length} class${mine.length===1?'':'es'}${
         trouble?` · <b class="warn">${trouble} may be a problem</b>`:mine.length?` · <b class="good">all open right now</b>`:''}</div>
       <div class="bstamp">Seats checked ${BUILT} —
@@ -1989,7 +2105,9 @@ go('plan_');
 // Anyone who set up before the school question existed is already a Cornell user;
 // don't make them sit through onboarding again.
 if(!S('school')&&S('user'))S('school','cornell');
-greet();  // the school question now lives on the first screen, not in a modal of its own
+greet();
+const _shared=sharedCodes();
+if(_shared&&_shared.length){myPrograms=S('myprograms')||[];renderShared(_shared);}  // the school question now lives on the first screen, not in a modal of its own
 </script>
 </body>
 </html>

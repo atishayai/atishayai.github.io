@@ -499,6 +499,25 @@ ok(run(`REQS.every(function(p){return !p.source||p.source.indexOf('cornell.edu')
    'J25: requirement rules cite their sources');
 run(`plan=[];S('plan',plan)`);
 
+// J26: score, share links, brag card
+run(`myPrograms=['as-distr','anthro-ba','premed'];S('myprograms',myPrograms);doneCourses=[];S('done',doneCourses)`);
+run(`plan=[{code:'ANTHR 1700',pat:0},{code:'CHEM 2070',pat:0}];S('plan',plan)`);
+ok(run(`scheduleScore(plan.map(function(p){return rec(p.code)}),openSlots())`) > 0, 'J26: a real schedule scores above zero');
+ok(run(`scheduleScore([],openSlots())`) === 0, 'J26: empty schedule scores zero');
+ok(run(`scheduleScore(CAT.slice(0,5),openSlots())`) <= 100, 'J26: score caps at 100');
+// share link round-trip
+run(`location.hash='';globalThis._link=shareLink()`);
+ok(/#s=ANTHR-1700\.CHEM-2070/.test(run(`_link`)), 'J26: share link encodes the schedule in the URL');
+run(`location.hash='#s=ANTHR-1700.CHEM-2070.FAKE-9999'`);
+ok(run(`JSON.stringify(sharedCodes())`) === '["ANTHR 1700","CHEM 2070"]', 'J26: decode round-trips and drops unknown codes');
+run(`renderShared(sharedCodes())`);
+ok(/A friend sent you a schedule/.test(run(`V.innerHTML`)), 'J26: shared view renders');
+ok(/score for you/.test(run(`V.innerHTML`)), 'J26: shared schedule is re-scored for the viewer');
+ok(/you have this too/.test(run(`V.innerHTML`)), 'J26: overlap with your own classes is called out');
+run(`location.hash=''`);
+ok(run(`typeof bragCard`) === 'function', 'J26: brag card exists');
+run(`plan=[];S('plan',plan)`);
+
 // J17: no personal data shipped
 ok(!/Atishay|Georgetown/.test(html), 'J17: zero personal data in the product build');
 
