@@ -294,6 +294,16 @@ body.focus main{padding:0}
 .winchip.good{background:rgba(var(--green-rgb),.12);border-color:rgba(var(--green-rgb),.35)}
 .winchip.score{background:linear-gradient(135deg,rgba(var(--accent-rgb),.25),rgba(var(--purple-rgb),.25));
   border-color:rgba(var(--purple-rgb),.5);font-size:15px}
+.sboard{display:flex;gap:18px;align-items:center;margin-top:14px;border:2px solid var(--line);
+  border-radius:16px;padding:16px;background:var(--panel)}
+.donutsvg{width:128px;height:128px;display:block}
+.sdonut{text-align:center}
+.slegend{display:flex;flex-direction:column;gap:3px;font-size:10.5px;color:var(--dim);margin-top:8px;text-align:left}
+.slegend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px}
+.sbars{flex:1;display:flex;flex-direction:column;gap:9px;min-width:0}
+.sbar-top{display:flex;justify-content:space-between;font-size:13px;font-weight:620}
+.sbar-top b{color:var(--purple)}
+@media (max-width:760px){.sboard{flex-direction:column;align-items:stretch}.sdonut{display:flex;gap:14px;align-items:center;justify-content:center}}
 .topnav{display:flex;align-items:center;gap:8px;margin-bottom:18px}
 .mlogo{background:none;border:none;font-family:inherit;font-size:15px;letter-spacing:.13em;
   font-weight:800;color:var(--purple);cursor:pointer;padding:4px 0;text-transform:uppercase}
@@ -1602,13 +1612,51 @@ function useOption(id){
 }
 function statusOf(r){return isOpen(r)?['open','Open','st-open']:(r[11]==='W'?['wait','Waitlist','st-wait']:['full','Full','st-full'])}
 
+/* Four optimization metrics, each 0-100; the Schedule Score is their average.
+   Decomposing kills score inflation — maxing double-counting AND seat safety AND
+   balance at once is genuinely hard, so 100 means something again. */
+function scoreParts(courses,slots){
+  if(!courses.length)return[
+    {k:'double',name:'Double-counting',v:0,why:'requirements per class'},
+    {k:'cover',name:'Coverage',v:0,why:'of what you still owe'},
+    {k:'seats',name:'Seat safety',v:0,why:'classes with open seats'},
+    {k:'balance',name:'Balance',v:0,why:'spread across subjects'}];
+  const fills=courses.reduce((a,r)=>a+slotsFilledBy(r,slots).length,0);
+  const owed=slots.reduce((a,sl)=>a+sl.left,0)||1;
+  const distinct={};courses.forEach(r=>slotsFilledBy(r,slots).forEach(sl=>distinct[sl.pid+'.'+sl.sid]=1));
+  return[
+   {k:'double',name:'Double-counting',v:Math.min(100,Math.round(50*fills/courses.length)),why:'requirements per class'},
+   {k:'cover',name:'Coverage',v:Math.min(100,Math.round(100*Object.keys(distinct).length/Math.min(owed,10))),why:'of what you still owe'},
+   {k:'seats',name:'Seat safety',v:Math.round(100*courses.filter(isOpen).length/courses.length),why:'classes with open seats'},
+   {k:'balance',name:'Balance',v:Math.min(100,Math.round(100*new Set(courses.map(r=>r[0])).size/courses.length)),why:'spread across subjects'}];
+}
+/* Donut: this semester vs already done vs still left, of everything owed. Pure SVG. */
+function donut(courses,slots){
+  const all=[];myPrograms.forEach(pid=>{const p=reqProgram(pid);if(p)p.slots.forEach(sl=>all.push({pid,sl}))});
+  const total=all.reduce((a,x)=>a+(x.sl.need||1),0)||1;
+  const owedNow=slots.reduce((a,sl)=>a+sl.left,0);
+  const done=total-owedNow;
+  const dis={};courses.forEach(r=>slotsFilledBy(r,slots).forEach(sl=>dis[sl.pid+'.'+sl.sid]=1));
+  const now=Object.keys(dis).length;
+  const left=Math.max(0,total-done-now);
+  const R=52,C=2*Math.PI*R;
+  let off=0;const seg=(n,color)=>{const len=C*n/total;
+    const el=`<circle r="${R}" cx="70" cy="70" fill="none" stroke="${color}" stroke-width="16"
+      stroke-dasharray="${len} ${C-len}" stroke-dashoffset="${-off}" transform="rotate(-90 70 70)"/>`;
+    off+=len;return el};
+  const pct=Math.round(100*(done+now)/total);
+  return `<svg viewBox="0 0 140 140" class="donutsvg">
+    ${seg(done,'#34D399')}${seg(now,'#A855F7')}${seg(left,'#2B2B3B')}
+    <text x="70" y="66" text-anchor="middle" fill="#F3F3F9" font-size="26" font-weight="800">${pct}%</text>
+    <text x="70" y="88" text-anchor="middle" fill="#9595AB" font-size="10">on track</text>
+  </svg>`;
+}
 /* Schedule Score: 50 points per requirement-fill per course, capped at 100.
    An average of one fill per course scores 50; two per course maxes it. The number is
    the competition — no leaderboard, nothing to game, nobody ranked at the bottom. */
 function scheduleScore(courses,slots){
   if(!courses.length)return 0;
-  const fills=courses.reduce((a,r)=>a+slotsFilledBy(r,slots).length,0);
-  return Math.min(100,Math.round(50*fills/courses.length));
+  return Math.round(scoreParts(courses,slots).reduce((a,p)=>a+p.v,0)/4);
 }
 /* Share: the whole schedule rides in the URL hash — no server, no account. */
 function shareLink(){
@@ -1723,6 +1771,16 @@ function renderBoard(){
         ${(()=>{const tot=mine.reduce((a,r)=>a+slotsFilledBy(r,slots).length,0);
         return `<span class="winchip">${tot} requirement${tot===1?'':'s'} handled</span>`
           +(mine.every(isOpen)?`<span class="winchip good">every seat open</span>`:'')})()}</div>
+      <div class="sboard">
+        <div class="sdonut">${donut(mine,slots)}
+          <div class="slegend"><span><i style="background:#34D399"></i>done</span>
+            <span><i style="background:#A855F7"></i>this semester</span>
+            <span><i style="background:#2B2B3B"></i>left</span></div></div>
+        <div class="sbars">${scoreParts(mine,slots).map(p=>`
+          <div class="sbar"><div class="sbar-top"><span>${p.name}</span><b>${p.v}</b></div>
+            <div class="bar"><i style="width:${p.v}%;background:linear-gradient(90deg,#4C8DFF,#A855F7)"></i></div>
+            <div class="fine">${p.why}</div></div>`).join('')}</div>
+      </div>
       <div class="row" style="gap:8px;margin-top:10px">
         <button class="chip" onclick="copyShare()">Share my schedule</button>
         <button class="chip" onclick="bragCard()">Save the brag card</button>
