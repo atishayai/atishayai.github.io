@@ -1182,11 +1182,17 @@ function slotSpecificity(sl){return sl.match&&sl.match.from?2:sl.match&&sl.match
 function slotsFilledBy(r,slots){
   const hits=slots.filter(sl=>matchOk(r,sl.match)&&ruleOk(r,sl));
   const byProgram={};
-  hits.forEach(sl=>{
-    const cur=byProgram[sl.pid];
-    if(!cur||slotSpecificity(sl)>slotSpecificity(cur))byProgram[sl.pid]=sl;
+  hits.forEach(sl=>{(byProgram[sl.pid]=byProgram[sl.pid]||[]).push(sl)});
+  const out=[];
+  Object.keys(byProgram).forEach(pid=>{
+    const p=reqProgram(pid);
+    // College cores allow one course to satisfy up to two categories (A&S says so
+    // explicitly); majors and minors credit a course once.
+    const cap=(p&&p.kind==='core')?2:1;
+    byProgram[pid].sort((a,b)=>slotSpecificity(b)-slotSpecificity(a));
+    byProgram[pid].slice(0,cap).forEach(sl=>out.push(sl));
   });
-  return Object.keys(byProgram).map(k=>byProgram[k]);
+  return out;
 }
 /* Every slot a course *could* fill, ignoring the one-per-program cap. Used by the receipts
    so a student can see the alternatives, and by backups to match on any shared slot. */
@@ -1264,9 +1270,16 @@ function generateSchedule(opts){
   };
 
   const chosen=[];let cr=0;
-  for(let guard=0;guard<12;guard++){
+  const coreCand=cand.filter(r=>slotsFilledBy(r,slots).some(sl=>sl.match&&sl.match.from));
+  for(let guard=0;guard<14;guard++){
+    // Phase A: while named-course requirements are still owed, pick only among courses
+    // that satisfy one — an ILR first-year should be handed ILRID 1510 and ECON 1110,
+    // not whichever elective happens to carry two attribute tags.
+    const coreOwed=slots.some(sl=>sl.match&&sl.match.from&&need[sl.pid+'.'+sl.sid]>0);
+    const pool=(coreOwed&&coreCand.some(r=>!chosen.some(c=>codeOf(c)===codeOf(r))
+        &&slotsFilledBy(r,slots).some(sl=>sl.match.from&&need[sl.pid+'.'+sl.sid]>0)))?coreCand:cand;
     let best=null,bestV=0;
-    cand.forEach(r=>{
+    pool.forEach(r=>{
       if(chosen.some(c=>codeOf(c)===codeOf(r)))return;
       if(cr+creditsOf(r)>maxC)return;
       if(chosen.some(c=>clashes(codeOf(c),codeOf(r))))return;
@@ -1386,8 +1399,8 @@ function doneHits(){
 }
 function obDots(){
   if(step!=='ask')return '';
-  const at=!S('user')?0:!S('year')?1:!selMajor?2:3;
-  return `<div class="obdots">${[0,1,2,3].map(i=>`<span class="${i<at?'done':i===at?'now':''}"></span>`).join('')}</div>`;
+  const at=!S('user')?0:!S('year')?1:!S('college')?2:!selMajor?3:4;
+  return `<div class="obdots">${[0,1,2,3,4].map(i=>`<span class="${i<at?'done':i===at?'now':''}"></span>`).join('')}</div>`;
 }
 function goHome(){step='ask';S('step','ask');plan_()}
 function nukeAll(){
@@ -1412,8 +1425,10 @@ function miniNav(){
 }
 function progName(id){const p=reqProgram(id);return p?p.name.replace(/\s*\((BA|BS|BFA|Minor)\)\s*$/,''):id}
 
+const COLLEGE_CORE={as:'as-distr',cals:'cals-core',engr:'engr-ls',ilr:'ilr-core',
+  he:'he-core',dyson:'dyson-core',hotel:'hotel-core',brooks:'brooks-core',aap:'aap-core'};
 function buildPrograms(){
-  myPrograms=['as-distr'];
+  myPrograms=[COLLEGE_CORE[S('college')]||'as-distr'];
   if(selMajor)myPrograms.push(selMajor);
   selMinors.forEach(m=>myPrograms.push(m));
   if(selPre)myPrograms.push('premed');
@@ -1444,6 +1459,15 @@ function renderAsk(){
       .map(y=>`<div class="pickcard" onclick="S('year','${y[0]}');plan_()"><span class="pickname">${y[1]}</span></div>`).join('')}
     <div class="askfoot">Free · no account · data from
       <a href="https://classes.cornell.edu/browse/roster/FA26" target="_blank" rel="noopener noreferrer">Cornell's official Class Roster ↗</a></div>
+  </div>`:`
+${!S('college')?`
+    <h1>Which college are you in?</h1>
+    <p>Each one has its own graduation requirements — I track the right set for you.</p>
+    ${[['as','Arts & Sciences'],['cals','Agriculture & Life Sciences (CALS)'],['engr','Engineering'],
+       ['ilr','ILR'],['he','Human Ecology'],['dyson','Dyson (Business)'],
+       ['hotel','Nolan (Hotel)'],['brooks','Brooks (Public Policy)'],['aap','Architecture, Art & Planning']]
+      .map(c=>`<div class="pickcard" onclick="S('college','${c[0]}');plan_()"><span class="pickname" style="font-size:16.5px">${c[1]}</span></div>`).join('')}
+    <div class="askfoot">Not sure? It's on your admissions letter — or pick Arts & Sciences and change later.</div>
   </div>`:`
     <h1>${S('year')==='transfer'?'Welcome to Cornell, ':''}${S('user')}, what are you studying?</h1>
     <p>Pick your major and I'll do the rest.</p>
@@ -1495,7 +1519,7 @@ function renderAsk(){
     :`<div class="askfoot" style="margin-top:26px"><a href="#" onclick="selMajor='';buildPrograms();step='options';S('step','options');options=null;plan_();return false">I'm undecided — show me options anyway</a></div>`}
     <div class="askfoot">Free · no account · data from
       <a href="https://classes.cornell.edu/browse/roster/FA26" target="_blank" rel="noopener noreferrer">Cornell's official Class Roster ↗</a></div>
-  </div>`}`}
+  </div>`}`}`}
   `;
 }
 function editReqs(){step='ask';S('step','ask');plan_()}

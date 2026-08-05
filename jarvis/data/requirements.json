@@ -95,6 +95,582 @@
    ]
   },
   {
+   "id": "cals-core",
+   "name": "CALS Requirements",
+   "kind": "core",
+   "confidence": "curated",
+   "source": "https://cals.cornell.edu/undergraduate-students/cals-student-services/degree-requirements/graduation-requirements",
+   "note": "CALS 2025+ rules (entering Fall 2025 or later). Humanities picks must span different categories; written expression needs 6 credits.",
+   "slots": [
+    {
+     "id": "bsc",
+     "name": "Biological Sciences",
+     "need": 1,
+     "match": {
+      "attr": "BSC-AG"
+     }
+    },
+    {
+     "id": "psc",
+     "name": "Physical Sciences",
+     "need": 1,
+     "match": {
+      "attr": "PSC-AG"
+     }
+    },
+    {
+     "id": "dls",
+     "name": "Data Literacy \u2014 Statistics",
+     "need": 1,
+     "match": {
+      "attr": "DLS-AG"
+     }
+    },
+    {
+     "id": "dlg",
+     "name": "Data Literacy \u2014 second course",
+     "need": 1,
+     "match": {
+      "anyOf": [
+       {
+        "attr": "DLG-AG"
+       },
+       {
+        "attr": "DLS-AG"
+       }
+      ]
+     }
+    },
+    {
+     "id": "hum",
+     "name": "Humanities & Social Sciences",
+     "need": 2,
+     "match": {
+      "anyOf": [
+       {
+        "attr": "CA-AG"
+       },
+       {
+        "attr": "FL-AG"
+       },
+       {
+        "attr": "HA-AG"
+       },
+       {
+        "attr": "LA-AG"
+       },
+       {
+        "attr": "SBA-AG"
+       }
+      ]
+     },
+     "note": "Two courses from different categories."
+    },
+    {
+     "id": "afs",
+     "name": "Agriculture, Food Systems & Nutrition",
+     "need": 1,
+     "match": {
+      "attr": "AFS-AG"
+     }
+    },
+    {
+     "id": "eth",
+     "name": "Ethics",
+     "need": 1,
+     "match": {
+      "attr": "ETH-AG"
+     }
+    },
+    {
+     "id": "d",
+     "name": "Human Diversity",
+     "need": 1,
+     "match": {
+      "attr": "D-AG"
+     }
+    },
+    {
+     "id": "sch",
+     "name": "Sustainability Challenges",
+     "need": 1,
+     "match": {
+      "attr": "SCH-AG"
+     }
+    },
+    {
+     "id": "wrt",
+     "name": "Written Expression",
+     "need": 2,
+     "match": {
+      "attr": "WRT-AG"
+     },
+     "note": "Minimum 6 credits."
+    }
+   ]
+  },
+  {
+   "id": "engr-ls",
+   "name": "Engineering Liberal Studies",
+   "kind": "core",
+   "confidence": "curated",
+   "source": "https://www.duffield.cornell.edu/courses-requirements/bachelor-science-requirements/liberal-studies/liberal-studies-requirements-for-students-entering-fall-2024-and-later/",
+   "note": "Fall 2024+ policy: 6 courses / 18 credits, at least 3 of the 7 groups, at most 2 from Communications (CE), and at least 2 courses at 2000-level or higher.",
+   "slots": [
+    {
+     "id": "re",
+     "name": "Race & Equity (Group 7)",
+     "need": 1,
+     "match": {
+      "anyOf": [
+       {
+        "attr": "SCD-AS"
+       },
+       {
+        "attr": "D-AG"
+       }
+      ]
+     }
+    },
+    {
+     "id": "ls",
+     "name": "Liberal studies electives",
+     "need": 5,
+     "match": {
+      "anyOf": [
+       {
+        "attr": "CA-AG"
+       },
+       {
+        "attr": "CA-HE"
+       },
+       {
+        "attr": "LA-AG"
+       },
+       {
+        "attr": "LAD-HE"
+       },
+       {
+        "attr": "ALC-AS"
+       },
+       {
+        "attr": "HST-AS"
+       },
+       {
+        "attr": "HA-AG"
+       },
+       {
+        "attr": "HA-HE"
+       },
+       {
+        "attr": "KCM-AG"
+       },
+       {
+        "attr": "KCM-HE"
+       },
+       {
+        "attr": "ETM-AS"
+       },
+       {
+        "attr": "SBA-AG"
+       },
+       {
+        "attr": "SBA-HE"
+       },
+       {
+        "attr": "SSC-AS"
+       },
+       {
+        "attr": "GLC-AS"
+       },
+       {
+        "attr": "FL-AG"
+       },
+       {
+        "attr": "CE-EN"
+       }
+      ]
+     },
+     "note": "Spread across at least 3 groups; no more than 2 CE courses."
+    }
+   ]
+  },
+  {
+   "id": "ilr-core",
+   "name": "ILR Core Curriculum",
+   "kind": "core",
+   "confidence": "curated",
+   "source": "https://www.ilr.cornell.edu/current-students/undergraduate-student-resources/curriculum-requirements/new-curriculum-requirements",
+   "note": "Fall 2022+ curriculum. Core must be taken for a letter grade. Statistics and some cores are term-dependent; anything not offered this term stays owed.",
+   "rules": {
+    "letterOnly": true
+   },
+   "slots": [
+    {
+     "id": "ilrid",
+     "name": "Introduction to ILR",
+     "need": 1,
+     "match": {
+      "from": [
+       "ILRID 1510"
+      ]
+     }
+    },
+    {
+     "id": "hist",
+     "name": "Intro to U.S. Labor History",
+     "need": 1,
+     "match": {
+      "from": [
+       "ILRGL 1100"
+      ]
+     }
+    },
+    {
+     "id": "micro",
+     "name": "Introductory Microeconomics",
+     "need": 1,
+     "match": {
+      "from": [
+       "ECON 1110"
+      ]
+     }
+    },
+    {
+     "id": "macro",
+     "name": "Introductory Macroeconomics",
+     "need": 1,
+     "match": {
+      "from": [
+       "ECON 1120"
+      ]
+     }
+    },
+    {
+     "id": "psych",
+     "name": "Psychology of Work",
+     "need": 1,
+     "match": {
+      "from": [
+       "ILRID 1525",
+       "ILRID 1520",
+       "ILRID 1521"
+      ]
+     }
+    },
+    {
+     "id": "soc",
+     "name": "Sociology of Work",
+     "need": 1,
+     "match": {
+      "from": [
+       "ILRID 1535",
+       "ILRID 1530",
+       "ILRID 1531"
+      ]
+     }
+    },
+    {
+     "id": "law",
+     "name": "Labor & Employment Law",
+     "need": 1,
+     "match": {
+      "from": [
+       "ILRGL 2010"
+      ]
+     }
+    },
+    {
+     "id": "lr",
+     "name": "Labor Relations",
+     "need": 1,
+     "match": {
+      "from": [
+       "ILRGL 2050"
+      ]
+     }
+    },
+    {
+     "id": "wages",
+     "name": "Economics of Wages & Employment",
+     "need": 1,
+     "match": {
+      "from": [
+       "ILRLE 2400"
+      ]
+     }
+    },
+    {
+     "id": "intl",
+     "name": "International & Comparative Labor",
+     "need": 1,
+     "match": {
+      "from": [
+       "ILRGL 2300",
+       "ILRGL 2350"
+      ]
+     }
+    },
+    {
+     "id": "stat",
+     "name": "Statistics",
+     "need": 1,
+     "match": {
+      "from": [
+       "ILRST 2100",
+       "STSCI 2100",
+       "ILRST 2110",
+       "STSCI 2110"
+      ]
+     }
+    },
+    {
+     "id": "fws",
+     "name": "First-Year Writing Seminar",
+     "need": 1,
+     "match": {
+      "pred": {
+       "isFWS": true
+      }
+     }
+    },
+    {
+     "id": "sow",
+     "name": "Sophomore Writing Seminar",
+     "need": 1,
+     "match": {
+      "attr": "SOW-IL"
+     }
+    },
+    {
+     "id": "awi",
+     "name": "Advanced Writing Intensive",
+     "need": 1,
+     "match": {
+      "attr": "AWI-IL"
+     }
+    },
+    {
+     "id": "sct",
+     "name": "Science & Technology",
+     "need": 1,
+     "match": {
+      "attr": "SCT-IL"
+     }
+    },
+    {
+     "id": "qp",
+     "name": "Quantitative Policy elective",
+     "need": 1,
+     "match": {
+      "attr": "QP-IL"
+     }
+    },
+    {
+     "id": "icl",
+     "name": "International & Comparative elective",
+     "need": 1,
+     "match": {
+      "attr": "ICL-IL"
+     }
+    },
+    {
+     "id": "lh",
+     "name": "Labor History elective",
+     "need": 1,
+     "match": {
+      "attr": "LH-IL"
+     }
+    }
+   ]
+  },
+  {
+   "id": "he-core",
+   "name": "Human Ecology Breadth",
+   "kind": "core",
+   "confidence": "curated",
+   "source": "https://human.cornell.edu/student-services/registrar/degree-progress/hd-25-26",
+   "note": "Breadth per the 2025-26 curriculum sheets; exact mix varies by Human Ecology major \u2014 check your own sheet.",
+   "slots": [
+    {
+     "id": "hum",
+     "name": "Humanities",
+     "need": 2,
+     "match": {
+      "anyOf": [
+       {
+        "attr": "HA-AG"
+       },
+       {
+        "attr": "HA-HE"
+       },
+       {
+        "attr": "HST-AS"
+       },
+       {
+        "attr": "ALC-AS"
+       },
+       {
+        "attr": "LA-AG"
+       },
+       {
+        "attr": "LAD-HE"
+       },
+       {
+        "attr": "CA-AG"
+       },
+       {
+        "attr": "CA-HE"
+       }
+      ]
+     }
+    },
+    {
+     "id": "soc",
+     "name": "Social Sciences",
+     "need": 2,
+     "match": {
+      "anyOf": [
+       {
+        "attr": "SSC-AS"
+       },
+       {
+        "attr": "ETM-AS"
+       },
+       {
+        "attr": "SBA-AG"
+       },
+       {
+        "attr": "SBA-HE"
+       },
+       {
+        "attr": "KCM-AG"
+       },
+       {
+        "attr": "KCM-HE"
+       }
+      ]
+     }
+    },
+    {
+     "id": "nat",
+     "name": "Natural Science",
+     "need": 1,
+     "match": {
+      "anyOf": [
+       {
+        "attr": "PBS-HE"
+       },
+       {
+        "attr": "BIO-AS"
+       },
+       {
+        "attr": "PHS-AS"
+       },
+       {
+        "attr": "BSC-AG"
+       },
+       {
+        "attr": "PSC-AG"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "aap-core",
+   "name": "AAP Foundations",
+   "kind": "core",
+   "confidence": "partial",
+   "source": "https://aap.cornell.edu/academics/architecture/undergraduate",
+   "note": "This college's core is a named course sequence; the exact list is not modeled yet. Tracked here as courses in its home subject \u2014 confirm against the official page.",
+   "slots": [
+    {
+     "id": "core",
+     "name": "ARCH core courses",
+     "need": 4,
+     "match": {
+      "pred": {
+       "subjects": [
+        "ARCH"
+       ],
+       "minLevel": 1000
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "brooks-core",
+   "name": "Brooks Public Policy Core",
+   "kind": "core",
+   "confidence": "partial",
+   "source": "https://publicpolicy.cornell.edu/undergraduate/",
+   "note": "This college's core is a named course sequence; the exact list is not modeled yet. Tracked here as courses in its home subject \u2014 confirm against the official page.",
+   "slots": [
+    {
+     "id": "core",
+     "name": "PUBPOL core courses",
+     "need": 4,
+     "match": {
+      "pred": {
+       "subjects": [
+        "PUBPOL"
+       ],
+       "minLevel": 1000
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "hotel-core",
+   "name": "Nolan Hotel Core",
+   "kind": "core",
+   "confidence": "partial",
+   "source": "https://sha.cornell.edu/current-students/handbook/",
+   "note": "This college's core is a named course sequence; the exact list is not modeled yet. Tracked here as courses in its home subject \u2014 confirm against the official page.",
+   "slots": [
+    {
+     "id": "core",
+     "name": "HADM core courses",
+     "need": 4,
+     "match": {
+      "pred": {
+       "subjects": [
+        "HADM"
+       ],
+       "minLevel": 1000
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "dyson-core",
+   "name": "Dyson (AEM) Core",
+   "kind": "core",
+   "confidence": "partial",
+   "source": "https://dyson.cornell.edu/programs/undergraduate/degree-requirements/core-requirements/",
+   "note": "This college's core is a named course sequence; the exact list is not modeled yet. Tracked here as courses in its home subject \u2014 confirm against the official page.",
+   "slots": [
+    {
+     "id": "core",
+     "name": "AEM core courses",
+     "need": 4,
+     "match": {
+      "pred": {
+       "subjects": [
+        "AEM"
+       ],
+       "minLevel": 1000
+      }
+     }
+    }
+   ]
+  },
+  {
    "id": "anthro-ba",
    "name": "Anthropology (BA)",
    "kind": "major",

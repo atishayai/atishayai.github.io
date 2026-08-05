@@ -73,7 +73,23 @@ ok(/Nice to meet you, Test/.test(askHTML) && /What year are you\?/.test(askHTML)
 ok(/First-year/.test(askHTML) && /Transfer student/.test(askHTML), 'J1: year options include transfer');
 run(`S('year','transfer');plan_()`);
 askHTML = run(`V.innerHTML`);
+ok(/Which college are you in\?/.test(askHTML), 'J1: asks the college after the year');
+ok(/Arts & Sciences/.test(askHTML) && /Engineering/.test(askHTML) && /ILR/.test(askHTML), 'J1: all colleges offered');
+run(`S('college','as');plan_()`);
+askHTML = run(`V.innerHTML`);
 ok(/Welcome to Cornell, Test, what are you studying\?/.test(askHTML), 'J1: transfer students get a welcome; majors come next');
+// each college core resolves to real slots the engine can use
+ok(run(`Object.keys(COLLEGE_CORE).every(function(k){var p=reqProgram(COLLEGE_CORE[k]);return p&&p.slots.length>0})`),
+   'J1: every college maps to a requirement set');
+run(`S('college','cals');buildPrograms()`);
+ok(run(`myPrograms[0]`) === 'cals-core', 'J1: the college decides the core set');
+ok(run(`openSlots().some(function(s){return s.sname==='Human Diversity'})`), 'J1: CALS slots are live');
+run(`S('college','as');buildPrograms()`);
+// an ILR first-year gets the fixed core, not attribute-tagged electives
+run(`S('college','ilr');selMajor='';buildPrograms();var RI=generateSchedule({credits:15,maxLevel:3999});globalThis._RI=RI`);
+ok(run(`_RI.courses.filter(function(r){return slotsFilledBy(r,_RI.slots).some(function(sl){return sl.match.from})}).length >= 3`),
+   `J1: ILR plan is built from the named core courses`);
+run(`S('college','as');selMajor=REQS.filter(function(p){return p.name==='History (BA)'})[0].id;S('selMajor',selMajor);buildPrograms()`);
 ok(typeof run(`typeof nukeAll`)==='string' && run(`typeof nukeAll`)==='function', 'J1: the kill switch exists');
 ok((askHTML.match(/<select/g)||[]).length <= 1, 'J1: no dropdown farm');
 ok(!/A&S Distribution/.test(askHTML), 'J1: no jargon before a choice is made');
@@ -386,10 +402,11 @@ const after = run(`openSlots().length`);
 ok(after < before, `J22: completed work reduces what is owed (${before} -> ${after})`);
 run(`doneCourses=[];S('done',doneCourses)`);
 
-// one course counts once per program, never three times inside one major
+// caps: majors/minors credit a course once; college cores allow up to two categories
 ok(run(`(function(){var sl=openSlots();var f=slotsFilledBy(rec('ANTHR 3000'),sl);
   var byProg={};f.forEach(function(x){byProg[x.pid]=(byProg[x.pid]||0)+1});
-  return Object.keys(byProg).every(function(k){return byProg[k]===1})})()`), 'J22: a course fills at most one slot per program');
+  return Object.keys(byProg).every(function(k){var p=reqProgram(k);
+    return byProg[k] <= (p&&p.kind==='core'?2:1)})})()`), 'J22: per-program caps — one for majors, two for college cores');
 ok(run(`slotsMatchedBy(rec('ANTHR 3000'),openSlots()).length > slotsFilledBy(rec('ANTHR 3000'),openSlots()).length`), 'J22: it still *matches* more slots than it is credited for');
 
 // the generated schedule
@@ -450,7 +467,7 @@ ok(run(`!_ch || (function(){var s=_BK.map(function(b){return b.spec});
 ok(run(`REQS.length`) > 180, `J24: catalog-wide coverage shipped (${run(`REQS.length`)} programs)`);
 ok(run(`REQS.every(function(p){return p.slots&&p.slots.length&&p.confidence&&p.source!==undefined})`),
    'J24: every program has slots, confidence and a source');
-ok(run(`REQS.every(function(p){return p.slots.every(function(s){return s.need>=1&&s.match&&(s.match.attr||s.match.from||s.match.pred)})})`),
+ok(run(`REQS.every(function(p){return p.slots.every(function(s){return s.need>=1&&s.match&&(s.match.attr||s.match.from||s.match.pred||s.match.anyOf)})})`),
    'J24: every slot is usable by the engine');
 // ground truth we verified by hand against the official page
 ok(run(`(function(){var p=REQS.filter(function(x){return x.name==='Anthropology (Minor)'})[0];
