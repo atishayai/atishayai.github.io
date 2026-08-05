@@ -26,6 +26,7 @@ function freshDOM() {
     createElement(t) { const e = makeEl(t); if(t==='a'){e.href='';e.download='';} return e; },
     createElementNS(ns, t) { return makeEl(t); },
     querySelectorAll() { return []; },
+    addEventListener(){}, removeEventListener(){},
     body: makeEl('body'),
   };
   return { doc, reg };
@@ -296,6 +297,91 @@ ok(run(`(function(){
   return missing.length===0 })()`), 'J21: school and ratings are included in the backup');
 run(`S('school','cornell');S('myrates',{'COGST 1101':4});dlJSON()`);
 ok(/"school"/.test(lastBlob) && /"myrates"/.test(lastBlob), 'J21: backup file actually contains them');
+
+// ===== J22: the engine =====
+run(`prefs.daysOff=[];prefs.noBefore=0;prefs.noAfter=0;S('prefs',prefs)`);
+run(`myPrograms=['as-distr','anthro-ba','premed'];S('myprograms',myPrograms)`);
+run(`doneCourses=[];S('done',doneCourses)`);
+
+// requirement data actually shipped
+ok(run(`REQS.length`) >= 5, `J22: requirement programs shipped (${run(`REQS.length`)})`);
+ok(run(`REQS.every(function(p){return p.slots&&p.slots.length&&p.source&&p.confidence})`), 'J22: every program has slots, a source and a confidence');
+ok(run(`REQS.every(function(p){return p.slots.every(function(s){return s.match&&(s.match.attr||s.match.from||s.match.pred||s.match.anyOf)})})`), 'J22: every slot has a usable match rule');
+
+// distribution matching against real roster data
+ok(run(`matchOk(rec('COGST 1101'),{attr:'ETM-AS'})`), 'J22: COGST 1101 matches ETM-AS (the tracker tip)');
+ok(run(`matchOk(rec('SOC 3010'),{attr:'SDS-AS'})&&matchOk(rec('SOC 3010'),{attr:'SSC-AS'})`), 'J22: SOC 3010 matches SDS-AS and SSC-AS');
+ok(!run(`matchOk(rec('SOC 3010'),{attr:'BIO-AS'})`), 'J22: does not match a distribution it lacks');
+// predicate + crosslist matching
+ok(run(`matchOk(rec('ANTHR 3000'),{pred:{subjects:['ANTHR'],minLevel:3000,maxLevel:3999}})`), 'J22: level predicate matches');
+ok(!run(`matchOk(rec('ANTHR 1700'),{pred:{subjects:['ANTHR'],minLevel:3000}})`), 'J22: level predicate rejects below range');
+
+// completed courses remove the slots they filled
+const before = run(`openSlots().length`);
+run(`doneCourses=['ANTHR 3000'];S('done',doneCourses)`);
+const after = run(`openSlots().length`);
+ok(after < before, `J22: completed work reduces what is owed (${before} -> ${after})`);
+run(`doneCourses=[];S('done',doneCourses)`);
+
+// one course counts once per program, never three times inside one major
+ok(run(`(function(){var sl=openSlots();var f=slotsFilledBy(rec('ANTHR 3000'),sl);
+  var byProg={};f.forEach(function(x){byProg[x.pid]=(byProg[x.pid]||0)+1});
+  return Object.keys(byProg).every(function(k){return byProg[k]===1})})()`), 'J22: a course fills at most one slot per program');
+ok(run(`slotsMatchedBy(rec('ANTHR 3000'),openSlots()).length > slotsFilledBy(rec('ANTHR 3000'),openSlots()).length`), 'J22: it still *matches* more slots than it is credited for');
+
+// the generated schedule
+run(`var R=generateSchedule({credits:15,maxLevel:3999}); globalThis._R=R`);
+ok(run(`_R.courses.length`) >= 3, `J22: produces a real schedule (${run(`_R.courses.length`)} courses)`);
+ok(run(`_R.credits >= 12 && _R.credits <= 18`), `J22: credits inside the full-time band (${run(`_R.credits`)})`);
+ok(run(`(function(){var c=_R.courses.map(codeOf);
+  return !c.some(function(a,i){return c.slice(i+1).some(function(b){return clashes(a,b)})})})()`), 'J22: no two recommended courses clash');
+ok(run(`_R.courses.every(function(r){return fitsCons(codeOf(r)).length===0})`), 'J22: every course obeys the student rules');
+ok(run(`_R.courses.every(function(r){return slotsFilledBy(r,_R.slots).length>0})`), 'J22: no course is recommended that fills nothing');
+ok(run(`new Set(_R.courses.map(function(r){return r[0]})).size >= 3`), `J22: spread across subjects, not four of one (${run(`new Set(_R.courses.map(function(r){return r[0]})).size`)})`);
+ok(run(`_R.courses.every(function(r){return r[8]<5000})`), 'J22: no graduate-level courses');
+ok(run(`_R.courses.filter(function(r){return slotsFilledBy(r,_R.slots).length>1}).length >= 2`), 'J22: at least two courses double-count');
+// rules are respected: a day off removes Friday-only courses
+run(`prefs.daysOff=['F'];S('prefs',prefs);var R2=generateSchedule({credits:15,maxLevel:3999});globalThis._R2=R2`);
+ok(run(`_R2.courses.every(function(r){return fitsCons(codeOf(r)).length===0})`), 'J22: a day off is honoured by the generated schedule');
+run(`prefs.daysOff=[];S('prefs',prefs)`);
+// determinism
+ok(run(`JSON.stringify(generateSchedule({credits:15,maxLevel:3999}).courses.map(codeOf))===JSON.stringify(generateSchedule({credits:15,maxLevel:3999}).courses.map(codeOf))`), 'J22: same input gives the same answer');
+
+// backups must be genuinely swappable
+run(`var C=_R.courses.map(codeOf); globalThis._C=C; globalThis._B=backupsFor(C[0],C)`);
+ok(run(`_B.length>0`), `J22: backups found for the first course (${run(`_B.length`)})`);
+ok(run(`_B.every(function(b){return _C.indexOf(b.code)<0})`), 'J22: a backup is never already in the schedule');
+ok(run(`_B.every(function(b){var others=_C.filter(function(c){return c!==_C[0]});
+  return !others.some(function(o){return clashes(o,b.code)})})`), 'J22: every backup fits the hole without clashing');
+ok(run(`_B.every(function(b){return fitsCons(b.code).length===0})`), 'J22: backups obey the student rules too');
+ok(run(`(function(){var open=_B.map(function(b){return b.open?1:0});
+  return open.join('')===open.slice().sort().reverse().join('')})()`), 'J22: open backups rank above full ones');
+
+// seat data present and stamped
+ok(run(`CAT.filter(function(r){return r[11]==='O'}).length > 1000`), 'J22: seat status shipped for the catalog');
+ok(run(`typeof BUILT==='string' && BUILT.length===10`), 'J22: build date shipped so seat data can be stamped');
+
+// J23: prerequisites and backup honesty — both were real bugs
+run(`myPrograms=['as-distr','anthro-ba','premed'];S('myprograms',myPrograms);doneCourses=[];S('done',doneCourses)`);
+ok(run(`CAT.filter(function(r){return (r[12]||[]).length}).length > 500`), 'J23: prerequisite data shipped');
+ok(run(`JSON.stringify(prereqsOf(rec('CHEM 3570')))==='["CHEM 2080"]'`), 'J23: CHEM 3570 requires CHEM 2080');
+ok(run(`prereqMet(rec('CHEM 2070'))===true`), 'J23: a course with no prerequisites is always allowed');
+ok(run(`prereqMet(rec('CHEM 3570'))===false`), 'J23: organic chemistry is blocked before general chemistry');
+run(`doneCourses=['CHEM 2080'];S('done',doneCourses)`);
+ok(run(`prereqMet(rec('CHEM 3570'))===true`), 'J23: completing the prerequisite unlocks it');
+run(`doneCourses=[];S('done',doneCourses)`);
+
+run(`var R3=generateSchedule({credits:15,maxLevel:3999});globalThis._R3=R3;globalThis._C3=R3.courses.map(codeOf)`);
+ok(run(`_R3.courses.every(function(r){return prereqMet(r,_C3)})`), 'J23: nothing recommended has unmet prerequisites');
+ok(run(`_C3.indexOf('CHEM 3570')<0 && _C3.indexOf('CHEM 3580')<0`), 'J23: orgo never appears for a student with no chemistry');
+
+// the exact defect: orgo was offered as a backup for gen chem because both carry PHS-AS
+run(`var ch=_C3.filter(function(c){return c.indexOf('CHEM')===0})[0];globalThis._ch=ch;
+     globalThis._BK=ch?backupsFor(ch,_C3):[]`);
+ok(run(`!_ch || _BK.every(function(b){return prereqMet(b.r,_C3)})`), 'J23: backups respect prerequisites');
+ok(run(`!_ch || _BK.every(function(b){return b.covers && b.covers.length})`), 'J23: every backup names what it covers');
+ok(run(`!_ch || (function(){var s=_BK.map(function(b){return b.spec});
+  return s.join('')===s.slice().sort().reverse().join('')})()`), 'J23: backups sharing a specific requirement rank above distribution-only ones');
 
 // J17: no personal data shipped
 ok(!/Atishay|Georgetown/.test(html), 'J17: zero personal data in the product build');

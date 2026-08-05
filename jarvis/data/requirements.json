@@ -1,0 +1,447 @@
+{
+ "version": 1,
+ "school": "Cornell",
+ "term": "FA26",
+ "_note": "Requirement model for the schedule engine. match types: attr (distribution code from the roster API) | from (explicit course list) | pred (subjects + level range) | anyOf (nested). confidence: official = derived from Cornell's API, curated = read off the official page, partial = structure known, course list not yet verified.",
+ "programs": [
+  {
+   "id": "as-distr",
+   "name": "A&S Distribution",
+   "kind": "core",
+   "confidence": "official",
+   "source": "https://as.cornell.edu/education/degree-requirements",
+   "note": "Ten categories; every Arts & Sciences student needs all ten. Matched directly against the roster's distribution attributes, so this is exact.",
+   "slots": [
+    {
+     "id": "ALC-AS",
+     "name": "Arts, Literature & Culture",
+     "need": 1,
+     "match": {
+      "attr": "ALC-AS"
+     }
+    },
+    {
+     "id": "BIO-AS",
+     "name": "Biological Sciences",
+     "need": 1,
+     "match": {
+      "attr": "BIO-AS"
+     }
+    },
+    {
+     "id": "ETM-AS",
+     "name": "Ethics & the Mind",
+     "need": 1,
+     "match": {
+      "attr": "ETM-AS"
+     }
+    },
+    {
+     "id": "GLC-AS",
+     "name": "Global Citizenship",
+     "need": 1,
+     "match": {
+      "attr": "GLC-AS"
+     }
+    },
+    {
+     "id": "HST-AS",
+     "name": "Historical Analysis",
+     "need": 1,
+     "match": {
+      "attr": "HST-AS"
+     }
+    },
+    {
+     "id": "PHS-AS",
+     "name": "Physical Sciences",
+     "need": 1,
+     "match": {
+      "attr": "PHS-AS"
+     }
+    },
+    {
+     "id": "SCD-AS",
+     "name": "Social Difference",
+     "need": 1,
+     "match": {
+      "attr": "SCD-AS"
+     }
+    },
+    {
+     "id": "SDS-AS",
+     "name": "Statistics & Data Science",
+     "need": 1,
+     "match": {
+      "attr": "SDS-AS"
+     }
+    },
+    {
+     "id": "SMR-AS",
+     "name": "Symbolic & Mathematical Reasoning",
+     "need": 1,
+     "match": {
+      "attr": "SMR-AS"
+     }
+    },
+    {
+     "id": "SSC-AS",
+     "name": "Social Sciences",
+     "need": 1,
+     "match": {
+      "attr": "SSC-AS"
+     }
+    }
+   ]
+  },
+  {
+   "id": "anthro-ba",
+   "name": "Anthropology (BA)",
+   "kind": "major",
+   "confidence": "curated",
+   "source": "https://anthropology.cornell.edu/anthropology-major",
+   "rules": {
+    "minGrade": "C-",
+    "letterOnly": true,
+    "noFWS": true
+   },
+   "slots": [
+    {
+     "id": "socio",
+     "name": "Sociocultural subfield",
+     "need": 1,
+     "match": {
+      "from": [
+       "ANTHR 1400",
+       "ANTHR 2400",
+       "ANTHR 2468"
+      ]
+     }
+    },
+    {
+     "id": "arkeo",
+     "name": "Archaeological subfield",
+     "need": 1,
+     "match": {
+      "from": [
+       "ANTHR 1200",
+       "ANTHR 2201",
+       "ANTHR 2245",
+       "ANTHR 2430",
+       "ANTHR 2729"
+      ]
+     }
+    },
+    {
+     "id": "bio",
+     "name": "Biological subfield",
+     "need": 1,
+     "match": {
+      "from": [
+       "ANTHR 1300",
+       "ANTHR 2310",
+       "ANTHR 3235"
+      ]
+     }
+    },
+    {
+     "id": "theory",
+     "name": "Anthropological Theory (core)",
+     "need": 1,
+     "match": {
+      "from": [
+       "ANTHR 3000"
+      ]
+     }
+    },
+    {
+     "id": "e3000",
+     "name": "3000-level electives",
+     "need": 2,
+     "match": {
+      "pred": {
+       "subjects": [
+        "ANTHR"
+       ],
+       "minLevel": 3000,
+       "maxLevel": 3999
+      }
+     }
+    },
+    {
+     "id": "e4000",
+     "name": "4000-level courses",
+     "need": 2,
+     "match": {
+      "pred": {
+       "subjects": [
+        "ANTHR"
+       ],
+       "minLevel": 4000,
+       "maxLevel": 4999
+      }
+     },
+     "note": "One must be a senior seminar with a research paper; ANTHR 4263 does not count."
+    },
+    {
+     "id": "elec",
+     "name": "Electives",
+     "need": 2,
+     "match": {
+      "pred": {
+       "subjects": [
+        "ANTHR"
+       ],
+       "minLevel": 1000
+      }
+     },
+     "note": "Cognate disciplines allowed with advisor approval."
+    }
+   ]
+  },
+  {
+   "id": "premed",
+   "name": "Pre-Med prerequisites",
+   "kind": "track",
+   "confidence": "curated",
+   "source": "https://prehealthadvising.cornell.edu/academic-preparation/",
+   "note": "Not a Cornell program \u2014 the course set most US medical schools expect. Sequencing matters: general chemistry gates organic chemistry.",
+   "slots": [
+    {
+     "id": "bio1",
+     "name": "Biology I \u2014 cell & developmental",
+     "need": 1,
+     "match": {
+      "from": [
+       "BIOMG 1350"
+      ]
+     }
+    },
+    {
+     "id": "bio2",
+     "name": "Biology II \u2014 comparative physiology",
+     "need": 1,
+     "match": {
+      "from": [
+       "BIOG 1440",
+       "BIOG 1445"
+      ]
+     }
+    },
+    {
+     "id": "biolab",
+     "name": "Investigative Biology Laboratory",
+     "need": 1,
+     "match": {
+      "from": [
+       "BIOG 1500"
+      ]
+     }
+    },
+    {
+     "id": "genchem",
+     "name": "General chemistry with lab",
+     "need": 2,
+     "match": {
+      "from": [
+       "CHEM 2070",
+       "CHEM 2071",
+       "CHEM 2080",
+       "CHEM 2081",
+       "CHEM 2150",
+       "CHEM 2090"
+      ]
+     }
+    },
+    {
+     "id": "orgo",
+     "name": "Organic chemistry with lab",
+     "need": 2,
+     "match": {
+      "from": [
+       "CHEM 3570",
+       "CHEM 3580",
+       "CHEM 3590",
+       "CHEM 3600",
+       "CHEM 2510"
+      ]
+     }
+    },
+    {
+     "id": "biochem",
+     "name": "Biochemistry",
+     "need": 1,
+     "match": {
+      "from": [
+       "BIOMG 3300",
+       "BIOMG 3310",
+       "BIOMG 3320",
+       "BIOMG 3350",
+       "NS 3200"
+      ]
+     }
+    },
+    {
+     "id": "phys",
+     "name": "Physics",
+     "need": 2,
+     "match": {
+      "from": [
+       "PHYS 2207",
+       "PHYS 2208",
+       "PHYS 1112"
+      ]
+     }
+    },
+    {
+     "id": "calc",
+     "name": "Calculus",
+     "need": 1,
+     "match": {
+      "from": [
+       "MATH 1106",
+       "MATH 1110",
+       "MATH 1910"
+      ]
+     }
+    },
+    {
+     "id": "stat",
+     "name": "Statistics",
+     "need": 1,
+     "match": {
+      "from": [
+       "STSCI 2100",
+       "STSCI 2150",
+       "STSCI 2200",
+       "MATH 1710"
+      ]
+     }
+    },
+    {
+     "id": "writing",
+     "name": "Writing",
+     "need": 1,
+     "match": {
+      "pred": {
+       "isFWS": true
+      }
+     }
+    },
+    {
+     "id": "socsci",
+     "name": "Social science",
+     "need": 1,
+     "match": {
+      "pred": {
+       "subjects": [
+        "PSYCH",
+        "SOC",
+        "HD",
+        "PUBPOL",
+        "GDEV"
+       ],
+       "minLevel": 1000
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "infosci-minor",
+   "name": "Information Science (Minor)",
+   "kind": "minor",
+   "confidence": "partial",
+   "source": "https://infosci.cornell.edu/undergraduate/undergraduate-minor-info-sci",
+   "note": "Structure confirmed (6 courses: 1 core + 3 concentration + 2 electives). The exact per-concentration course lists are not yet verified, so eligibility is matched as 'an INFO course' \u2014 treat these slots as approximate and confirm with the department.",
+   "rules": {
+    "minGrade": "C",
+    "atCornell": true,
+    "noTransfer": true,
+    "noSU": true
+   },
+   "slots": [
+    {
+     "id": "core",
+     "name": "Core course",
+     "need": 1,
+     "match": {
+      "pred": {
+       "subjects": [
+        "INFO"
+       ],
+       "minLevel": 1000,
+       "maxLevel": 2999
+      }
+     }
+    },
+    {
+     "id": "conc",
+     "name": "Concentration courses",
+     "need": 3,
+     "match": {
+      "pred": {
+       "subjects": [
+        "INFO"
+       ],
+       "minLevel": 2000
+      }
+     }
+    },
+    {
+     "id": "elec",
+     "name": "Electives",
+     "need": 2,
+     "match": {
+      "pred": {
+       "subjects": [
+        "INFO"
+       ],
+       "minLevel": 1000
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "cogsci-minor",
+   "name": "Cognitive Science (Minor)",
+   "kind": "minor",
+   "confidence": "partial",
+   "source": "https://cogsci.cornell.edu/undergraduate-minor",
+   "note": "Five courses. Exact approved list not yet verified \u2014 matched as COGST plus the usual cognate subjects. Confirm with the department.",
+   "rules": {
+    "minGrade": "C"
+   },
+   "slots": [
+    {
+     "id": "intro",
+     "name": "Introduction to Cognitive Science",
+     "need": 1,
+     "match": {
+      "from": [
+       "COGST 1101"
+      ]
+     }
+    },
+    {
+     "id": "breadth",
+     "name": "Cognitive science courses",
+     "need": 4,
+     "match": {
+      "pred": {
+       "subjects": [
+        "COGST",
+        "PSYCH",
+        "LING",
+        "PHIL",
+        "INFO"
+       ],
+       "minLevel": 1000
+      }
+     }
+    }
+   ]
+  }
+ ]
+}

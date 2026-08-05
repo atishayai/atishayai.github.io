@@ -5,4 +5,8 @@ node_modules/
 student_profile.json
 # raw Cornell roster scrape — stays local, never published.
 # index.html is built from it and ships with the data baked in.
-data/
+# Exclude the raw Cornell scrape (large, re-fetchable), but NOT the curated requirement
+# model. Must be data/* and not data/ — git cannot re-include a file whose parent
+# directory is itself excluded, so the negation below is silently ignored otherwise.
+data/*
+!data/requirements.json

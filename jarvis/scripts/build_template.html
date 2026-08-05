@@ -110,6 +110,49 @@ a{color:var(--accent);text-decoration:none}
 #obcard p{font-size:14px;color:var(--dim);line-height:1.8;margin:14px 0 20px}
 #obcard input{text-align:center;font-size:14px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+/* --- hero --- */
+.hero{max-width:640px;padding:26px 0 8px}
+.hero h1{font-size:clamp(26px,4.2vw,38px);font-weight:680;letter-spacing:-.02em;line-height:1.15}
+.herosub{font-size:15px;color:var(--dim);line-height:1.65;margin:12px 0 22px;max-width:56ch}
+.bigbtn{background:var(--accent);color:#fff;border:none;border-radius:11px;font-family:inherit;
+  font-size:15.5px;font-weight:600;padding:15px 30px;cursor:pointer;transition:filter .15s}
+.bigbtn:hover{filter:brightness(1.08)}
+.verdict{border:1px solid rgba(var(--accent-rgb),.35);background:rgba(var(--accent-rgb),.05);
+  border-radius:12px;padding:16px 18px;margin:6px 0 14px;max-width:720px}
+.vbig{font-size:19px;font-weight:640}
+.vsub{font-size:13.5px;color:var(--dim);line-height:1.6;margin-top:5px}
+.pcard{border:1px solid var(--line);border-radius:12px;background:var(--panel);margin-bottom:10px;max-width:720px;overflow:hidden}
+.pcard-top{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer}
+.pcard-top:hover{background:rgba(var(--accent-rgb),.03)}
+.pcode{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--accent)}
+.ptitle{font-family:var(--sans);font-weight:500;color:var(--txt);margin-left:7px}
+.pmeta{font-size:12.5px;color:var(--dim);margin-top:4px}
+.seat-o{color:var(--green)}.seat-c{color:var(--red)}
+.pfills{font-size:12.5px;color:var(--dim);white-space:nowrap;display:flex;align-items:center;gap:7px}
+.pfills b{color:var(--accent);font-size:15px}
+.caret{color:var(--dim)}
+.receipt{border-top:1px solid var(--line);padding:12px 16px;background:var(--panel2)}
+.rline{display:flex;gap:9px;align-items:flex-start;font-size:13px;line-height:1.55;padding:5px 0}
+.rline a{font-size:12px;margin-left:auto;white-space:nowrap}
+.rtick{color:var(--green);font-weight:700}
+.warnpill{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--amber);
+  border:1px solid rgba(var(--amber-rgb),.4);border-radius:5px;padding:1px 5px;margin-left:6px}
+.backups{border-top:1px dashed var(--line);margin-top:10px;padding-top:10px}
+.bline{display:flex;gap:10px;align-items:center;font-size:13px;padding:6px 0}
+.bline span:first-child{flex:1}
+/* program picker */
+#reqpick{position:fixed;inset:0;background:rgba(var(--scrim-rgb),.45);z-index:120;display:flex;align-items:center;justify-content:center;padding:16px}
+#reqcard{width:min(520px,96vw);max-height:88dvh;overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 26px}
+#reqcard h2{font-size:20px;font-weight:650}
+.reqrow{display:flex;gap:11px;align-items:flex-start;padding:11px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;cursor:pointer}
+.reqrow:hover{border-color:var(--accent)}
+.reqrow.on{border-color:var(--accent);background:rgba(var(--accent-rgb),.05)}
+/* more menu */
+.morewrap{position:relative}
+#moreMenu{display:none;position:absolute;top:100%;left:0;z-index:60;background:var(--panel);
+  border:1px solid var(--line);border-radius:10px;padding:5px;min-width:160px;box-shadow:0 8px 24px rgba(var(--scrim-rgb),.12)}
+#moreMenu.on{display:block}
+#moreMenu button{display:block;width:100%;text-align:left}
 /* ---- mobile ----
    The app was built desktop-first: fixed multi-column grids and HTML5 drag-and-drop,
    which does not fire from touch on iOS Safari or Android Chrome. This block stacks the
@@ -352,10 +395,16 @@ function courseSel(id,selected){
 function cChip(code){return code?`<span class="cchip">${code}</span>`:''}
 function crTop(){document.getElementById('crN').textContent=credits()}
 /* router */
-const TABS=[['home','Today'],['sch','My Week'],['opt','Find Courses'],['prog','Programs'],['nb','Notebook'],['cal','Calendar'],['res','Resources'],['brain','Brain']];
+const TABS=[['plan_','Plan'],['home','Today'],['sch','My Week'],['prog','Programs']];
+const MORE=[['opt','Find Courses'],['res','Resources'],['nb','Notebook'],['cal','Calendar'],['brain','Brain']];
 let cur='home';
-document.getElementById('nav').innerHTML=TABS.map(t=>`<button data-t="${t[0]}" onclick="go('${t[0]}')">${t[1]}</button>`).join('')+`<button id="gear" title="my setup: interests · programs · rules" onclick="openSetup()">⚙</button>`;
-function go(t){if(t==='setup'){openSetup();return}if(t==='todo'||t==='note')t='nb';cur=t;document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));({home,sch,opt,prog,nb,cal,res,brain})[t]()}
+document.getElementById('nav').innerHTML=TABS.map(t=>`<button data-t="${t[0]}" onclick="go('${t[0]}')">${t[1]}</button>`).join('')
+  +`<span class="morewrap"><button id="moreBtn" onclick="toggleMore(event)">More ▾</button>
+     <div id="moreMenu">${MORE.map(t=>`<button data-t="${t[0]}" onclick="go('${t[0]}');toggleMore()">${t[1]}</button>`).join('')}</div></span>`
+  +`<button id="gear" title="my setup: interests · programs · rules" onclick="openSetup()">⚙</button>`;
+function toggleMore(e){if(e)e.stopPropagation();const m=document.getElementById('moreMenu');m.classList.toggle('on')}
+if(document.addEventListener)document.addEventListener('click',()=>{const m=document.getElementById('moreMenu');if(m)m.classList.remove('on')});
+function go(t){if(t==='setup'){openSetup();return}if(t==='todo'||t==='note')t='nb';cur=t;document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));({plan_,home,sch,opt,prog,nb,cal,res,brain})[t]()}
 /* ===== NOTEBOOK (to-dos + notes, one place) ===== */
 function nb(){
   const cs=myCourses();
@@ -857,6 +906,324 @@ function addEv(){const i=document.getElementById('evIn');if(!i.value.trim())retu
   const sel=document.getElementById('evCourse');
   (events[selD]=events[selD]||[]).push({t:i.value.trim(),c:(sel&&sel.value)||''});
   S('events',events);cal()}
+/* ===== THE ENGINE =====
+   Generates a schedule rather than helping you build one. Greedy weighted set cover over
+   unfilled requirement slots — a course is worth however many STILL-OPEN slots it fills, so
+   double-counters win on their own without special-casing — then a swap pass to escape the
+   obvious greedy mistakes.
+
+   Row layout: [subj,num,title,credits,days,times,xlist,flags,level,instr,distr,open]
+   flags: bit0 = S/U option, bit1 = FWS. */
+const REQS=(DATA.requirements&&DATA.requirements.programs)||[];
+const BUILT=DATA.built||'';
+let myPrograms=S('myprograms')||[];         // requirement program ids being tracked
+let doneCourses=S('done')||[];              // already completed (transfer credit + past terms)
+
+function reqProgram(id){return REQS.find(p=>p.id===id)}
+function codeOf(r){return r[0]+' '+r[1]}
+function isOpen(r){return (r[11]||'')==='O'}
+function seatLabel(r){return{O:'open',C:'closed',W:'waitlist'}[r[11]]||'unknown'}
+
+/* Does a course satisfy a match rule? Crosslistings count — a requirement listing
+   ANTHR 2430 is satisfied by the ARKEO 2430 that is literally the same class. */
+function matchOk(r,m){
+  if(!m)return false;
+  if(m.attr)return (r[10]||[]).indexOf(m.attr)>-1;
+  if(m.from){
+    if(m.from.indexOf(codeOf(r))>-1)return true;
+    return (r[6]||'').split(', ').some(x=>x&&m.from.indexOf(x)>-1);
+  }
+  if(m.pred){
+    const p=m.pred;
+    if(p.isFWS)return !!(r[7]&2);
+    if(p.subjects&&p.subjects.indexOf(r[0])<0)return false;
+    if(p.minLevel&&r[8]<p.minLevel)return false;
+    if(p.maxLevel&&r[8]>p.maxLevel)return false;
+    return true;
+  }
+  if(m.anyOf)return m.anyOf.some(x=>matchOk(r,x));
+  return false;
+}
+
+/* Every slot still owed, after subtracting what the student has already done. */
+function openSlots(){
+  const out=[];
+  myPrograms.forEach(pid=>{const p=reqProgram(pid);if(!p)return;
+    (p.slots||[]).forEach(sl=>{
+      const filled=doneCourses.filter(c=>{const r=rec(c);return r&&matchOk(r,sl.match)}).length;
+      const left=(sl.need||1)-filled;
+      if(left>0)out.push({pid:p.id,pname:p.name,source:p.source,conf:p.confidence,
+                          rules:p.rules||{},sid:sl.id,sname:sl.name,note:sl.note,
+                          match:sl.match,left:left});
+    })});
+  return out;
+}
+
+/* Program-level rules can disqualify a course outright — the Information Science minor
+   forbids S/U, so proposing an S/U-only course there would be a wrong answer, not a
+   near miss. */
+function ruleOk(r,slot){
+  const R=slot.rules||{};
+  if(R.noFWS&&(r[7]&2))return false;
+  if(R.noSU&&(r[7]&1)&&!(r[7]&0))return true; // S/U *option* is fine; S/U-only is not
+  return true;
+}
+/* A course counts once per PROGRAM, not once per slot. ANTHR 3000 is the Theory core OR a
+   3000-level elective — never both plus a general elective, which is what a naive match
+   returns and which would triple-count it against the major. Across different programs it
+   may legitimately count many times: that is the double-count the whole product rests on.
+   Within a program, prefer the most specific slot — an explicit course list beats a
+   subject/level predicate, because that is the slot only this course can fill. */
+function slotSpecificity(sl){return sl.match&&sl.match.from?2:sl.match&&sl.match.attr?1:0}
+function slotsFilledBy(r,slots){
+  const hits=slots.filter(sl=>matchOk(r,sl.match)&&ruleOk(r,sl));
+  const byProgram={};
+  hits.forEach(sl=>{
+    const cur=byProgram[sl.pid];
+    if(!cur||slotSpecificity(sl)>slotSpecificity(cur))byProgram[sl.pid]=sl;
+  });
+  return Object.keys(byProgram).map(k=>byProgram[k]);
+}
+/* Every slot a course *could* fill, ignoring the one-per-program cap. Used by the receipts
+   so a student can see the alternatives, and by backups to match on any shared slot. */
+function slotsMatchedBy(r,slots){return slots.filter(sl=>matchOk(r,sl.match)&&ruleOk(r,sl))}
+
+/* --- scheduling constraints --- */
+function violatesRules(r){return fitsCons(codeOf(r)).length>0}
+/* Prerequisites. The roster gives free-form prose ("CHEM 2080 or advanced placement, or
+   permission of instructor"), so the logic cannot be evaluated — but the course codes in
+   it can. If a course names prerequisites and the student has done none of them, do not
+   recommend it. Recommending organic chemistry to someone who has not taken general
+   chemistry is a wrong answer, not an ambitious one. Erring toward caution is right for a
+   recommender: a missed option costs less than an impossible one. */
+function prereqsOf(r){return r[12]||[]}
+function prereqMet(r,alsoHave){
+  const need=prereqsOf(r);
+  if(!need.length)return true;
+  const have=doneCourses.concat(alsoHave||[]);
+  return need.some(c=>have.indexOf(c)>-1);
+}
+function firstPattern(code){const p=patterns(code);return p.length?p[0]:null}
+function clashes(codeA,codeB){
+  const A=firstPattern(codeA),B=firstPattern(codeB);
+  if(!A||!B)return false;
+  const ta=pt(A.time),tb=pt(B.time);
+  if(!ta||!tb)return false;
+  if(![...A.days].some(d=>B.days.indexOf(d)>-1))return false;
+  return ta[0]<tb[1]&&tb[0]<ta[1];
+}
+function creditsOf(r){return parseFloat(String(r[3]).split('-')[0])||0}
+
+/* --- the recommendation --- */
+function generateSchedule(opts){
+  opts=opts||{};
+  const target=opts.credits||15, maxC=opts.max||18;
+  const slots=openSlots();
+  if(!slots.length)return{courses:[],slots:[],reason:'no-programs'};
+  const need={}; slots.forEach(sl=>need[sl.pid+'.'+sl.sid]=sl.left);
+
+  // candidates: scheduled, obey the student's rules, not already done, not graduate-level
+  const cand=CAT.filter(r=>{
+    if(!r[4].length||!r[5].length)return false;
+    if(doneCourses.indexOf(codeOf(r))>-1)return false;
+    if(r[8]>=5000)return false;
+    if(opts.maxLevel&&r[8]>opts.maxLevel)return false;
+    if(violatesRules(r))return false;
+    if(!prereqMet(r))return false;
+    return slotsFilledBy(r,slots).length>0;
+  });
+
+  /* Raw coverage alone produces a degenerate answer: four anthropology courses, because
+     each one scores against both a distribution and the major's permissive elective slot
+     while a chemistry course scores one. Nobody takes four courses in one subject. So the
+     score also rewards spreading across subjects and across the programs being tracked. */
+  const value=(r,chosen)=>{
+    let v=0;
+    const fills=slotsFilledBy(r,slots);
+    fills.forEach(sl=>{if(need[sl.pid+'.'+sl.sid]>0)v++});
+    if(!v)return 0;
+    const sameSubject=chosen.filter(c=>c[0]===r[0]).length;
+    v-=sameSubject*0.9;                                  // third course in a subject rarely earns its place
+    const progsSoFar={};chosen.forEach(c=>slotsFilledBy(c,slots).forEach(sl=>progsSoFar[sl.pid]=1));
+    if(fills.some(sl=>!progsSoFar[sl.pid]))v+=0.5;       // advance a program nothing else touches
+    if(!isOpen(r))v-=0.35;                               // prefer a seat you can actually get
+    v-=Math.max(0,(r[8]-3000))/20000;                    // nudge toward level-appropriate
+    return v;
+  };
+
+  const chosen=[];let cr=0;
+  for(let guard=0;guard<12;guard++){
+    let best=null,bestV=0;
+    cand.forEach(r=>{
+      if(chosen.some(c=>codeOf(c)===codeOf(r)))return;
+      if(cr+creditsOf(r)>maxC)return;
+      if(chosen.some(c=>clashes(codeOf(c),codeOf(r))))return;
+      const v=value(r,chosen);
+      if(v>bestV||(v===bestV&&best&&isOpen(r)&&!isOpen(best))){bestV=v;best=r}
+    });
+    if(!best)break;
+    chosen.push(best);cr+=creditsOf(best);
+    slotsFilledBy(best,slots).forEach(sl=>{const k=sl.pid+'.'+sl.sid;if(need[k]>0)need[k]--});
+    if(cr>=target)break;
+    if(cr>=target-1)break;            // 14 is closer to a 15 target than 17 is
+  }
+  return{courses:chosen,slots:slots,credits:cr,
+         covered:slots.length-Object.values(need).filter(v=>v>0).length};
+}
+
+/* Backups: same requirement, still open, and it has to actually fit the hole — no clash
+   with the courses that would remain. Without that last check a "backup" can be
+   unschedulable, which is worse than none. */
+function backupsFor(code,chosen){
+  const r=rec(code);if(!r)return[];
+  const slots=openSlots(), mine=slotsFilledBy(r,slots);
+  if(!mine.length)return[];
+  const others=chosen.filter(c=>c!==code);
+  const keys=mine.map(sl=>sl.pid+'.'+sl.sid);
+  return CAT.filter(x=>{
+    if(codeOf(x)===code)return false;
+    if(!x[4].length)return false;
+    if(doneCourses.indexOf(codeOf(x))>-1)return false;
+    if(chosen.indexOf(codeOf(x))>-1)return false;
+    if(violatesRules(x))return false;
+    if(!prereqMet(x,others))return false;
+    if(others.some(o=>clashes(o,codeOf(x))))return false;
+    return slotsMatchedBy(x,slots).some(sl=>keys.indexOf(sl.pid+'.'+sl.sid)>-1);
+  }).map(x=>{
+    const sharedSlots=slotsMatchedBy(x,slots).filter(sl=>keys.indexOf(sl.pid+'.'+sl.sid)>-1);
+    // Rank by the most specific requirement shared. Sharing an explicit course list means
+    // it genuinely replaces the course; sharing only a distribution tag does not — that is
+    // how organic chemistry turned up as a "backup" for general chemistry.
+    const spec=Math.max.apply(null,sharedSlots.map(slotSpecificity).concat([0]));
+    return{r:x,code:codeOf(x),shared:sharedSlots.length,spec:spec,
+           covers:sharedSlots.map(sl=>sl.sname),
+           total:slotsFilledBy(x,slots).length,open:isOpen(x)};
+  })
+   .sort((a,b)=>(b.spec-a.spec)||(b.open-a.open)||(b.shared-a.shared)||(b.total-a.total))
+   .slice(0,4);
+}
+/* ===== PLAN — the hero =====
+   Answer loud, receipts quiet. One line of verdict per course; proof is one tap away and
+   never on screen uninvited, because dumping the proof rebuilds the overwhelm we removed. */
+let planResult=null, openReceipt={}, openBackup={};
+
+function plan_(){
+  if(!myPrograms.length){
+    V.innerHTML=`<div class="hero">
+      <h1>What should I take?</h1>
+      <p class="herosub">Tell Jarvis what you're working toward and it builds the schedule for you —
+      the courses that knock out the most requirements at once, around the times you want to keep free.</p>
+      <button class="bigbtn" onclick="openReqPicker()">Choose my programs →</button>
+      <div class="fine" style="margin-top:14px">Takes about a minute. Nothing leaves your device.</div>
+    </div>`;return;
+  }
+  const owed=openSlots();
+  V.innerHTML=`<div class="hero">
+      <h1>What should I take?</h1>
+      <p class="herosub">${myPrograms.map(id=>(reqProgram(id)||{}).name).filter(Boolean).join(' · ')}
+        — <b>${owed.reduce((a,s)=>a+s.left,0)}</b> requirements still owed.</p>
+      <button class="bigbtn" onclick="runPlan()">Build my schedule</button>
+      <div class="fine" style="margin-top:12px"><a href="#" onclick="openReqPicker();return false">change programs</a>
+        · <a href="#" onclick="openSetup();return false">change my rules</a></div>
+    </div><div id="planOut"></div>`;
+  if(planResult)renderPlan();
+}
+function runPlan(){planResult=generateSchedule({credits:15,maxLevel:3999});openReceipt={};openBackup={};renderPlan()}
+
+function renderPlan(){
+  const box=document.getElementById('planOut');if(!box||!planResult)return;
+  const res=planResult, codes=res.courses.map(codeOf);
+  if(!res.courses.length){
+    box.innerHTML=`<div class="empty">Nothing fits your rules right now.<br>
+      <span class="fine">Loosening a day off or a time window usually unblocks it.</span>
+      <div style="margin-top:10px"><button class="b" onclick="openSetup()">change my rules</button></div></div>`;
+    return;
+  }
+  const totalFills=res.courses.reduce((a,r)=>a+slotsFilledBy(r,res.slots).length,0);
+  box.innerHTML=`
+    <div class="verdict">
+      <div class="vbig">${res.courses.length} courses · ${res.credits} credits</div>
+      <div class="vsub">Knocks out <b>${totalFills} requirements</b> across ${new Set(res.courses.flatMap(r=>slotsFilledBy(r,res.slots).map(s=>s.pid))).size} programs.
+        Every one fits your rules and nothing clashes.</div>
+    </div>
+    ${res.courses.map((r,i)=>courseCard(r,i,res,codes)).join('')}
+    <div class="row" style="margin-top:16px;flex-wrap:wrap">
+      <button class="b" style="font-size:13px;padding:12px 20px" onclick="acceptPlan()">Put this on my week</button>
+      <button class="b" onclick="runPlan()">try again</button>
+    </div>
+    <div class="fine" style="margin-top:12px">Seat availability is from ${BUILT||'the last data refresh'} — check the roster before you enroll.</div>`;
+}
+
+function courseCard(r,i,res,codes){
+  const code=codeOf(r), fills=slotsFilledBy(r,res.slots), open=isOpen(r);
+  const showR=openReceipt[code], showB=openBackup[code];
+  const bk=showB?backupsFor(code,codes):[];
+  return `<div class="pcard">
+    <div class="pcard-top" onclick="openReceipt['${code}']=!openReceipt['${code}'];renderPlan()">
+      <div style="flex:1">
+        <div class="pcode">${code} <span class="ptitle">${r[2]}</span></div>
+        <div class="pmeta">${r[4].map((d,j)=>d+' '+(r[5][j]||'')).slice(0,1).join('')} · ${r[3]} credits
+          · <span class="${open?'seat-o':'seat-c'}">${seatLabel(r)}</span></div>
+      </div>
+      <div class="pfills">Counts for <b>${fills.length}</b><span class="caret">${showR?'▾':'▸'}</span></div>
+    </div>
+    ${showR?`<div class="receipt">
+      ${fills.map(sl=>`<div class="rline"><span class="rtick">✓</span>
+        <span><b>${sl.pname}</b> — ${sl.sname}
+        ${sl.conf==='partial'?'<span class="warnpill">unverified</span>':''}
+        ${sl.note?`<div class="fine">${sl.note}</div>`:''}</span>
+        <a href="${sl.source}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">rule ↗</a></div>`).join('')}
+      <div class="rline"><span class="rtick">✓</span><span>Fits your rules — no clash with the rest of this schedule.</span></div>
+      <div class="rline"><span class="rtick">${open?'✓':'!'}</span><span>${open?'Had open seats':'Was full'} as of ${BUILT}.</span>
+        <a href="https://classes.cornell.edu/search/roster/FA26?q=${encodeURIComponent(code)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">roster ↗</a></div>
+      <div style="margin-top:8px"><button class="b" onclick="event.stopPropagation();openBackup['${code}']=!openBackup['${code}'];renderPlan()">
+        ${showB?'hide backups':'show backups'}</button></div>
+      ${showB?(bk.length?`<div class="backups">
+        <div class="fine" style="margin-bottom:6px">If this fills, these cover the same requirement and still fit your week:</div>
+        ${bk.map(b=>`<div class="bline"><span><b>${b.code}</b> ${b.r[2]}
+            <div class="fine">covers ${b.covers.join(' · ')}</div></span>
+          <span class="${b.open?'seat-o':'seat-c'}">${b.open?'open':'full'}</span>
+          <button class="b" onclick="event.stopPropagation();swapIn('${code}','${b.code}')">swap in</button></div>`).join('')}
+        </div>`:`<div class="fine" style="margin-top:8px">No backup covers this one and still fits your week — worth a plan B with your advisor.</div>`):''}
+    </div>`:''}
+  </div>`;
+}
+function swapIn(oldCode,newCode){
+  const i=planResult.courses.findIndex(r=>codeOf(r)===oldCode);
+  const r=rec(newCode);if(i<0||!r)return;
+  planResult.courses[i]=r;
+  planResult.credits=planResult.courses.reduce((a,x)=>a+creditsOf(x),0);
+  openReceipt[newCode]=true;delete openReceipt[oldCode];delete openBackup[oldCode];
+  renderPlan();toast(newCode+' swapped in');
+}
+function acceptPlan(){
+  if(!planResult)return;
+  planResult.courses.forEach(r=>{const c=codeOf(r);if(!plan.some(p=>p.code===c))plan.push({code:c,pat:0})});
+  S('plan',plan);toast('Added to My Week');go('sch');
+}
+
+/* program picker — which requirement sets am I working toward */
+function openReqPicker(){
+  const d=document.createElement('div');d.id='reqpick';
+  d.innerHTML=`<div id="reqcard">
+    <h2>What are you working toward?</h2>
+    <p class="fine" style="margin:8px 0 16px">Pick everything that applies. Jarvis looks for courses that satisfy several at once.</p>
+    ${REQS.map(p=>`<div class="reqrow ${myPrograms.indexOf(p.id)>-1?'on':''}" onclick="toggleReqProgram('${p.id}')">
+      <input type="checkbox" ${myPrograms.indexOf(p.id)>-1?'checked':''} onclick="event.stopPropagation();toggleReqProgram('${p.id}')">
+      <span style="flex:1"><b>${p.name}</b>
+        <div class="fine">${(p.slots||[]).length} requirement${p.slots.length>1?'s':''}${p.confidence==='partial'?' · course list not yet verified':p.confidence==='official'?' · from Cornell\'s own data':''}</div></span></div>`).join('')}
+    <div class="row" style="margin-top:18px;justify-content:flex-end">
+      <button class="b" style="font-size:13px;padding:11px 22px" onclick="document.getElementById('reqpick').remove();plan_()">Done</button></div>
+  </div>`;
+  d.onclick=e=>{if(e.target===d){d.remove();plan_()}};
+  document.body.appendChild(d);
+}
+function toggleReqProgram(id){
+  const i=myPrograms.indexOf(id);
+  i>-1?myPrograms.splice(i,1):myPrograms.push(id);
+  S('myprograms',myPrograms);planResult=null;
+  const el=document.getElementById('reqpick');if(el){el.remove();openReqPicker()}
+}
 /* ===== COURSE DETAIL =====
    One panel per course: who teaches it, every section time, and links out to what
    students say. Cornell's own course evaluations and RateMyProfessors are LINKED,
@@ -1143,7 +1510,7 @@ function greet(){
   document.getElementById('greet').textContent=(h<12?'good morning':h<18?'good afternoon':'good evening')+', '+n;
 }
 /* boot */
-crTop();go('home');
+crTop();go('plan_');
 // Anyone who set up before the school question existed is already a Cornell user;
 // don't make them sit through onboarding again.
 if(!S('school')&&S('user'))S('school','cornell');

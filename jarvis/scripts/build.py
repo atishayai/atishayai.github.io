@@ -15,7 +15,7 @@ except Exception:
     subjects = {}
 overlaps = None  # overlaps recomputed live in-app from crosslists; overlap_map.json kept for reference
 
-# --- normalize catalog rows: [subj,num,title,credits,days,times,xlist,flags,level,instr] ---
+# --- catalog row: [subj,num,title,credits,days,times,xlist,flags,level,instr,distr,open,prereq] ---
 cat = []
 INSTR, _instr_ix = [], {}
 def iid(name):
@@ -30,7 +30,8 @@ for s in sorted(courses):
         # 2,600 names spread over 4,100 courses is a lot of repeated strings to ship.
         cat.append([c["subject"], c["number"], c["title"], c["credits"],
                     c["meeting_days"], c["meeting_times"], ", ".join(c["crosslistings"]),
-                    fl, c["level"], [iid(n) for n in c.get("instructors", [])]])
+                    fl, c["level"], [iid(n) for n in c.get("instructors", [])],
+                    c.get("distr", []), c.get("open", ""), c.get("prereq", [])])
 
 # --- strip any founder-specific / personal strings from program notes ---
 PERSONAL = re.compile(r"Atishay|Georgetown|\bGU\b", re.I)
@@ -62,8 +63,10 @@ for name, pg in programs.items():
     e["items"] = items
     slim[name] = e
 
+reqs = json.load(open(f"{D}/requirements.json"))
 data = {"catalog": cat, "programs": slim, "subjectNames": subjects,
-        "instructors": INSTR}
+        "instructors": INSTR, "requirements": reqs,
+        "built": __import__("datetime").date.today().isoformat()}
 blob = json.dumps(data, separators=(",", ":")).replace("</", "<\\/")
 assert "Atishay" not in blob and "Georgetown" not in blob, "PERSONAL DATA LEAKED — aborting build"
 

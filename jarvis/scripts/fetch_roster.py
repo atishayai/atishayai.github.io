@@ -34,14 +34,15 @@ DATA = os.path.join(ROOT, "data")
 SU_BASES = {"OPT", "OPI", "SUI", "SUS"}
 
 
-def get(url, tries=4):
+def get(url, tries=6):
     """GET JSON with backoff. The roster API is public but rate-limits bursts."""
     for i in range(tries):
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "jarvis-roster/1.0"})
             with urllib.request.urlopen(req, timeout=45, context=SSL_CTX) as r:
                 return json.loads(r.read().decode())
-        except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, json.JSONDecodeError) as e:
+        except (OSError, urllib.error.HTTPError, json.JSONDecodeError) as e:
+            # OSError covers socket.timeout, which is not a TimeoutError before Python 3.10
             if i == tries - 1:
                 raise RuntimeError(f"failed after {tries} tries: {url} ({e})")
             time.sleep(2 ** i)
@@ -70,6 +71,53 @@ def instructors(course):
                         seen.add(name.lower())
                         out.append(name)
     return out
+
+
+def distributions(course):
+    """A&S / AG distribution codes (SSC-AS, HST-AS, D-AG...). These come from crseAttrs,
+    NOT catalogDistr — catalogDistr is empty across the whole roster. This is the single
+    biggest requirement system a student has to satisfy, and it is fully machine-readable."""
+    out = []
+    for a in course.get("crseAttrs") or []:
+        v = (a.get("crseAttrValue") or "").strip()
+        if v and (a.get("attrDescr") or "").lower().startswith("distribution") and v not in out:
+            out.append(v)
+    return out
+
+
+import re as _re
+_CODE = _re.compile(r"\b([A-Z]{2,6})\s+(\d{4})\b")
+
+
+def prereq_codes(course):
+    """Course codes named in the prerequisite text. The text is free-form prose
+    ("CHEM 2080 or advanced placement, or permission of instructor"), so we cannot
+    evaluate the logic — but knowing a course names prerequisites at all is enough to
+    stop recommending organic chemistry to someone who has not taken general chemistry."""
+    txt = " ".join(filter(None, [course.get("catalogPrereq") or "",
+                                 course.get("catalogPrereqCoreq") or ""]))
+    if not txt:
+        return []
+    me = f'{course.get("subject")} {course.get("catalogNbr")}'
+    out = []
+    for subj, num in _CODE.findall(txt):
+        c = f"{subj} {num}"
+        if c != me and c not in out:
+            out.append(c)
+    return out
+
+
+def open_status(course):
+    """Best status across sections: O open > W waitlist > C closed. A build-time snapshot —
+    the UI must stamp it with a date and never imply it is live."""
+    best = ""
+    rank = {"O": 3, "W": 2, "C": 1, "": 0}
+    for g in course.get("enrollGroups", []):
+        for s in g.get("classSections", []):
+            st = (s.get("openStatus") or "").strip().upper()
+            if rank.get(st, 0) > rank.get(best, 0):
+                best = st
+    return best
 
 
 def meeting_pairs(course):
@@ -118,9 +166,11 @@ def course_row(c):
         "meeting_days": [p[0] for p in pairs],
         "meeting_times": [p[1] for p in pairs],
         "instructors": instructors(c),
+        "distr": distributions(c),
+        "open": open_status(c),
+        "prereq": prereq_codes(c),
         "su_option": any((g.get("gradingBasis") or "") in SU_BASES for g in groups),
         "is_fws": "FWS" in title.upper() or "FWS" in attrs.upper(),
-        "dist_tags": sorted({t.strip() for t in (c.get("catalogDistr") or "").replace("(", "").replace(")", "").split(",") if t.strip()}),
         "level": int(num[0]) * 1000,
     }
 
