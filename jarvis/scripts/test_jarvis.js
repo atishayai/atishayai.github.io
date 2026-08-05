@@ -61,23 +61,43 @@ catch (e) { ok(false, 'boot: ' + e.message); console.error(e); process.exit(1); 
 const g = name => vm.runInContext(name, ctx);
 const run = code => vm.runInContext(code, ctx);
 
-// J1: the whole setup is three dropdowns on one screen — no modal, no wizard
-ok(run(`S('school')`) === null, 'J1: fresh user has no school yet');
-ok(run(`typeof plan_==='function' && typeof startPlan==='function'`), 'J1: the simple flow exists');
+// J1: three dropdowns, then the enrollment board
+ok(run(`typeof plan_==='function' && typeof renderBoard==='function'`), 'J1: the board flow exists');
 ok(run(`typeof obSchool==='undefined'`), 'J1: the old school modal is gone');
 run(`step='ask';plan_()`);
 const askHTML = run(`V.innerHTML`);
-ok(/Where do you go\?/.test(askHTML), 'J1: asks the school');
-ok(/What are you studying\?/.test(askHTML), 'J1: asks the major');
-ok(/med school/.test(askHTML), 'J1: asks about pre-med');
-ok(!/totally free/.test(askHTML), 'J1: no schedule-rules question — kept simple');
 ok((askHTML.match(/<select/g)||[]).length === 3, 'J1: exactly three dropdowns');
-run(`S('school','cornell');ansMajor='anthro-ba';ansPre='maybe';startPlan()`);
-ok(run(`S('school')`) === 'cornell', 'J1: answers are remembered');
+ok(!/totally free/.test(askHTML), 'J1: no scheduling-rules question');
+run(`S('school','cornell');ansMajor='anthro-ba';ansPre='maybe';startBoard()`);
+ok(run(`step`) === 'board', 'J1: answering moves you to the board');
 ok(run(`myPrograms.indexOf('as-distr')>-1 && myPrograms.indexOf('anthro-ba')>-1 && myPrograms.indexOf('premed')>-1`),
-   'J1: three dropdowns become the tracked requirement sets');
-ok(run(`planResult && planResult.courses.length>0`), 'J1: one button produces a schedule');
-ok(run(`prefs.daysOff.length===0`), 'J1: no rules were invented on the student behalf');
+   'J1: dropdowns become the tracked requirement sets');
+
+// J1b: the board — this is the product
+run(`plan=[];S('plan',plan);dropped=[];S('dropped',dropped)`);
+run(`plan_()`);
+ok(/Add a class you want/.test(run(`V.innerHTML`)), 'J1b: empty board invites you to add what you are taking');
+// a course that is FULL should surface backups; an open one should not clutter
+run(`addToBoard('CHEM 2070')`);
+ok(run(`plan.length`) === 1, 'J1b: adding a class puts it on the board');
+ok(/CHEM 2070/.test(run(`V.innerHTML`)), 'J1b: the class shows on the board');
+ok(run(`typeof statusOf(rec('CHEM 2070'))[1]==='string'`), 'J1b: every class has a seat status');
+// marking one lost must produce a real, requirement-preserving fallback
+run(`markLost('CHEM 2070')`);
+ok(run(`dropped.indexOf('CHEM 2070')>-1`), 'J1b: "did not get it" is remembered');
+ok(/Take one of these instead/.test(run(`V.innerHTML`)), 'J1b: losing a class surfaces the plan B');
+run(`globalThis._bk=backupsFor('CHEM 2070',plan.map(function(p){return p.code}))`);
+ok(run(`_bk.length>0`), `J1b: backups exist for a lost class (${run(`_bk.length`)})`);
+ok(run(`_bk.every(function(b){return b.covers&&b.covers.length})`), 'J1b: each backup says what it still covers');
+ok(run(`_bk.every(function(b){return prereqMet(b.r,plan.map(function(p){return p.code}))})`), 'J1b: backups respect prerequisites');
+ok(run(`_bk.every(function(b){return b.r[8]<5000})`), 'J1b: never offers a graduate course as a backup');
+ok(run(`_bk.every(function(b){return b.r[8]<=rec('CHEM 2070')[8]+1000})`), 'J1b: backups stay near the original level');
+// switching actually swaps it on the board and clears the lost flag
+run(`takeBackup('CHEM 2070',_bk[0].code)`);
+ok(run(`plan.some(function(p){return p.code===_bk[0].code}) && !plan.some(function(p){return p.code==='CHEM 2070'})`),
+   'J1b: switching to a backup replaces it on the board');
+ok(run(`dropped.indexOf('CHEM 2070')<0`), 'J1b: switching clears the lost flag');
+run(`plan=[];S('plan',plan);dropped=[];S('dropped',dropped)`);
 
 // J2: setup wizard — programs first, then subjects, then rules (auto-opened by obSchool)
 run(`tgProg(Object.keys(PROGRAMS).find(k=>/Cognitive/i.test(k)))`);

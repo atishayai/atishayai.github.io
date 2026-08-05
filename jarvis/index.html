@@ -158,6 +158,46 @@ body.focus main{padding:0}
 .pline span{color:var(--dim);font-size:14px}
 .pline a{font-size:14px}
 .ractions{margin-top:24px}
+/* ===== board ===== */
+.board{max-width:560px;margin:0 auto;padding:26px 18px 60px}
+.bhead{margin-bottom:18px}
+.btitle2{font-size:clamp(26px,5.4vw,34px);font-weight:720;letter-spacing:-.02em}
+.bsub{font-size:16px;color:var(--dim);margin-top:7px}
+.bsub .warn{color:var(--amber)}.bsub .good{color:var(--green)}
+.bstamp{font-size:12.5px;color:var(--dim);opacity:.7;margin-top:5px}
+.addbox{position:relative;margin-bottom:18px}
+.addbox input{width:100%;font-family:inherit;font-size:16.5px;padding:15px 17px;border:2px solid var(--line);
+  border-radius:13px;background:var(--panel);color:var(--txt)}
+.addbox input:focus{border-color:var(--accent);outline:none}
+#addhits{margin-top:6px}
+.ahit{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--line);
+  border-radius:10px;margin-top:6px;cursor:pointer;background:var(--panel);font-size:14.5px}
+.ahit:hover{border-color:var(--accent)}
+.acode{font-family:var(--mono);font-weight:700;color:var(--accent)}
+.atitle{flex:1;color:var(--dim)}
+.pill{font-size:12.5px;font-weight:700;padding:5px 12px;border-radius:99px;white-space:nowrap}
+.st-open{background:rgba(var(--green-rgb),.16);color:var(--green)}
+.st-full{background:rgba(var(--red-rgb),.16);color:var(--red)}
+.st-wait{background:rgba(var(--amber-rgb),.16);color:var(--amber)}
+.st-lost{background:rgba(var(--red-rgb),.22);color:var(--red)}
+.bcard2{border:2px solid var(--line);border-radius:16px;background:var(--panel);margin-bottom:13px;overflow:hidden}
+.bcard2.lost{opacity:.75;border-color:rgba(var(--red-rgb),.4)}
+.bc-top{display:flex;align-items:flex-start;gap:12px;padding:17px 18px 12px}
+.bc-code{font-family:var(--mono);font-size:14.5px;font-weight:700;color:var(--accent)}
+.bc-title{font-size:19px;font-weight:640;line-height:1.3;margin:3px 0 5px}
+.bc-when{font-size:15px;color:var(--dim)}
+.bc-keeps{font-size:14px;color:var(--dim);padding:0 18px 14px;line-height:1.5}
+.bc-keeps b{color:var(--purple);font-weight:640}
+.plan-b{border-top:2px solid var(--line);background:var(--panel2);padding:14px 18px}
+.pb-head{font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--amber);font-weight:700;margin-bottom:9px}
+.pb-row{display:flex;align-items:center;gap:10px;padding:9px 0;font-size:14.5px;border-bottom:1px solid var(--line)}
+.pb-row:last-child{border-bottom:none}
+.pb-keeps{font-size:13px;color:var(--dim);margin-top:2px}
+.mini{background:var(--accent);color:#fff;border:none;border-radius:9px;font-family:inherit;
+  font-size:13.5px;font-weight:650;padding:9px 14px;cursor:pointer}
+.bc-foot{display:flex;gap:16px;padding:11px 18px;border-top:1px solid var(--line);font-size:13.5px}
+.bempty{text-align:center;padding:38px 20px;color:var(--txt);font-size:17px;line-height:1.7;
+  border:2px dashed var(--line);border-radius:16px}
 @media (max-width:760px){.ask,.result{padding-left:16px;padding-right:16px}}
 /* --- hero --- */
 .hero{max-width:640px;padding:26px 0 8px}
@@ -1132,6 +1172,8 @@ function backupsFor(code,chosen){
   return CAT.filter(x=>{
     if(codeOf(x)===code)return false;
     if(!x[4].length)return false;
+    if(x[8]>=5000)return false;      // graduate courses are not a fallback an undergrad can take
+    if(x[8]>r[8]+1000)return false;  // nor is a 3000-level course a fallback for a 1000-level one
     if(doneCourses.indexOf(codeOf(x))>-1)return false;
     if(chosen.indexOf(codeOf(x))>-1)return false;
     if(violatesRules(x))return false;
@@ -1151,132 +1193,158 @@ function backupsFor(code,chosen){
    .sort((a,b)=>(b.spec-a.spec)||(b.open-a.open)||(b.shared-a.shared)||(b.total-a.total))
    .slice(0,4);
 }
-/* ===== THE APP =====
-   Three dropdowns and a button. Everything else in this file still exists but is reached
-   only from the small "more tools" link — a first-time student should never see it. */
-let planResult=null, openReceipt={}, step='ask';
-let ansMajor=S('ansMajor')||'', ansPre=S('ansPre')||'', ansFree=S('ansFree')||'';
-
+/* ===== THE BOARD =====
+   Students mostly know what they want to take. The pain is enrollment morning and
+   add/drop: the class is full, now what? So this is not a generator — it is a
+   contingency board. Your intended courses, what is open, and for each one the ranked
+   fallbacks that keep the same requirement. Coursicle tells you when a seat frees up;
+   nothing tells you what to take instead that still counts. That is the gap. */
+let dropped=S('dropped')||[];        // courses you tried for and did not get
+let boardQ='', step=S('ansMajor')?'board':'ask';
+let ansMajor=S('ansMajor')||'', ansPre=S('ansPre')||'';
+let openWhy={};
 const MAJORS=[['anthro-ba','Anthropology'],['','— my major is not here yet —']];
-const DAYS=[['','No preference'],['M','Mondays'],['T','Tuesdays'],['W','Wednesdays'],['R','Thursdays'],['F','Fridays']];
 
 function plan_(){
   document.body.classList.add('focus');
-  if(step==='done'&&planResult)return renderPlan();
+  if(step==='ask')return renderAsk();
+  renderBoard();
+}
+
+function renderAsk(){
   V.innerHTML=`<div class="ask">
-    <div class="askhead">
-      <div class="asklogo">Jarvis</div>
-      <h1>Let's pick your classes.</h1>
-      <p>Three quick questions. Then I'll build your whole Fall 2026 schedule.</p>
-    </div>
-
-    <label class="q">
-      <span class="qnum">1</span>
-      <span class="qtext">Where do you go?</span>
-      <select id="qSchool" onchange="S('school',this.value)">
-        <option value="cornell" ${S('school')!=='other'?'selected':''}>Cornell</option>
+    <div class="asklogo">Jarvis</div>
+    <h1>Enrollment day, handled.</h1>
+    <p>Tell me what you're taking. I'll show you what's open, and exactly what to grab
+       instead if something fills.</p>
+    <label class="q"><span class="qnum">1</span><span class="qtext">Where do you go?</span>
+      <select onchange="S('school',this.value)">
+        <option value="cornell">Cornell</option>
         <option value="other" ${S('school')==='other'?'selected':''}>Somewhere else — not built yet</option>
-      </select>
-    </label>
-
-    <label class="q">
-      <span class="qnum">2</span>
-      <span class="qtext">What are you studying?</span>
-      <select id="qMajor" onchange="ansMajor=this.value;S('ansMajor',ansMajor)">
+      </select></label>
+    <label class="q"><span class="qnum">2</span><span class="qtext">What are you studying?</span>
+      <select onchange="ansMajor=this.value;S('ansMajor',ansMajor)">
         <option value="">Choose your major…</option>
         ${MAJORS.map(m=>`<option value="${m[0]}" ${ansMajor===m[0]&&m[0]?'selected':''}>${m[1]}</option>`).join('')}
-      </select>
-    </label>
-
-    <label class="q">
-      <span class="qnum">3</span>
-      <span class="qtext">Thinking about med school?</span>
-      <select id="qPre" onchange="ansPre=this.value;S('ansPre',ansPre)">
+      </select></label>
+    <label class="q"><span class="qnum">3</span><span class="qtext">Thinking about med school?</span>
+      <select onchange="ansPre=this.value;S('ansPre',ansPre)">
         <option value="no" ${ansPre==='no'?'selected':''}>No</option>
         <option value="yes" ${ansPre==='yes'?'selected':''}>Yes</option>
         <option value="maybe" ${ansPre==='maybe'?'selected':''}>Not sure — keep it open</option>
-      </select>
-    </label>
-
-    <button class="go" onclick="startPlan()">Build my schedule →</button>
-    <div class="askfoot">Free. No account. Nothing leaves your laptop.
-      <a href="#" onclick="document.body.classList.remove('focus');step='done';go('home');return false">skip, just let me look around</a></div>
+      </select></label>
+    <button class="go" onclick="startBoard()">Next →</button>
+    <div class="askfoot">Free. No account. Nothing leaves your laptop.</div>
   </div>`;
 }
-
-function startPlan(){
-  if(S('school')==='other'){
-    V.innerHTML=`<div class="ask"><div class="asklogo">Jarvis</div>
-      <h1>Only Cornell so far.</h1>
-      <p>Your school's course catalog isn't loaded yet, so I can't build a real schedule for you.
-      Everything here would be Cornell classes — which won't help.</p>
-      <button class="go" onclick="step='ask';plan_()">← Go back</button></div>`;return;
-  }
+function startBoard(){
   myPrograms=['as-distr'];
   if(ansMajor)myPrograms.push(ansMajor);
   if(ansPre==='yes'||ansPre==='maybe')myPrograms.push('premed');
   S('myprograms',myPrograms);
-  prefs.daysOff=[];prefs.noBefore=0;prefs.noAfter=0;S('prefs',prefs);  // keep it simple: no rules to answer yet
-  planResult=generateSchedule({credits:15,maxLevel:3999});
-  openReceipt={};step='done';
-  plan_();
+  step='board';plan_();
 }
 
-function renderPlan(){
-  const res=planResult;
-  if(!res||!res.courses.length){
-    V.innerHTML=`<div class="ask"><h1>Hmm — nothing fits.</h1>
-      <p>I couldn't find classes that fit. Try a different major.</p>
-      <button class="go" onclick="step='ask';plan_()">← Change my answers</button></div>`;return;
-  }
-  const codes=res.courses.map(codeOf);
-  const totalFills=res.courses.reduce((a,r)=>a+slotsFilledBy(r,res.slots).length,0);
-  V.innerHTML=`<div class="result">
-    <div class="rhead">
-      <div class="rbig">Here's your semester.</div>
-      <div class="rsub">${res.courses.length} classes · ${res.credits} credits · knocks out <b>${totalFills} requirements</b></div>
+function statusOf(r){return isOpen(r)?['open','Open','st-open']:(r[11]==='W'?['wait','Waitlist','st-wait']:['full','Full','st-full'])}
+
+function renderBoard(){
+  const mine=plan.map(p=>rec(p.code)).filter(Boolean);
+  const slots=openSlots();
+  const trouble=mine.filter(r=>!isOpen(r)).length;
+  V.innerHTML=`<div class="board">
+    <div class="bhead">
+      <div class="btitle2">Your enrollment board</div>
+      <div class="bsub">${mine.length} class${mine.length===1?'':'es'}${
+        trouble?` · <b class="warn">${trouble} may be a problem</b>`:mine.length?` · <b class="good">all open right now</b>`:''}</div>
+      <div class="bstamp">Seats checked ${BUILT}</div>
     </div>
-    ${res.courses.map(r=>bigCard(r,res,codes)).join('')}
-    <div class="ractions">
-      <button class="go" onclick="acceptPlan()">Looks good — save it</button>
-      <button class="ghost" onclick="step='ask';plan_()">Change my answers</button>
+
+    <div class="addbox">
+      <input type="text" id="bq" placeholder="Add a class you want — try CHEM 2070" value="${boardQ}"
+        oninput="boardQ=this.value;drawAdd()" autocomplete="off">
+      <div id="addhits"></div>
     </div>
-    <div class="askfoot">Seats checked ${BUILT}. Double-check on the roster before you enroll.
-      <a href="#" onclick="document.body.classList.remove('focus');go('home');return false">more tools</a></div>
+
+    ${mine.length?mine.map(r=>boardCard(r,slots,mine)).join(''):
+      `<div class="bempty">Add the classes you're planning to take.<br>
+       <span class="dim">I'll flag anything that's full and line up backups that still count.</span></div>`}
+
+    ${mine.length?`<div class="askfoot" style="margin-top:24px">
+      <a href="#" onclick="document.body.classList.remove('focus');go('home');return false">more tools</a></div>`:''}
   </div>`;
+  drawAdd();
 }
 
-function bigCard(r,res,codes){
-  const code=codeOf(r), fills=slotsFilledBy(r,res.slots), open=isOpen(r), shown=openReceipt[code];
-  const day={M:'Mon',T:'Tue',W:'Wed',R:'Thu',F:'Fri'};
-  const when=(r[4][0]||'').split('').map(d=>day[d]||d).join(' ')+' · '+(r[5][0]||'time TBA');
-  return `<div class="bcard">
-    <div class="bmain" onclick="openReceipt['${code}']=!openReceipt['${code}'];renderPlan()">
-      <div class="bcode">${code}</div>
-      <div class="btitle">${r[2]}</div>
-      <div class="bwhen">${when}</div>
-      <div class="btags">
-        <span class="tag tag-count">counts for ${fills.length} requirement${fills.length>1?'s':''}</span>
-        <span class="tag ${open?'tag-open':'tag-full'}">${open?'seats open':'was full'}</span>
-        <span class="tag">${r[3]} credits</span>
+function drawAdd(){
+  const box=document.getElementById('addhits');if(!box)return;
+  const q=boardQ.trim().toUpperCase();
+  if(q.length<2){box.innerHTML='';return}
+  const hits=CAT.filter(r=>(codeOf(r)+' '+r[2]).toUpperCase().indexOf(q)>-1&&!plan.some(p=>p.code===codeOf(r))).slice(0,6);
+  box.innerHTML=hits.map(r=>{const st=statusOf(r);
+    return`<div class="ahit" onclick="addToBoard('${codeOf(r)}')">
+      <span class="acode">${codeOf(r)}</span><span class="atitle">${r[2]}</span>
+      <span class="pill ${st[2]}">${st[1]}</span></div>`}).join('')
+    ||`<div class="ahit dim">no match</div>`;
+}
+function addToBoard(code){
+  if(!plan.some(p=>p.code===code))plan.push({code,pat:0});
+  S('plan',plan);boardQ='';plan_();
+}
+function removeFromBoard(code){
+  plan=plan.filter(p=>p.code!==code);S('plan',plan);
+  dropped=dropped.filter(c=>c!==code);S('dropped',dropped);plan_();
+}
+function markLost(code){
+  if(dropped.indexOf(code)<0)dropped.push(code);
+  S('dropped',dropped);plan_();
+}
+function takeBackup(oldCode,newCode){
+  plan=plan.map(p=>p.code===oldCode?{code:newCode,pat:0}:p);
+  dropped=dropped.filter(c=>c!==oldCode);
+  S('plan',plan);S('dropped',dropped);plan_();
+  toast('Switched to '+newCode);
+}
+
+function boardCard(r,slots,mine){
+  const code=codeOf(r), st=statusOf(r), lost=dropped.indexOf(code)>-1;
+  const keeps=slotsFilledBy(r,slots);
+  const codes=mine.map(codeOf);
+  const bk=(lost||!isOpen(r))?backupsFor(code,codes):[];
+  const when=(r[4][0]||'').split('').map(d=>({M:'Mon',T:'Tue',W:'Wed',R:'Thu',F:'Fri'}[d]||d)).join(' ')+' · '+(r[5][0]||'time TBA');
+  return `<div class="bcard2 ${lost?'lost':''}">
+    <div class="bc-top">
+      <div style="flex:1">
+        <div class="bc-code">${code}</div>
+        <div class="bc-title">${r[2]}</div>
+        <div class="bc-when">${when}</div>
       </div>
-      <div class="bwhy">${shown?'hide why ▲':'why this one? ▼'}</div>
+      <span class="pill ${lost?'st-lost':st[2]}">${lost?'Didn\'t get it':st[1]}</span>
     </div>
-    ${shown?`<div class="bproof">
-      ${fills.map(sl=>`<div class="pline"><b>✓ ${sl.sname}</b><span>${sl.pname}</span>
-        <a href="${sl.source}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">see the rule ↗</a></div>`).join('')}
-      <div class="pline"><b>✓ Fits your schedule</b><span>No clash with the rest of these.</span></div>
+    ${keeps.length?`<div class="bc-keeps">Keeps${keeps.map(k=>` <b>${k.sname}</b>`).join(' ·')}</div>`:
+      `<div class="bc-keeps dim">Doesn't count toward anything you're tracking.</div>`}
+
+    ${(lost||!isOpen(r))?`<div class="plan-b">
+      <div class="pb-head">${lost?'Take one of these instead':'If this fills, take'}</div>
+      ${bk.length?bk.slice(0,3).map(b=>{const bs=statusOf(b.r);
+        return`<div class="pb-row">
+          <div style="flex:1"><b>${b.code}</b> ${b.r[2]}
+            <div class="pb-keeps">still covers ${b.covers.join(' · ')}</div></div>
+          <span class="pill ${bs[2]}">${bs[1]}</span>
+          <button class="mini" onclick="takeBackup('${code}','${b.code}')">switch</button>
+        </div>`}).join(''):
+        `<div class="pb-row dim">No backup covers the same requirement and fits your week. Worth asking your advisor.</div>`}
     </div>`:''}
+
+    <div class="bc-foot">
+      ${lost?`<a href="#" onclick="dropped=dropped.filter(c=>c!=='${code}');S('dropped',dropped);plan_();return false">actually I got it</a>`
+            :`<a href="#" onclick="markLost('${code}');return false">didn't get this one</a>`}
+      <a href="#" onclick="removeFromBoard('${code}');return false">remove</a>
+    </div>
   </div>`;
 }
-
-function acceptPlan(){
-  if(!planResult)return;
-  planResult.courses.forEach(r=>{const c=codeOf(r);if(!plan.some(p=>p.code===c))plan.push({code:c,pat:0})});
-  S('plan',plan);toast('Saved to your week');
-}
-/* kept so older calls and tests still resolve */
-function runPlan(){startPlan()}
+/* kept so older calls resolve */
+function runPlan(){startBoard()}
+function startPlan(){startBoard()}
 function openReqPicker(){step='ask';plan_()}
 /* ===== COURSE DETAIL =====
    One panel per course: who teaches it, every section time, and links out to what
