@@ -252,6 +252,34 @@ body.focus main{padding:0}
 .tbranch{margin-left:14px;padding-left:13px;border-left:3px solid rgba(var(--accent-rgb),.55)}
 .tbranch.d2{border-left-color:rgba(var(--purple-rgb),.6)}
 .tif{font-size:11px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--amber);margin-top:10px}
+/* mini nav */
+@keyframes floatup{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+.bcard2,.optcard,.pickcard,.verdict{animation:floatup .28s ease both}
+.bcard2:nth-child(4){animation-delay:.04s}.bcard2:nth-child(5){animation-delay:.08s}
+.bcard2:nth-child(6){animation-delay:.12s}.bcard2:nth-child(7){animation-delay:.16s}
+.optcard:nth-child(4){animation-delay:.05s}.optcard:nth-child(5){animation-delay:.1s}
+.tnode{animation:floatup .22s ease both}
+.winrow{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 2px}
+.winchip{font-size:13.5px;font-weight:650;padding:7px 13px;border-radius:99px;
+  background:rgba(var(--purple-rgb),.14);color:var(--txt);border:1px solid rgba(var(--purple-rgb),.35)}
+.winchip.good{background:rgba(var(--green-rgb),.12);border-color:rgba(var(--green-rgb),.35)}
+.topnav{display:flex;align-items:center;gap:8px;margin-bottom:18px}
+.mlogo{background:none;border:none;font-family:inherit;font-size:15px;letter-spacing:.13em;
+  font-weight:800;color:var(--purple);cursor:pointer;padding:4px 0;text-transform:uppercase}
+.mlogo:hover{color:var(--accent)}
+.mtab{font-family:inherit;font-size:13.5px;font-weight:650;padding:8px 15px;border-radius:99px;
+  border:2px solid var(--line);background:none;color:var(--dim);cursor:pointer;margin-left:2px}
+.mtab.on{border-color:var(--accent);color:var(--txt);background:rgba(var(--accent-rgb),.1)}
+/* requirement chips + detail table */
+.kchip{display:inline-block;font-size:12.5px;padding:4px 10px;border-radius:8px;margin:0 6px 6px 0;
+  background:rgba(var(--purple-rgb),.12);color:var(--txt);border:1px solid rgba(var(--purple-rgb),.3)}
+.kchip b{color:var(--purple)}
+.bc-detail{border-top:1px solid var(--line);padding:10px 18px 12px;background:var(--panel2)}
+.drow{display:flex;gap:10px;align-items:baseline;padding:6px 0;font-size:13.5px;border-bottom:1px solid var(--line)}
+.drow:last-child{border-bottom:none}
+.drow b{min-width:74px;color:var(--purple);font-weight:680}
+.drow span{flex:1;color:var(--txt)}
+.drow a{font-size:12px;white-space:nowrap}
 .tgo{background:var(--accent);color:#fff;border:none;border-radius:9px;font-family:inherit;
   font-size:12.5px;font-weight:650;padding:8px 12px;cursor:pointer;white-space:nowrap}
 .rgname{font-size:16.5px;font-weight:620;line-height:1.35}
@@ -457,7 +485,7 @@ details#custform .body{padding:0 12px 12px;display:flex;flex-direction:column;ga
 </head>
 <body>
 <header>
-  <h1>◉ JARVIS</h1>
+  <h1>JARVIS</h1>
   <nav id="nav"></nav>
   <span id="greet"></span>
   <span id="cr"><b id="crN">0</b> cr planned</span>
@@ -1300,7 +1328,7 @@ function backupsFor(code,chosen){
    fallbacks that keep the same requirement. Coursicle tells you when a seat frees up;
    nothing tells you what to take instead that still counts. That is the gap. */
 let dropped=S('dropped')||[];
-let openChain={}, openNode={};
+let openChain={}, openNode={}, openDetail={};
 /* one more level down: what covers the requirement if the first fallback ALSO fills */
 function pathKids(orig,mid,codes){
   const swapped=codes.map(c=>c===orig?mid:c);
@@ -1322,6 +1350,20 @@ function plan_(){
    every removed decision is the point. */
 let selMajor=S('selMajor')||'', selMinors=S('selMinors')||[], selPre=S('selPre')||false;
 let reqQ='', minorQ='', showMinorSearch=false;
+function goHome(){step='ask';S('step','ask');plan_()}
+function shortProg(pname){
+  if(pname==='A&S Distribution')return 'A&S';
+  if(pname==='Pre-Med prerequisites')return 'Pre-med';
+  return pname.replace(/\s*\((BA|BS|BFA|Minor)\)\s*$/,'');
+}
+function miniNav(){
+  return `<div class="topnav">
+    <button class="mlogo" onclick="goHome()">JARVIS</button>
+    ${step!=='ask'?`
+      <button class="mtab ${step==='options'?'on':''}" onclick="step='options';S('step','options');plan_()">Plans</button>
+      <button class="mtab ${step==='board'?'on':''}" onclick="step='board';S('step','board');plan_()">My classes</button>`:''}
+  </div>`;
+}
 function progName(id){const p=reqProgram(id);return p?p.name.replace(/\s*\((BA|BS|BFA|Minor)\)\s*$/,''):id}
 
 function buildPrograms(){
@@ -1338,7 +1380,7 @@ function renderAsk(){
   const hits=q?majors.filter(p=>p.name.toLowerCase().indexOf(q)>-1).slice(0,6):[];
   const mhits=mq?minors.filter(p=>p.name.toLowerCase().indexOf(mq)>-1&&selMinors.indexOf(p.id)<0).slice(0,5):[];
   V.innerHTML=`<div class="ask">
-    <div class="asklogo">Jarvis</div>
+    <button class="mlogo" style="margin-bottom:20px" onclick="goHome()">JARVIS</button>
     <h1>What are you studying?</h1>
     <p>I'll build you a semester that knocks out the most requirements — with backups for
        when classes fill up.</p>
@@ -1383,7 +1425,7 @@ let options=null, openOpt={}, showParams=false;
 let targetCr=S('targetCr')||15;
 function setParam(fn){fn();S('prefs',prefs);S('targetCr',targetCr);options=null;renderOptions()}
 function paramsBar(){
-  if(!showParams)return `<div style="margin-bottom:14px"><button class="chip" onclick="showParams=true;renderOptions()">⚙ Times, days &amp; credits</button></div>`;
+  if(!showParams)return `<div style="margin-bottom:14px"><button class="chip" onclick="showParams=true;renderOptions()">Times, days &amp; credits</button></div>`;
   const sel=(v,cur)=>v===cur?'selected':'';
   return `<div style="margin-bottom:6px"><button class="chip on" onclick="showParams=false;renderOptions()">✓ Done</button></div><div class="params">
     <select onchange="setParam(()=>prefs.noBefore=+this.value)">
@@ -1403,6 +1445,7 @@ function renderOptions(){
   if(!options)options=generateOptions();
   const DAY={M:'Mon',T:'Tue',W:'Wed',R:'Thu',F:'Fri'};
   V.innerHTML=`<div class="board">
+    ${miniNav()}
     <div class="bhead">
       <div class="btitle2">Pick your semester.</div>
       <div class="bsub">Tap a plan to see its classes. You can change anything after.</div>
@@ -1451,8 +1494,12 @@ function renderBoard(){
   const slots=openSlots();
   const trouble=mine.filter(r=>!isOpen(r)).length;
   V.innerHTML=`<div class="board">
+    ${miniNav()}
     <div class="bhead">
-      <div class="btitle2">Your enrollment board</div>
+      <div class="btitle2">Your classes</div>
+      ${mine.length?`<div class="winrow">${(()=>{const tot=mine.reduce((a,r)=>a+slotsFilledBy(r,slots).length,0);
+        return `<span class="winchip">${tot} requirement${tot===1?'':'s'} handled</span>`
+          +(mine.every(isOpen)?`<span class="winchip good">every seat open</span>`:'')})()}</div>`:''}
       <div class="bsub">${mine.length} class${mine.length===1?'':'es'}${
         trouble?` · <b class="warn">${trouble} may be a problem</b>`:mine.length?` · <b class="good">all open right now</b>`:''}</div>
       <div class="bstamp">Seats checked ${BUILT} ·
@@ -1467,7 +1514,7 @@ function renderBoard(){
     </div>
 
     ${mine.length?mine.map(r=>boardCard(r,slots,mine)).join(''):
-      `<div class="bempty">Add the classes you're planning to take.<br>
+      `<div class="bempty">What are you hoping to take?<br>
        <span class="dim">I'll flag anything that's full and line up backups that still count.</span></div>`}
 
     ${mine.length?`<div class="askfoot" style="margin-top:24px">
@@ -1521,8 +1568,14 @@ function boardCard(r,slots,mine){
       </div>
       <span class="pill ${lost?'st-lost':st[2]}">${lost?'Didn\'t get it':st[1]}</span>
     </div>
-    ${keeps.length?`<div class="bc-keeps">Keeps${keeps.map(k=>` <b>${k.sname}</b>`).join(' ·')}</div>`:
+    ${keeps.length?`<div class="bc-keeps">${keeps.map(k=>`<span class="kchip"><b>${shortProg(k.pname)}</b> ${k.sname}</span>`).join('')}</div>`:
       `<div class="bc-keeps dim">Doesn't count toward anything you're tracking.</div>`}
+    ${openDetail[code]?`<div class="bc-detail">
+      ${slotsMatchedBy(r,slots).map(k=>`<div class="drow"><b>${shortProg(k.pname)}</b><span>${k.sname}${k.left?'':' — already done'}</span>
+        <a href="${k.source}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">rule ↗</a></div>`).join('')||'<div class="drow dim">Nothing you are tracking.</div>'}
+      ${(r[10]||[]).length?`<div class="drow"><b>Tags</b><span>${r[10].join(' · ')}</span></div>`:''}
+      <div class="drow"><b>Credits</b><span>${r[3]}</span></div>
+    </div>`:''}
 
     ${(lost||!isOpen(r)||openChain[code])?`<div class="plan-b">
       <div class="pb-head">${lost?'Pick a new path':'Your paths if it fills'}</div>
@@ -1532,7 +1585,7 @@ function boardCard(r,slots,mine){
         <div class="tbranch">
           <div class="tnode" onclick="openNode['${nk}']=!openNode['${nk}'];plan_()">
             <span class="tname">${b.code} <span class="fine">${b.r[2]}</span>
-              <div class="pb-keeps">keeps ${b.covers.join(' · ')} · ${openNode[nk]?'▲':'▼ what if this fills too?'}</div></span>
+              <div class="pb-keeps">${slotsMatchedBy(b.r,openSlots()).slice(0,3).map(k=>`<b>${shortProg(k.pname)}</b> ${k.sname}`).join(' · ')||('keeps '+b.covers.join(' · '))} · ${openNode[nk]?'▲':'▼ what if this fills too?'}</div></span>
             <span class="pill ${bs[2]}">${bs[1]}</span>
             <button class="tgo" onclick="event.stopPropagation();takeBackup('${code}','${b.code}')">take it</button>
           </div>
@@ -1547,6 +1600,7 @@ function boardCard(r,slots,mine){
     </div>`:''}
     <div class="bc-foot">
       ${(!lost&&isOpen(r))?`<a href="#" onclick="openChain['${code}']=!openChain['${code}'];plan_();return false">${openChain[code]?'hide paths':'see my paths'}</a>`:''}
+      <a href="#" onclick="openDetail['${code}']=!openDetail['${code}'];plan_();return false">${openDetail[code]?'less':'details'}</a>
       ${lost?`<a href="#" onclick="dropped=dropped.filter(c=>c!=='${code}');S('dropped',dropped);plan_();return false">actually I got it</a>`
             :`<a href="#" onclick="markLost('${code}');return false">didn't get this one</a>`}
       <a href="#" onclick="removeFromBoard('${code}');return false">remove</a>
