@@ -1693,13 +1693,13 @@ function bragCard(){
   grad.addColorStop(0,'#4C8DFF');grad.addColorStop(1,'#A855F7');
   x.fillStyle=grad;x.font='800 340px -apple-system,Helvetica';x.fillText(String(score),80,700);
   x.fillStyle='#9595AB';x.font='600 52px -apple-system,Helvetica';x.fillText('schedule score',90,780);
-  x.fillStyle='#F3F3F9';x.font='600 54px -apple-system,Helvetica';
-  x.fillText(rs.length+' classes · '+cr+' credits · '+fills+' requirements handled',80,900);
+  x.fillStyle='#F3F3F9';x.font='600 40px -apple-system,Helvetica';
+  x.fillText(rs.length+' classes · '+cr+' credits · '+fills+' requirements',80,900);
   let y=1010;
   rs.slice(0,7).forEach(r=>{
     x.fillStyle='#4C8DFF';x.font='700 46px Menlo,monospace';x.fillText(codeOf(r),80,y);
     x.fillStyle='#9595AB';x.font='500 40px -apple-system,Helvetica';
-    x.fillText((r[2]||'').slice(0,32),400,y);
+    x.fillText((r[2]||'').slice(0,28),400,y);
     y+=86;
   });
   x.fillStyle='#34D399';x.font='700 46px -apple-system,Helvetica';
