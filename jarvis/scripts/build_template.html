@@ -238,6 +238,14 @@ body.focus main{padding:0}
 .bc-foot{align-items:center}
 .mtab.reset{margin-left:auto;border-color:transparent;color:var(--dim);font-size:12.5px}
 .mtab.reset:hover{color:var(--red);border-color:rgba(var(--red-rgb),.4)}
+#installbar{position:fixed;left:12px;right:12px;bottom:14px;z-index:130;display:flex;align-items:center;gap:10px;
+  background:linear-gradient(135deg,rgba(76,141,255,.16),rgba(168,85,247,.16)),#16161F;
+  border:1px solid rgba(var(--accent-rgb),.4);border-radius:14px;padding:13px 15px;font-size:14px;
+  box-shadow:0 10px 30px rgba(0,0,0,.5);animation:floatup .35s ease both}
+#installbar span{flex:1;line-height:1.45}
+.ib-go{background:var(--accent);color:#fff;border:none;border-radius:9px;font-family:inherit;font-weight:700;
+  font-size:14px;padding:9px 16px;cursor:pointer}
+.ib-x{background:none;border:none;color:var(--dim);font-size:15px;cursor:pointer;font-family:inherit;padding:4px}
 .opt-stats{display:flex;flex-wrap:wrap;gap:14px;margin-top:11px;font-size:13.5px;color:var(--dim)}
 .opt-stats b{color:var(--txt);font-size:15px}
 .opt-stats .ok{color:var(--green);font-weight:650}
@@ -2177,6 +2185,30 @@ function greet(){
   const n=S('user');if(!n)return;
   const h=new Date().getHours();
   document.getElementById('greet').textContent=(h<12?'good morning':h<18?'good afternoon':'good evening')+', '+n;
+}
+/* Install banner: the website IS the launcher. Android gets a real one-tap install
+   (beforeinstallprompt); iOS has no such API, so we show the Share -> Add to Home
+   Screen steps. Hidden once running standalone, dismissable, never nags again. */
+let deferredInstall=null;
+if(typeof addEventListener==='function')addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;drawInstall()});
+function isStandalone(){
+  try{return (typeof matchMedia==='function'&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true}catch(e){return false}
+}
+function isIOS(){return /iPhone|iPad|iPod/.test((navigator&&navigator.userAgent)||'')}
+function drawInstall(){
+  if(!document.querySelector)return;
+  if(isStandalone()||S('noinstall'))return;
+  if(document.getElementById('installbar'))return;
+  const d=document.createElement('div');d.id='installbar';
+  d.innerHTML=deferredInstall
+    ?`<span>Get Jarvis on your home screen</span>
+      <button class="ib-go" onclick="deferredInstall.prompt();S('noinstall',1);this.parentElement.remove()">Install</button>
+      <button class="ib-x" onclick="S('noinstall',1);document.getElementById('installbar').remove()">✕</button>`
+    :isIOS()
+    ?`<span>Install: tap <b>Share</b> <svg width="13" height="16" viewBox="0 0 13 16" style="vertical-align:-2px"><path d="M6.5 1v9M3.5 3.5L6.5 1l3 2.5M1.5 7v7h10V7" stroke="#4C8DFF" stroke-width="1.4" fill="none" stroke-linecap="round"/></svg> then <b>Add to Home Screen</b></span>
+      <button class="ib-x" onclick="S('noinstall',1);document.getElementById('installbar').remove()">✕</button>`
+    :'';
+  if(d.innerHTML&&document.body.appendChild)document.body.appendChild(d);
 }
 /* boot */
 if(navigator.serviceWorker&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
