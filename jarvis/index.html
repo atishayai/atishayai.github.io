@@ -16,7 +16,7 @@
 <meta property="og:site_name" content="Knockout!">
 <meta property="og:title" content="Knockout! — Now for Cornell Students">
 <meta property="og:description" content="Build your Cornell schedule, track every major and minor requirement, and find the classes that count toward more than one at once. Free, no account.">
-<meta property="og:url" content="https://www.atishay.io/jarvis/">
+<meta property="og:url" content="https://knockout.college/">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Knockout! — Now for Cornell Students">
 <meta name="twitter:description" content="Schedule, degree progress, and a course optimizer. Free, no account.">
@@ -1790,7 +1790,7 @@ function renderShared(codes){
     <div class="ractions">
       <button class="go" onclick="location.hash='';plan_()">Build my own →</button>
     </div>
-    <div class="askfoot">Jarvis · free · no account · www.atishay.io/jarvis</div>
+    <div class="askfoot">Knockout! · free · knockout.college</div>
   </div>`;
 }
 /* Brag card: an IG-story-sized PNG drawn on canvas. The score is the headline. */
@@ -1829,7 +1829,7 @@ function bragCard(){
   x.fillStyle='#34D399';x.font='700 46px -apple-system,Helvetica';
   x.fillText(rs.every(isOpen)?'every seat open':'', 80, y+40);
   x.fillStyle='#9595AB';x.font='600 44px -apple-system,Helvetica';
-  x.fillText('beat it: www.atishay.io/jarvis',80,1830);
+  x.fillText('beat it: knockout.college',80,1830);
   const a=document.createElement('a');
   a.download='jarvis-schedule.png';a.href=c.toDataURL('image/png');a.click();
   toast('Saved — send it or post it');
