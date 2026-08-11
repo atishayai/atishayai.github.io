@@ -1678,14 +1678,12 @@ function renderOptions(){
       <div class="opt-top" onclick="openOpt['${o.id}']=!openOpt['${o.id}'];renderOptions()">
         <div style="flex:1">
           <div class="opt-name">${o.name}</div>
-          <div class="opt-why">${o.why}</div>
           <div class="opt-preview">${o.res.courses.slice(0,3).map(codeOf).join(' · ')}${o.res.courses.length>3?' · +'+(o.res.courses.length-3):''}</div>
           <div class="opt-stats">
-            <span><b>${o.res.courses.length}</b> classes</span>
-            <span><b>${o.res.credits}</b> credits</span>
-            <span><b>${o.fills}</b> requirements</span>
-            <span><b>${o.days}</b> day${o.days===1?'':'s'}/week</span>
-            ${o.allOpen?`<span class="ok">all have seats</span>`:''}
+            <span><b>${o.res.credits}</b> cr</span>
+            <span><b>${o.fills}</b> reqs</span>
+            <span><b>${o.days}</b> day${o.days===1?'':'s'}</span>
+            ${o.allOpen?`<span class="ok">seats ✓</span>`:''}
           </div>
         </div>
         <span class="caret2">${openOpt[o.id]?'▲':'▼'}</span>
@@ -1697,7 +1695,7 @@ function renderOptions(){
               <a class="vlink" href="${rosterURL(r)}" target="_blank" rel="noopener noreferrer"
                  onclick="event.stopPropagation()">Cornell ↗</a>
               <div class="opt-when">${[...(r[4][0]||'')].map(d=>DAY[d]||d).join(' ')} · ${r[5][0]||'time TBA'}</div>
-              <div class="opt-keeps">${slotsFilledBy(r,o.res.slots).map(k=>k.sname).join(' · ')||'no tracked requirement'}</div></div>
+              <div class="opt-keeps">${(f=>f.length?f.slice(0,2).map(k=>k.sname).join(' · ')+(f.length>2?' +'+(f.length-2):''):'—')(slotsFilledBy(r,o.res.slots))}</div></div>
             <span class="pill ${st[2]}">${st[1]}</span></div>`}).join('')}
         <button class="go" style="margin-top:16px" onclick="useOption('${o.id}')">Use this plan →</button>
       </div>`:''}
@@ -1887,8 +1885,7 @@ function renderBoard(){
       ${mine.length?`<div class="winrow">
         <span class="winchip score">score ${scheduleScore(mine,slots)}</span>
         ${(()=>{const tot=mine.reduce((a,r)=>a+slotsFilledBy(r,slots).length,0);
-        return `<span class="winchip">${tot} requirement${tot===1?'':'s'} handled</span>`
-          +(mine.every(isOpen)?`<span class="winchip good">every seat open</span>`:'')})()}</div>
+        return `<span class="winchip">${tot} req${tot===1?'':'s'} handled</span>`})()}</div>
       <div class="sboard">
         <div class="sdonut">${donut(mine,slots)}
           <div class="slegend"><span><i style="background:#34D399"></i>done</span>
@@ -1908,8 +1905,8 @@ function renderBoard(){
         <button class="chip" onclick="bragCard()">Make my card</button>
       </div>`:''}
       <div class="bsub">${mine.length} class${mine.length===1?'':'es'}${
-        trouble?` · <b class="warn">${trouble} may be a problem</b>`:mine.length?` · <b class="good">all open right now</b>`:''}</div>
-      <div class="bstamp">Seats ${BUILT} · <a href="https://classes.cornell.edu/browse/roster/FA26" target="_blank" rel="noopener noreferrer">verify ↗</a></div>
+        trouble?` · <b class="warn">${trouble} full</b>`:mine.length?` · <b class="good">all open</b>`:''}
+        · seats ${BUILT} · <a href="https://classes.cornell.edu/browse/roster/FA26" target="_blank" rel="noopener noreferrer" style="font-size:13px">verify ↗</a></div>
     </div>
 
     <div class="addbox">
@@ -1981,13 +1978,14 @@ function boardCard(r,slots,mine){
       </div>
       <span class="pill ${lost?'st-lost':st[2]}">${lost?'Didn\'t get it':st[1]}</span>
     </div>
-    ${keeps.length?`<div class="bc-keeps">${keeps.map(k=>`<span class="kchip"><b>${shortProg(k.pname)}</b> ${k.sname}</span>`).join('')}</div>`:
+    ${keeps.length?`<div class="bc-keeps">${keeps.slice(0,2).map(k=>`<span class="kchip"><b>${shortProg(k.pname)}</b> ${k.sname}</span>`).join('')}${keeps.length>2?`<span class="kchip">+${keeps.length-2}</span>`:''}</div>`:
       `<div class="bc-keeps dim">Doesn't count toward anything you're tracking.</div>`}
     ${openDetail[code]?`<div class="bc-detail">
       ${slotsMatchedBy(r,slots).map(k=>`<div class="drow"><b>${shortProg(k.pname)}</b><span>${k.sname}${k.left?'':' — already done'}</span>
         <a href="${k.source}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">rule ↗</a></div>`).join('')||'<div class="drow dim">Nothing you are tracking.</div>'}
       ${(r[10]||[]).length?`<div class="drow"><b>Tags</b><span>${r[10].join(' · ')}</span></div>`:''}
-      <div class="drow"><b>Credits</b><span>${r[3]}</span></div>
+      <div class="drow"><b>Credits</b><span>${r[3]}</span>
+        <a href="#" onclick="removeFromBoard('${code}');return false" style="color:var(--red)">remove class</a></div>
     </div>`:''}
 
     ${(lost||!isOpen(r)||openChain[code])?`<div class="plan-b">
@@ -2018,10 +2016,9 @@ function boardCard(r,slots,mine){
         `<div class="pb-row dim">No backup covers the same requirement and fits your week. Worth asking your advisor.</div>`}
     </div>`:''}
     <div class="bc-foot">
-      <span class="fine" style="flex:1">${(openDetail[code]||openChain[code])?'tap to close':'tap for details & paths'}</span>
+      <span class="fine" style="flex:1">${(openDetail[code]||openChain[code])?'tap to close':'tap for paths'}</span>
       ${lost?`<a href="#" onclick="dropped=dropped.filter(c=>c!=='${code}');S('dropped',dropped);plan_();return false">actually I got it</a>`
-            :`<a href="#" onclick="markLost('${code}');return false">didn't get this one</a>`}
-      <a href="#" onclick="removeFromBoard('${code}');return false">remove</a>
+            :`<a href="#" onclick="markLost('${code}');return false">didn't get it</a>`}
     </div>
   </div>`;
 }
