@@ -258,14 +258,16 @@ body.focus main{padding:0}
 /* home-page fun */
 .floaties{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0}
 .flo{position:absolute;font-family:var(--mono);font-size:12px;font-weight:700;padding:7px 13px;
-  border-radius:99px;border:1px solid rgba(var(--accent-rgb),.3);color:rgba(243,243,249,.5);
-  background:rgba(76,141,255,.07);white-space:nowrap;filter:blur(.3px)}
-.f1{top:33%;left:-4%;animation:drift1 17s ease-in-out infinite}
-.f2{top:20%;right:-2%;animation:drift2 13s ease-in-out infinite;border-color:rgba(var(--green-rgb),.35);color:rgba(52,211,153,.55)}
-.f3{bottom:26%;left:-6%;animation:drift2 21s ease-in-out infinite}
-.f4{bottom:12%;right:4%;animation:drift1 11s ease-in-out infinite;font-style:italic;
-  border-color:rgba(var(--purple-rgb),.4);color:rgba(168,85,247,.55);font-size:15px}
-.f5{top:44%;right:-5%;animation:drift1 19s ease-in-out infinite;border-color:rgba(var(--amber-rgb),.3);color:rgba(255,210,76,.5)}
+  border-radius:99px;border:1px solid rgba(var(--accent-rgb),.18);color:rgba(243,243,249,.28);
+  background:rgba(76,141,255,.05);white-space:nowrap;filter:blur(.6px)}
+.f1{top:10%;left:3%;animation:drift1 17s ease-in-out infinite}
+.f2{top:14%;right:3%;animation:drift2 13s ease-in-out infinite;border-color:rgba(var(--green-rgb),.2);color:rgba(52,211,153,.3)}
+.f3{bottom:12%;left:4%;animation:drift2 21s ease-in-out infinite}
+.f4{bottom:16%;right:4%;animation:drift1 11s ease-in-out infinite;font-style:italic;
+  border-color:rgba(var(--purple-rgb),.22);color:rgba(168,85,247,.32);font-size:14px}
+/* corners need room: on anything narrower than a laptop they would sit under the
+   content column, so they simply do not render there */
+@media (max-width:1100px){.floaties{display:none}}
 @keyframes drift1{0%,100%{transform:translate(0,0) rotate(-4deg)}50%{transform:translate(26px,-30px) rotate(3deg)}}
 @keyframes drift2{0%,100%{transform:translate(0,0) rotate(3deg)}50%{transform:translate(-30px,22px) rotate(-4deg)}}
 .ask{position:relative;z-index:1}
@@ -1556,7 +1558,6 @@ function renderAsk(){
       <span class="flo f2">Open</span>
       <span class="flo f3">ANTHR 1700 · counts ×3</span>
       <span class="flo f4">KO!</span>
-      <span class="flo f5">backup ready</span>
     </div>`:'';
   V.innerHTML=`${floaties}<div class="ask">
     <div style="display:flex;align-items:flex-start;justify-content:space-between">
