@@ -278,6 +278,8 @@ body.focus main{padding:0}
 .picktag{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--amber);font-weight:700}
 .pickx{background:none;border:none;color:var(--dim);font-size:17px;cursor:pointer;font-family:inherit;padding:4px 8px}
 .pickx:hover{color:var(--red)}
+.usp{display:flex;flex-wrap:wrap;gap:6px;margin:-14px 0 26px}
+.usp span{font-size:12.5px;font-weight:650;color:var(--green);background:rgba(var(--green-rgb),.09);border:1px solid rgba(var(--green-rgb),.25);border-radius:99px;padding:5px 11px}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 4px}
 .chip{font-family:inherit;font-size:14.5px;font-weight:620;padding:10px 16px;border-radius:99px;
   border:2px solid var(--line);background:var(--panel);color:var(--txt);cursor:pointer}
@@ -1395,7 +1397,7 @@ function backupsFor(code,chosen){
    fallbacks that keep the same requirement. Coursicle tells you when a seat frees up;
    nothing tells you what to take instead that still counts. That is the gap. */
 let dropped=S('dropped')||[];
-let openChain={}, openNode={}, openDetail={};
+let openChain={}, openNode={}, openDetail={}, showBars=false;
 /* one more level down: what covers the requirement if the first fallback ALSO fills */
 function pathKids(orig,mid,codes){
   const swapped=codes.map(c=>c===orig?mid:c);
@@ -1459,6 +1461,28 @@ function buildPrograms(){
   if(selPre)myPrograms.push('premed');
   S('myprograms',myPrograms);
 }
+function majHitsHtml(){
+  const q=reqQ.trim().toLowerCase();
+  if(!q)return '';
+  const hits=REQS.filter(p=>p.kind==='major'&&p.name.toLowerCase().indexOf(q)>-1).slice(0,6);
+  return hits.map(p=>`<div class="pickcard" onclick="selMajor='${p.id}';S('selMajor',selMajor);reqQ='';plan_()">
+      <span class="pickname">${progName(p.id)}</span>
+      ${p.confidence==='approx'||p.confidence==='partial'?'<span class="picktag" title="auto-read from the catalog — double-check with your department">approximate — double-check</span>':''}
+    </div>`).join('')||'<div class="askfoot" style="text-align:left">Nothing matches — try fewer letters.</div>';
+}
+function drawMajHits(){const el=document.getElementById&&document.getElementById('majHits');if(el)el.innerHTML=majHitsHtml()}
+function drawMinHits(){
+  const el=document.getElementById&&document.getElementById('minHits');if(!el)return;
+  const mq=minorQ.trim().toLowerCase();
+  el.innerHTML=mq?REQS.filter(p=>p.kind==='minor'&&p.name.toLowerCase().indexOf(mq)>-1&&selMinors.indexOf(p.id)<0).slice(0,5)
+    .map(p=>`<div class="pickcard" onclick="selMinors.push('${p.id}');S('selMinors',selMinors);minorQ='';showMinorSearch=false;plan_()">
+      <span class="pickname">${progName(p.id)}</span></div>`).join(''):'';
+}
+function drawDoneHits(){
+  const el=document.getElementById&&document.getElementById('doneHitsBox');if(!el)return;
+  el.innerHTML=doneHits().map(r=>`<div class="pickcard" onclick="doneCourses.push('${codeOf(r)}');S('done',doneCourses);doneQ='';plan_()">
+    <span class="pickname" style="font-size:15px">${codeOf(r)} <span class="fine">${r[2]}</span></span></div>`).join('');
+}
 function renderAsk(){
   const majors=REQS.filter(p=>p.kind==='major');
   const minors=REQS.filter(p=>p.kind==='minor');
@@ -1469,8 +1493,9 @@ function renderAsk(){
     <button class="mlogo" style="margin-bottom:20px" onclick="goHome()">JARVIS</button>
     ${obDots()}${!S('user')?`
     <h1>Hey. What's your name?</h1>
-    <p>I build class schedules that knock out the most requirements at once — and keep
-       backups ready for when classes fill up.</p>
+    <p>I find the classes that count for the most at once — and keep backups ready
+       for when they fill.</p>
+    <div class="usp">${['College core','Major','Minor','Pre-med','Open seats','Conflicts'].map(x=>`<span>✓ ${x}</span>`).join('')}</div>
     <input type="text" id="nameQ" placeholder="First name is fine" maxlength="24" autocomplete="off"
       onkeydown="if(event.key==='Enter'&&this.value.trim()){S('user',this.value.trim());plan_()}">
     <button class="go" onclick="const e=document.getElementById('nameQ');if(e&&e.value.trim()){S('user',e.value.trim());plan_()}">That's me →</button>
@@ -1495,7 +1520,7 @@ ${!S('college')?`
     <div class="askfoot">Not sure? It's on your admissions letter — or pick Arts & Sciences and change later.</div>
   </div>`:`
     <h1>${S('year')==='transfer'?'Welcome to Cornell, ':''}${S('user')}, what are you studying?</h1>
-    <p>Pick your major and I'll do the rest.</p>
+    <p>Pick it and I'll optimize across everything — core, major, minor, pre-med, seats.</p>
 
     ${selMajor?`
       <div class="pickcard on">
@@ -1503,12 +1528,8 @@ ${!S('college')?`
         <button class="pickx" onclick="selMajor='';S('selMajor','');plan_()" aria-label="remove">✕</button>
       </div>`
     :`<input type="text" id="majQ" placeholder="Type your major — history, econ, biology…"
-        value="${reqQ}" autocomplete="off"
-        oninput="reqQ=this.value;renderAsk();const e=document.getElementById('majQ');if(e){e.focus();if(e.setSelectionRange)e.setSelectionRange(e.value.length,e.value.length)}">
-      ${hits.map(p=>`<div class="pickcard" onclick="selMajor='${p.id}';S('selMajor',selMajor);reqQ='';plan_()">
-        <span class="pickname">${progName(p.id)}</span>
-        ${p.confidence==='approx'||p.confidence==='partial'?'<span class="picktag" title="auto-read from the catalog — double-check with your department">approximate — double-check</span>':''}
-      </div>`).join('')||(q?'<div class="askfoot" style="text-align:left">Nothing matches — try fewer letters.</div>':'')}`}
+        value="${reqQ}" autocomplete="off" oninput="reqQ=this.value;drawMajHits()">
+      <div id="majHits">${majHitsHtml()}</div>`}
 
     ${selMajor?`
     <div class="chips">
@@ -1522,15 +1543,13 @@ ${!S('college')?`
       `<button class="chip done" onclick="doneCourses=doneCourses.filter(x=>x!=='${c}');S('done',doneCourses);plan_()">${c} ✕</button>`).join('')}</div>`:''}
     ${showDoneSearch?`<input type="text" id="doneQ" placeholder="Type anything you've finished or transferred — ANTH 1001, CHEM…"
         value="${doneQ}" autocomplete="off"
-        oninput="doneQ=this.value;renderAsk();const e=document.getElementById('doneQ');if(e){e.focus();if(e.setSelectionRange)e.setSelectionRange(e.value.length,e.value.length)}">
+        oninput="doneQ=this.value;drawDoneHits()">
       <div class="fine" style="margin-top:6px">I won't recommend these again, and they count toward your requirements.</div>
-      ${doneHits().map(r=>`<div class="pickcard" onclick="doneCourses.push(codeOf(rec('${codeOf(r)}')));S('done',doneCourses);doneQ='';plan_()">
-        <span class="pickname" style="font-size:15px">${codeOf(r)} <span class="fine">${r[2]}</span></span></div>`).join('')}`:''}
+      <div id="doneHitsBox"></div>`:''}
     ${showMinorSearch?`<input type="text" id="minQ" placeholder="Type a minor — data science, music…"
         value="${minorQ}" autocomplete="off"
-        oninput="minorQ=this.value;renderAsk();const e=document.getElementById('minQ');if(e){e.focus();if(e.setSelectionRange)e.setSelectionRange(e.value.length,e.value.length)}">
-      ${mhits.map(p=>`<div class="pickcard" onclick="selMinors.push('${p.id}');S('selMinors',selMinors);minorQ='';showMinorSearch=false;plan_()">
-        <span class="pickname">${progName(p.id)}</span></div>`).join('')}`:''}
+        oninput="minorQ=this.value;drawMinHits()">
+      <div id="minHits"></div>`:''}
     <div class="fork">
       <div class="forkcard" onclick="buildPrograms();plan=[];S('plan',plan);step='board';S('step','board');plan_()">
         <div class="forkname">I already picked my classes</div>
@@ -1769,7 +1788,7 @@ function bragCard(){
   x.fillText('beat it: www.atishay.io/jarvis',80,1830);
   const a=document.createElement('a');
   a.download='jarvis-schedule.png';a.href=c.toDataURL('image/png');a.click();
-  toast('Card saved — post it');
+  toast('Saved — send it or post it');
 }
 function countUp(el,to){
   if(typeof requestAnimationFrame!=='function'||!el)return;
@@ -1797,14 +1816,18 @@ function renderBoard(){
           <div class="slegend"><span><i style="background:#34D399"></i>done</span>
             <span><i style="background:#A855F7"></i>this semester</span>
             <span><i style="background:#2B2B3B"></i>left</span></div></div>
-        <div class="sbars">${scoreParts(mine,slots).map(p=>`
+        <div class="sbars">
+          ${showBars?scoreParts(mine,slots).map(p=>`
           <div class="sbar"><div class="sbar-top"><span>${p.name}</span><b>${p.v}</b></div>
             <div class="bar"><i style="width:${p.v}%;background:linear-gradient(90deg,#4C8DFF,#A855F7)"></i></div>
-            <div class="fine">${p.why}</div></div>`).join('')}</div>
+            <div class="fine">${p.why}</div></div>`).join('')
+          :scoreParts(mine,slots).map(p=>`<div class="sbar-top" style="padding:3px 0"><span>${p.name}</span><b>${p.v}</b></div>`).join('')}
+          <button class="chip" style="margin-top:8px;align-self:flex-start" onclick="showBars=!showBars;plan_()">${showBars?'less':'breakdown'}</button>
+        </div>
       </div>
       <div class="row" style="gap:8px;margin-top:10px">
         <button class="chip" onclick="copyShare()">Share my schedule</button>
-        <button class="chip" onclick="bragCard()">Save the brag card</button>
+        <button class="chip" onclick="bragCard()">Share my classes</button>
       </div>`:''}
       <div class="bsub">${mine.length} class${mine.length===1?'':'es'}${
         trouble?` · <b class="warn">${trouble} may be a problem</b>`:mine.length?` · <b class="good">all open right now</b>`:''}</div>
@@ -1920,7 +1943,7 @@ function boardCard(r,slots,mine){
         `<div class="pb-row dim">No backup covers the same requirement and fits your week. Worth asking your advisor.</div>`}
     </div>`:''}
     <div class="bc-foot">
-      <span class="fine" style="flex:1">${(openDetail[code]||openChain[code])?'tap the card to close':'tap the card for details & paths'}</span>
+      <span class="fine" style="flex:1">${(openDetail[code]||openChain[code])?'tap to close':'tap for details & paths'}</span>
       ${lost?`<a href="#" onclick="dropped=dropped.filter(c=>c!=='${code}');S('dropped',dropped);plan_();return false">actually I got it</a>`
             :`<a href="#" onclick="markLost('${code}');return false">didn't get this one</a>`}
       <a href="#" onclick="removeFromBoard('${code}');return false">remove</a>
