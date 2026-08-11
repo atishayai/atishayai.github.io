@@ -1533,8 +1533,7 @@ function renderAsk(){
     
     ${[['first','First-year'],['soph','Sophomore'],['junior','Junior'],['senior','Senior'],['transfer','Transfer student']]
       .map(y=>`<div class="pickcard" onclick="S('year','${y[0]}');plan_()"><span class="pickname">${y[1]}</span></div>`).join('')}
-    <div class="askfoot">Free · no account · data from
-      <a href="https://classes.cornell.edu/browse/roster/FA26" target="_blank" rel="noopener noreferrer">Cornell's official Class Roster ↗</a></div>
+    ${legalFoot()}
   </div>`:`
 ${!S('college')?`
     <h1>Which college are you in?</h1>
@@ -1587,8 +1586,7 @@ ${!S('college')?`
       </div>
     </div>`
     :`<div class="askfoot" style="margin-top:26px"><a href="#" onclick="selMajor='';buildPrograms();step='options';S('step','options');options=null;plan_();return false">I'm undecided — show me options anyway</a></div>`}
-    <div class="askfoot">Free · no account · data from
-      <a href="https://classes.cornell.edu/browse/roster/FA26" target="_blank" rel="noopener noreferrer">Cornell's official Class Roster ↗</a></div>
+    ${legalFoot()}
   </div>`}`}`}
   `;
 }
