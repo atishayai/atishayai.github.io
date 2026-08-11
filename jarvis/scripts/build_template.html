@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0C0C12">
-<title>Jarvis — your whole college life, one place</title>
+<title>Knockout! — Now for Cornell Students</title>
 <meta name="description" content="Build your Cornell schedule, track every major and minor requirement, and find the classes that count toward more than one at once. Free, no account, runs in your browser.">
 <!-- Link preview for when this gets shared (Instagram bio, iMessage, Discord).
      Absolute URLs are required — relative ones are ignored by every scraper.
@@ -13,18 +13,18 @@
      Deliberately omitted for now: pointing og:image at a file that does not exist
      makes scrapers render a blank card, which looks more broken than no image. -->
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="Jarvis">
-<meta property="og:title" content="Jarvis — your whole college life, one place">
+<meta property="og:site_name" content="Knockout!">
+<meta property="og:title" content="Knockout! — Now for Cornell Students">
 <meta property="og:description" content="Build your Cornell schedule, track every major and minor requirement, and find the classes that count toward more than one at once. Free, no account.">
 <meta property="og:url" content="__SITE_URL__">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Jarvis — your whole college life, one place">
+<meta name="twitter:title" content="Knockout! — Now for Cornell Students">
 <meta name="twitter:description" content="Schedule, degree progress, and a course optimizer. Free, no account.">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Jarvis">
+<meta name="apple-mobile-web-app-title" content="Knockout!">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%234C8DFF'/%3E%3Ccircle cx='16' cy='16' r='6.5' fill='none' stroke='%230C0C12' stroke-width='2.5'/%3E%3Ccircle cx='16' cy='16' r='2' fill='%230C0C12'/%3E%3C/svg%3E">
 <style>
 :root{--bg:#0C0C12;--panel:#16161F;--panel2:#1E1E2A;--line:#2B2B3B;--line-rgb:43,43,59;--accent:#4C8DFF;--accent-rgb:76,141,255;--purple:#A855F7;--purple-rgb:168,85,247;--amber:#FFD24C;--amber-rgb:255,210,76;--red:#FF6B6B;--red-rgb:255,107,107;--green:#34D399;--green-rgb:52,211,153;--dim:#9595AB;--txt:#F3F3F9;--scrim-rgb:4,4,9;--sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Helvetica,Arial,sans-serif;--mono:'SF Mono',ui-monospace,Menlo,monospace}
@@ -238,6 +238,18 @@ body.focus main{padding:0}
 .bc-foot{align-items:center}
 .mtab.reset{margin-left:auto;border-color:transparent;color:var(--dim);font-size:12.5px}
 .mtab.reset:hover{color:var(--red);border-color:rgba(var(--red-rgb),.4)}
+/* the BAM */
+.bam{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
+  pointer-events:none;animation:bamfade 1.4s ease both}
+.bam-in{text-align:center;transform:rotate(-7deg);animation:bampunch .5s cubic-bezier(.1,1.6,.3,1) both}
+.bam-big{font-size:clamp(56px,15vw,110px);font-weight:900;letter-spacing:-.03em;font-style:italic;
+  background:linear-gradient(100deg,#4C8DFF,#A855F7 60%,#FFD24C);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 8px 30px rgba(168,85,247,.45))}
+.bam-small{font-size:clamp(16px,4vw,24px);font-weight:800;color:#F3F3F9;margin-top:4px;
+  text-shadow:0 2px 14px rgba(0,0,0,.6)}
+@keyframes bampunch{0%{transform:rotate(-7deg) scale(3);opacity:0}60%{transform:rotate(-7deg) scale(.96)}100%{transform:rotate(-7deg) scale(1);opacity:1}}
+@keyframes bamfade{0%,70%{opacity:1}100%{opacity:0}}
 #installbar{position:fixed;left:12px;right:12px;bottom:14px;z-index:130;display:flex;align-items:center;gap:10px;
   background:linear-gradient(135deg,rgba(76,141,255,.16),rgba(168,85,247,.16)),#16161F;
   border:1px solid rgba(var(--accent-rgb),.4);border-radius:14px;padding:13px 15px;font-size:14px;
@@ -543,7 +555,7 @@ details#custform .body{padding:0 12px 12px;display:flex;flex-direction:column;ga
 </head>
 <body>
 <header>
-  <h1>JARVIS</h1>
+  <h1>KNOCKOUT</h1>
   <nav id="nav"></nav>
   <span id="greet"></span>
   <span id="cr"><b id="crN">0</b> cr planned</span>
@@ -725,7 +737,7 @@ function dl(name,content,type){const a=document.createElement('a');a.href=URL.cr
 function dlICS(){
   const DW={M:'MO',T:'TU',W:'WE',R:'TH',F:'FR'};
   const first={M:'20260824',T:'20260825',W:'20260826',R:'20260827',F:'20260828'}; // week of Aug 24 2026
-  let ics='BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//JARVIS//EN\r\n';
+  let ics='BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//KNOCKOUT//EN\r\n';
   allItems().forEach((x,i)=>{
     const days=[...x.days].map(d=>DW[d]).filter(Boolean);if(!days.length)return;
     const d0=first[[...x.days][0]];
@@ -756,12 +768,12 @@ function impJSON(inp){
   r.onload=()=>{try{const o=JSON.parse(r.result);if(!o._jarvis)throw 0;
     ['user','prefs','plan','custom','todos','notes','events','brain','reqs'].forEach(k=>{if(o[k]!=null)S(k,o[k])});
     location.reload();
-  }catch(e){toast('that is not a Jarvis backup file')}};
+  }catch(e){toast('that is not a Knockout backup file')}};
   r.readAsText(f);
 }
 const V=document.getElementById('v');
 /* ===== STEPPER (guided flow) ===== */
-const FLOW=[['setup','Tell Jarvis your interests',()=>prefs.subjects.length>0],['sch','Build schedule',()=>plan.length+custom.length>0],['cal','Add deadlines',()=>Object.keys(events).length>0],['todo','First to-dos',()=>todos.length>0],['brain','Map your brain',()=>brainN.length>1]];
+const FLOW=[['setup','Tell Knockout your interests',()=>prefs.subjects.length>0],['sch','Build schedule',()=>plan.length+custom.length>0],['cal','Add deadlines',()=>Object.keys(events).length>0],['todo','First to-dos',()=>todos.length>0],['brain','Map your brain',()=>brainN.length>1]];
 function stepper(){
   const idx=FLOW.findIndex(f=>f[0]===cur);
   const next=FLOW.find(f=>!f[2]())||null;
@@ -890,7 +902,7 @@ function opt(){
       <div style="font-size:26px;margin-bottom:10px">◉</div>
       The Optimizer finds courses that count toward <b style="color:var(--accent)">several of YOUR interests at once</b> — one class, multiple boxes ticked.<br><br>
       It needs to know you first.<br><br>
-      <button class="b" style="font-size:12px;padding:10px 22px" onclick="openSetup()">tell Jarvis your interests →</button></div>`;
+      <button class="b" style="font-size:12px;padding:10px 22px" onclick="openSetup()">tell Knockout your interests →</button></div>`;
     return;
   }
   const ov=myOverlaps();
@@ -984,7 +996,7 @@ function drawSup(){
     const rest=SUBJECTS.filter(s=>!supSubjects.includes(s)&&(!q||s.includes(q)||(SUBJECT_NAMES[s]||'').toUpperCase().includes(q)));
     B.innerHTML=supDots()+`
     <h2 style="text-align:center">what are you into? 🎯</h2>
-    <div class="fine" style="text-align:center;margin:6px 0 16px">tap everything that sparks something — majors, maybes, curiosities.<br>pick <b style="color:var(--accent)">2 or more</b> and Jarvis finds courses that count for several at once.</div>
+    <div class="fine" style="text-align:center;margin:6px 0 16px">tap everything that sparks something — majors, maybes, curiosities.<br>pick <b style="color:var(--accent)">2 or more</b> and Knockout finds courses that count for several at once.</div>
     <input type="text" placeholder="search all ${SUBJECTS.length} subjects… psych, econ, cs, music…" oninput="supQ=this.value;drawSup()">
     ${picked.length?`<div class="fine" style="margin:10px 0 4px">picked (${picked.length}):</div><div class="chipbox">${picked.map(s=>`<span class="schip on" onclick="tgSub('${s}')" title="click to remove">${s}${SUBJECT_NAMES[s]?' · '+SUBJECT_NAMES[s]:''} ✕</span>`).join('')}</div>`:''}
     <div class="fine" style="margin:12px 0 4px">${q?'matches':'all subjects'} — scroll:</div>
@@ -1015,7 +1027,7 @@ function drawSup(){
   if(supStep===3){
     B.innerHTML=supDots()+`
     <h2 style="text-align:center">when is class NOT happening? 😤</h2>
-    <div class="fine" style="text-align:center;margin:6px 0 16px">your non-negotiables. Jarvis flags anything that breaks them.</div>
+    <div class="fine" style="text-align:center;margin:6px 0 16px">your non-negotiables. Knockout flags anything that breaks them.</div>
     <div class="fine" style="margin-bottom:6px">days I keep completely free:</div>
     <div class="row" style="margin-bottom:14px">${['M','T','W','R','F'].map(d=>`<span class="schip ${supDays.includes(d)?'on':''}" onclick="tgDay('${d}')" id="sd${d}" style="padding:8px 14px">${{M:'Mon',T:'Tue',W:'Wed',R:'Thu',F:'Fri'}[d]}</span>`).join('')}</div>
     <div class="cons">
@@ -1471,7 +1483,7 @@ function shortProg(pname){
 }
 function miniNav(){
   return `<div class="topnav">
-    <button class="mlogo" onclick="goHome()">JARVIS</button>
+    <button class="mlogo" onclick="goHome()">KNOCKOUT</button>
     ${step!=='ask'?`
       <button class="mtab ${step==='options'?'on':''}" onclick="step='options';S('step','options');plan_()">Plans</button>
       <button class="mtab ${step==='board'?'on':''}" onclick="step='board';S('step','board');plan_()">My classes</button>`:''}
@@ -1518,7 +1530,8 @@ function renderAsk(){
   const hits=q?majors.filter(p=>p.name.toLowerCase().indexOf(q)>-1).slice(0,6):[];
   const mhits=mq?minors.filter(p=>p.name.toLowerCase().indexOf(mq)>-1&&selMinors.indexOf(p.id)<0).slice(0,5):[];
   V.innerHTML=`<div class="ask">
-    <button class="mlogo" style="margin-bottom:20px" onclick="goHome()">JARVIS</button>
+    <button class="mlogo" style="margin-bottom:4px" onclick="goHome()">KNOCKOUT!</button>
+    <div class="fine" style="margin-bottom:18px">now for Cornell students</div>
     ${obDots()}${!S('user')?`
     <h1>Hey. What's your name?</h1>
     <p>Classes that count for the most — with backups when they fill.</p>
@@ -1658,12 +1671,20 @@ function renderOptions(){
         <span class="dim">Try loosening times or days in ⚙ above.</span></div>`}
   </div>`;
 }
+function bam(big,small){
+  if(!document.createElement||!document.body||!document.body.appendChild)return;
+  const d=document.createElement('div');d.className='bam';
+  d.innerHTML=`<div class="bam-in"><div class="bam-big">${big}</div>${small?`<div class="bam-small">${small}</div>`:''}</div>`;
+  document.body.appendChild(d);
+  if(typeof setTimeout==='function')setTimeout(()=>{if(d.remove)d.remove()},1400);
+}
 function useOption(id){
   const o=options.find(x=>x.id===id);if(!o)return;
   plan=o.res.courses.map(r=>({code:codeOf(r),pat:0}));S('plan',plan);
   dropped=[];S('dropped',dropped);
   step='board';S('step','board');plan_();
-  toast('Saved — these are your classes now');
+  const fills=o.res.courses.reduce((a,r)=>a+slotsFilledBy(r,o.res.slots).length,0);
+  bam('KNOCKOUT!',fills+' requirements down');
 }
 function statusOf(r){return isOpen(r)?['open','Open','st-open']:(r[11]==='W'?['wait','Waitlist','st-wait']:['full','Full','st-full'])}
 
@@ -1785,7 +1806,7 @@ function bragCard(){
   const g2=x.createRadialGradient(980,120,0,980,120,700);
   g2.addColorStop(0,'rgba(168,85,247,.25)');g2.addColorStop(1,'rgba(168,85,247,0)');
   x.fillStyle=g2;x.fillRect(0,0,1080,900);
-  x.fillStyle='#A855F7';x.font='700 44px -apple-system,Helvetica';x.fillText('J A R V I S',80,140);
+  x.fillStyle='#A855F7';x.font='700 44px -apple-system,Helvetica';x.fillText('K N O C K O U T',80,140);
   x.fillStyle='#F3F3F9';x.font='800 96px -apple-system,Helvetica';
   x.fillText((S('user')?S('user')+"'s":'My')+' semester',80,300);
   const rs=plan.map(p=>rec(p.code)).filter(Boolean), slots=openSlots();
@@ -1849,8 +1870,8 @@ function renderBoard(){
         </div>
       </div>
       <div class="row" style="gap:8px;margin-top:10px">
-        <button class="chip" onclick="copyShare()">Share my schedule</button>
-        <button class="chip" onclick="bragCard()">Share my classes</button>
+        <button class="chip" onclick="copyShare()">Share with a friend</button>
+        <button class="chip" onclick="bragCard()">Make my card</button>
       </div>`:''}
       <div class="bsub">${mine.length} class${mine.length===1?'':'es'}${
         trouble?` · <b class="warn">${trouble} may be a problem</b>`:mine.length?` · <b class="good">all open right now</b>`:''}</div>
@@ -1908,7 +1929,7 @@ function takeBackup(oldCode,newCode){
   plan=plan.map(p=>p.code===oldCode?{code:newCode,pat:0}:p);
   dropped=dropped.filter(c=>c!==oldCode);
   S('plan',plan);S('dropped',dropped);plan_();
-  toast('Switched to '+newCode);
+  bam('SWAPPED!',newCode+' is in');
 }
 
 function boardCard(r,slots,mine){
@@ -2019,7 +2040,7 @@ function openCourse(code){
         <span class="fine">Official, collected from everyone enrolled. Cornell login required.</span></div>
       <div class="cdrow"><a class="cdlink" href="https://classes.cornell.edu/search/roster/FA26?q=${encodeURIComponent(code)}" target="_blank" rel="noopener noreferrer">Cornell Class Roster ↗</a>
         <span class="fine">Enrollment status, prerequisites, full section list.</span></div>
-      <div class="fine" style="margin-top:8px">Ratings live on those sites — Jarvis links to them rather than copying them.</div>
+      <div class="fine" style="margin-top:8px">Ratings live on those sites — Knockout links to them rather than copying them.</div>
     </div>
 
     <div class="cdsec"><b>Your own take</b>
@@ -2246,7 +2267,7 @@ function drawInstall(){
   if(document.getElementById('installbar'))return;
   const d=document.createElement('div');d.id='installbar';
   d.innerHTML=deferredInstall
-    ?`<span>Get Jarvis on your home screen</span>
+    ?`<span>Get Knockout on your home screen</span>
       <button class="ib-go" onclick="deferredInstall.prompt();S('noinstall',1);this.parentElement.remove()">Install</button>
       <button class="ib-x" onclick="S('noinstall',1);document.getElementById('installbar').remove()">✕</button>`
     :isIOS()
