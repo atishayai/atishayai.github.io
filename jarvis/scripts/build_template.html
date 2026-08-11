@@ -1559,7 +1559,10 @@ function renderAsk(){
       <span class="flo f5">backup ready</span>
     </div>`:'';
   V.innerHTML=`${floaties}<div class="ask">
-    <button class="mlogo" style="margin-bottom:4px" onclick="goHome()">KNOCKOUT!</button>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between">
+      <button class="mlogo" style="margin-bottom:4px" onclick="goHome()">KNOCKOUT!</button>
+      <button class="mtab reset" style="margin-left:0" onclick="nukeAll()">start over</button>
+    </div>
     <div class="fine" style="margin-bottom:18px">now for Cornell students</div>
     ${obDots()}${!S('user')?`
     <h1>Hey. What's your name?</h1>
