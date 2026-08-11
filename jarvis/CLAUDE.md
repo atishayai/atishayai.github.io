@@ -1,8 +1,25 @@
-# JARVIS — build brief for Claude Code
+# KNOCKOUT! — build brief for Claude Code
 
-Read this first, every session. This is the operating manual for building Jarvis into a shippable product.
+Read this first, every session.
 
-## What Jarvis is
+## What this is
+**Knockout!** (formerly Jarvis) — requirement-aware schedule planner for Cornell students.
+Live at **https://knockout.college** (canonical repo: github.com/atishayai/knockout) and
+mirrored at www.atishay.io/jarvis. Free, no accounts, everything in localStorage,
+installable PWA. 186 tests. Owner: Atishay (Cornell transfer, non-technical — explain
+plainly, keep it dead simple, fewer words on screen always wins).
+
+## Deploy workflow (memorize this)
+1. Edit `scripts/build_template.html` (never index.html — it's generated)
+2. `SITE_URL=https://knockout.college/ python3 scripts/build.py`
+3. `node scripts/test_jarvis.js` — must stay green; add tests for new logic
+4. Commit+push THIS repo (mirror), then:
+   `rsync -a --exclude .git --exclude data/program_pages ./ "../../Cornell University/Cornell Jarvis/knockout-site/"`
+   and commit+push there (that repo serves knockout.college)
+5. Fresh data per term: `python3 scripts/fetch_roster.py FA26` + `fetch_programs.py`
+   (re-run both the night before any marketing push — seats are a build-time snapshot)
+
+## Product principle
 **Jarvis generates your schedule. It does not help you build one.**
 
 The problem, as validated: picking courses means hand-checking every option against a dozen
