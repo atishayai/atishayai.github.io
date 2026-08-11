@@ -255,6 +255,24 @@ body.focus main{padding:0}
   border:1px solid rgba(var(--accent-rgb),.4);border-radius:14px;padding:13px 15px;font-size:14px;
   box-shadow:0 10px 30px rgba(0,0,0,.5);animation:floatup .35s ease both}
 #installbar span{flex:1;line-height:1.45}
+/* home-page fun */
+.floaties{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+.flo{position:absolute;font-family:var(--mono);font-size:12px;font-weight:700;padding:7px 13px;
+  border-radius:99px;border:1px solid rgba(var(--accent-rgb),.3);color:rgba(243,243,249,.5);
+  background:rgba(76,141,255,.07);white-space:nowrap;filter:blur(.3px)}
+.f1{top:33%;left:-4%;animation:drift1 17s ease-in-out infinite}
+.f2{top:20%;right:-2%;animation:drift2 13s ease-in-out infinite;border-color:rgba(var(--green-rgb),.35);color:rgba(52,211,153,.55)}
+.f3{bottom:26%;left:-6%;animation:drift2 21s ease-in-out infinite}
+.f4{bottom:12%;right:4%;animation:drift1 11s ease-in-out infinite;font-style:italic;
+  border-color:rgba(var(--purple-rgb),.4);color:rgba(168,85,247,.55);font-size:15px}
+.f5{top:44%;right:-5%;animation:drift1 19s ease-in-out infinite;border-color:rgba(var(--amber-rgb),.3);color:rgba(255,210,76,.5)}
+@keyframes drift1{0%,100%{transform:translate(0,0) rotate(-4deg)}50%{transform:translate(26px,-30px) rotate(3deg)}}
+@keyframes drift2{0%,100%{transform:translate(0,0) rotate(3deg)}50%{transform:translate(-30px,22px) rotate(-4deg)}}
+.ask{position:relative;z-index:1}
+.ticker{overflow:hidden;margin:-8px 0 22px;mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
+.ticker-in{display:inline-block;white-space:nowrap;font-size:12.5px;color:var(--dim);
+  animation:tick 26s linear infinite}
+@keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 .ib-go{background:var(--accent);color:#fff;border:none;border-radius:9px;font-family:inherit;font-weight:700;
   font-size:14px;padding:9px 16px;cursor:pointer}
 .ib-x{background:none;border:none;color:var(--dim);font-size:15px;cursor:pointer;font-family:inherit;padding:4px}
@@ -333,7 +351,10 @@ body.focus main{padding:0}
 .sbar-top{display:flex;justify-content:space-between;font-size:13px;font-weight:620}
 .sbar-top b{color:var(--purple)}
 @media (max-width:760px){.sboard{flex-direction:column;align-items:stretch}.sdonut{display:flex;gap:14px;align-items:center;justify-content:center}}
-.topnav{display:flex;align-items:center;gap:8px;margin-bottom:18px}
+.topnav{display:flex;align-items:center;gap:8px;margin-bottom:18px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.topnav::-webkit-scrollbar{display:none}
+.topnav .mtab{white-space:nowrap;flex-shrink:0}
+.topnav .mlogo{flex-shrink:0}
 .mlogo{background:none;border:none;font-family:inherit;font-size:15px;letter-spacing:.13em;
   font-weight:800;color:var(--purple);cursor:pointer;padding:4px 0;text-transform:uppercase}
 .mlogo:hover{color:var(--accent)}
@@ -1487,6 +1508,7 @@ function miniNav(){
     ${step!=='ask'?`
       <button class="mtab ${step==='options'?'on':''}" onclick="step='options';S('step','options');plan_()">Plans</button>
       <button class="mtab ${step==='board'?'on':''}" onclick="step='board';S('step','board');plan_()">My classes</button>`:''}
+    ${step==='board'||step==='options'?`<button class="mtab" onclick="document.body.classList.remove('focus');go('home')">More tools</button>`:''}
     <button class="mtab reset" onclick="nukeAll()" title="wipe everything, back to the start">start over</button>
   </div>`;
 }
@@ -1529,13 +1551,21 @@ function renderAsk(){
   const q=reqQ.trim().toLowerCase(), mq=minorQ.trim().toLowerCase();
   const hits=q?majors.filter(p=>p.name.toLowerCase().indexOf(q)>-1).slice(0,6):[];
   const mhits=mq?minors.filter(p=>p.name.toLowerCase().indexOf(mq)>-1&&selMinors.indexOf(p.id)<0).slice(0,5):[];
-  V.innerHTML=`<div class="ask">
+  const floaties=!S('user')?`<div class="floaties" aria-hidden="true">
+      <span class="flo f1">CHEM 2070 · counts ×2</span>
+      <span class="flo f2">Open</span>
+      <span class="flo f3">ANTHR 1700 · counts ×3</span>
+      <span class="flo f4">KO!</span>
+      <span class="flo f5">backup ready</span>
+    </div>`:'';
+  V.innerHTML=`${floaties}<div class="ask">
     <button class="mlogo" style="margin-bottom:4px" onclick="goHome()">KNOCKOUT!</button>
     <div class="fine" style="margin-bottom:18px">now for Cornell students</div>
     ${obDots()}${!S('user')?`
     <h1>Hey. What's your name?</h1>
     <p>Classes that count for the most — with backups when they fill.</p>
     <div class="usp">${['College core','Major','Minor','Pre-med','Open seats','Conflicts'].map(x=>`<span>✓ ${x}</span>`).join('')}</div>
+    <div class="ticker"><div class="ticker-in">${(t=>t+t)(`${CAT.length} courses · ${REQS.length} programs tracked · seats checked against Cornell · backups for every class · `)}</div></div>
     <input type="text" id="nameQ" placeholder="First name is fine" maxlength="24" autocomplete="off"
       onkeydown="if(event.key==='Enter'&&this.value.trim()){S('user',this.value.trim());plan_()}">
     <button class="go" onclick="const e=document.getElementById('nameQ');if(e&&e.value.trim()){S('user',e.value.trim());plan_()}">That's me →</button>
@@ -1887,8 +1917,6 @@ function renderBoard(){
     ${mine.length?mine.map(r=>boardCard(r,slots,mine)).join(''):
       `<div class="bempty">What are you hoping to take?</div>`}
 
-    ${mine.length?`<div class="askfoot" style="margin-top:24px">
-      <a href="#" onclick="document.body.classList.remove('focus');go('home');return false">more tools</a></div>`:''}
     ${legalFoot()}
   </div>`;
   drawAdd();
