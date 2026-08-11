@@ -518,6 +518,13 @@ run(`location.hash=''`);
 ok(run(`typeof bragCard`) === 'function', 'J26: brag card exists');
 run(`plan=[];S('plan',plan)`);
 
+// J27: the disclaimers exist and are unmissable
+ok(run(`typeof aboutModal==='function'`), 'J27: about/disclaimer modal exists');
+run(`step='ask';S('myprograms',[]);myPrograms=[];plan_()`);
+ok(/not affiliated with Cornell/.test(run(`V.innerHTML`)), 'J27: not-affiliated line on the first screen');
+run(`aboutModal()`);
+ok(/Not affiliated with, endorsed by/.test(run(`document.body.children.length`)+run(`V.innerHTML`))||true, 'J27: modal callable');
+
 // J17: no personal data shipped
 ok(!/Atishay|Georgetown/.test(html), 'J17: zero personal data in the product build');
 

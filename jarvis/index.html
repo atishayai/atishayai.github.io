@@ -265,6 +265,8 @@ body.focus main{padding:0}
 .rgroup{margin-bottom:22px}
 .rglabel{font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--purple);font-weight:700}
 .rghint{font-size:13.5px;color:var(--dim);margin:3px 0 10px;line-height:1.5}
+.ab p{font-size:13.5px;line-height:1.65;color:var(--dim);margin-bottom:11px}
+.ab b{color:var(--txt)}
 .rgrow{display:flex;gap:12px;align-items:flex-start;padding:14px 15px;border:2px solid var(--line);
   border-radius:13px;margin-bottom:8px;cursor:pointer;background:var(--panel)}
 .rgrow:hover{border-color:var(--accent)}
@@ -1429,6 +1431,32 @@ function obDots(){
   const at=!S('user')?0:!S('year')?1:!S('college')?2:!selMajor?3:4;
   return `<div class="obdots">${[0,1,2,3,4].map(i=>`<span class="${i<at?'done':i===at?'now':''}"></span>`).join('')}</div>`;
 }
+function aboutModal(){
+  const d=document.createElement('div');d.id='reqpick';
+  d.innerHTML=`<div id="reqcard">
+    <h2>About</h2>
+    <div class="ab">
+      <p><b>Independent student project.</b> Not affiliated with, endorsed by, or connected
+        to Cornell University in any way.</p>
+      <p><b>A guide, not advising.</b> Course, seat and requirement information comes from
+        Cornell's public roster and catalog pages and may be incomplete or out of date.
+        Always confirm with your college registrar or advisor before enrolling. No guarantee
+        is made about accuracy or progress toward graduation.</p>
+      <p><b>Nothing is saved online.</b> Everything lives in this browser only — there is no
+        account and no cloud backup. Clearing browser data erases it.</p>
+      <p><b>Coming soon:</b> accounts &amp; sync, four-year timeline, live seat updates, more
+        schools.</p>
+    </div>
+    <div class="row" style="justify-content:flex-end;margin-top:14px">
+      <button class="b" style="font-size:13px;padding:10px 20px" onclick="document.getElementById('reqpick').remove()">Got it</button></div>
+  </div>`;
+  d.onclick=e=>{if(e.target===d)d.remove()};
+  document.body.appendChild(d);
+}
+function legalFoot(){
+  return `<div class="askfoot">Unofficial student project · not affiliated with Cornell ·
+    <a href="#" onclick="aboutModal();return false">about &amp; disclaimers</a></div>`;
+}
 function goHome(){step='ask';S('step','ask');plan_()}
 function nukeAll(){
   if(typeof confirm==='function'&&!confirm('Wipe everything and start from the beginning?'))return;
@@ -1493,18 +1521,16 @@ function renderAsk(){
     <button class="mlogo" style="margin-bottom:20px" onclick="goHome()">JARVIS</button>
     ${obDots()}${!S('user')?`
     <h1>Hey. What's your name?</h1>
-    <p>I find the classes that count for the most at once — and keep backups ready
-       for when they fill.</p>
+    <p>Classes that count for the most — with backups when they fill.</p>
     <div class="usp">${['College core','Major','Minor','Pre-med','Open seats','Conflicts'].map(x=>`<span>✓ ${x}</span>`).join('')}</div>
     <input type="text" id="nameQ" placeholder="First name is fine" maxlength="24" autocomplete="off"
       onkeydown="if(event.key==='Enter'&&this.value.trim()){S('user',this.value.trim());plan_()}">
     <button class="go" onclick="const e=document.getElementById('nameQ');if(e&&e.value.trim()){S('user',e.value.trim());plan_()}">That's me →</button>
-    <div class="askfoot">Free · no account · data from
-      <a href="https://classes.cornell.edu/browse/roster/FA26" target="_blank" rel="noopener noreferrer">Cornell's official Class Roster ↗</a></div>
+    ${legalFoot()}
   </div>`:`
     ${!S('year')?`
     <h1>Nice to meet you, ${S('user')}.<br>What year are you?</h1>
-    <p>So I know how to plan for you.</p>
+    
     ${[['first','First-year'],['soph','Sophomore'],['junior','Junior'],['senior','Senior'],['transfer','Transfer student']]
       .map(y=>`<div class="pickcard" onclick="S('year','${y[0]}');plan_()"><span class="pickname">${y[1]}</span></div>`).join('')}
     <div class="askfoot">Free · no account · data from
@@ -1512,7 +1538,7 @@ function renderAsk(){
   </div>`:`
 ${!S('college')?`
     <h1>Which college are you in?</h1>
-    <p>Each one has its own graduation requirements — I track the right set for you.</p>
+    <p>Each has different requirements — I track the right set.</p>
     ${[['as','Arts & Sciences'],['cals','Agriculture & Life Sciences (CALS)'],['engr','Engineering'],
        ['ilr','ILR'],['he','Human Ecology'],['dyson','Dyson (Business)'],
        ['hotel','Nolan (Hotel)'],['brooks','Brooks (Public Policy)'],['aap','Architecture, Art & Planning']]
@@ -1520,7 +1546,7 @@ ${!S('college')?`
     <div class="askfoot">Not sure? It's on your admissions letter — or pick Arts & Sciences and change later.</div>
   </div>`:`
     <h1>${S('year')==='transfer'?'Welcome to Cornell, ':''}${S('user')}, what are you studying?</h1>
-    <p>Pick it and I'll optimize across everything — core, major, minor, pre-med, seats.</p>
+    <p>I'll optimize across everything at once.</p>
 
     ${selMajor?`
       <div class="pickcard on">
@@ -1599,9 +1625,8 @@ function renderOptions(){
     ${miniNav()}
     <div class="bhead">
       <div class="btitle2">${S('user')?S('user')+', pick your semester.':'Pick your semester.'}</div>
-      <div class="bsub">Tap a plan to see its classes. You can change anything after.</div>
-      <div class="bstamp">Seats checked ${BUILT} —
-        <a href="https://classes.cornell.edu/browse/roster/FA26" target="_blank" rel="noopener noreferrer">verify live on the official roster ↗</a></div>
+      <div class="bsub">Tap one to see the classes.</div>
+      <div class="bstamp">Seats ${BUILT} · <a href="https://classes.cornell.edu/browse/roster/FA26" target="_blank" rel="noopener noreferrer">verify ↗</a></div>
     </div>
     ${paramsBar()}
     ${options.length?options.map(o=>`<div class="optcard ${openOpt[o.id]?'open':''}">
@@ -1831,8 +1856,7 @@ function renderBoard(){
       </div>`:''}
       <div class="bsub">${mine.length} class${mine.length===1?'':'es'}${
         trouble?` · <b class="warn">${trouble} may be a problem</b>`:mine.length?` · <b class="good">all open right now</b>`:''}</div>
-      <div class="bstamp">Seats checked ${BUILT} —
-        <a href="https://classes.cornell.edu/browse/roster/FA26" target="_blank" rel="noopener noreferrer">verify live on the official roster ↗</a></div>
+      <div class="bstamp">Seats ${BUILT} · <a href="https://classes.cornell.edu/browse/roster/FA26" target="_blank" rel="noopener noreferrer">verify ↗</a></div>
     </div>
 
     <div class="addbox">
@@ -1842,11 +1866,11 @@ function renderBoard(){
     </div>
 
     ${mine.length?mine.map(r=>boardCard(r,slots,mine)).join(''):
-      `<div class="bempty">What are you hoping to take?<br>
-       <span class="dim">I'll flag anything that's full and line up backups that still count.</span></div>`}
+      `<div class="bempty">What are you hoping to take?</div>`}
 
     ${mine.length?`<div class="askfoot" style="margin-top:24px">
       <a href="#" onclick="document.body.classList.remove('focus');go('home');return false">more tools</a></div>`:''}
+    ${legalFoot()}
   </div>`;
   drawAdd();
   // the reveal: score counts up, bars sweep in
