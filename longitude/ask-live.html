@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Longitude AI — Ask your archive (live)</title>
+<style>
+  :root { color-scheme: dark; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background:#0d0d0d; color:#fff; -webkit-font-smoothing:antialiased;
+    --surface:#1a1a19; --surface-2:#222220;
+    --ink-1:#fff; --ink-2:#c3c2b7; --ink-3:#898781;
+    --grid:#2c2c2a; --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+    --border:rgba(255,255,255,0.10);
+  }
+  .wrap { max-width:760px; margin:0 auto; padding:40px 24px 120px; }
+  .brand { font-size:16px; font-weight:700; margin-bottom:4px; } .brand span { color:var(--s1); }
+  .sub { color:var(--ink-3); font-size:13px; margin-bottom:26px; }
+  a { color:var(--s1); text-decoration:none; font-size:13px; }
+
+  .keybox { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin-bottom:22px; }
+  .keybox h3 { font-size:14px; margin-bottom:6px; }
+  .keybox p { font-size:12px; color:var(--ink-3); line-height:1.55; margin-bottom:12px; }
+  .keyrow { display:flex; gap:8px; }
+  input[type=password], input[type=text].q {
+    flex:1; font:inherit; font-size:13.5px; background:#0d0d0d; border:1px solid var(--border);
+    border-radius:9px; padding:11px 14px; color:var(--ink-1); outline:none;
+  }
+  input:focus { border-color:var(--s1); }
+  .btn { font:inherit; font-size:13px; padding:10px 18px; border-radius:9px; cursor:pointer; border:1px solid var(--s1); background:var(--s1); color:#fff; font-weight:600; }
+  .btn:disabled { opacity:.45; cursor:default; }
+  .btn.ghost { background:transparent; color:var(--ink-2); border-color:var(--border); }
+
+  #thread { margin:10px 0; }
+  .chat-q { display:flex; justify-content:flex-end; margin:14px 0; }
+  .chat-q div { background:var(--s1); color:#fff; border-radius:14px 14px 4px 14px; padding:10px 15px; font-size:13.5px; max-width:78%; line-height:1.5; }
+  .chat-a { display:flex; margin:14px 0; }
+  .chat-a div { background:var(--surface); border:1px solid var(--border); border-radius:14px 14px 14px 4px; padding:13px 17px; font-size:13.5px; max-width:86%; line-height:1.65; color:var(--ink-2); white-space:pre-wrap; }
+  .chat-a.err div { border-color:var(--s2); color:var(--s2); }
+  .thinking { color:var(--ink-3); font-size:12px; padding:8px 2px; display:none; }
+
+  .askrow { display:flex; gap:8px; position:sticky; bottom:24px; background:#0d0d0d; padding-top:10px; }
+  .hint { font-size:11px; color:var(--ink-3); margin-top:10px; line-height:1.5; }
+  .suggest { display:flex; flex-wrap:wrap; gap:7px; margin:14px 0 4px; }
+  .suggest button { font:inherit; font-size:12px; padding:6px 12px; border-radius:15px; cursor:pointer; background:var(--surface); border:1px solid var(--border); color:var(--ink-2); }
+  .suggest button:hover { border-color:var(--ink-3); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">LONGITUDE <span>AI</span> — live</div>
+  <div class="sub">Ask the founder's archive anything. Answers draw only on a curated digest of the real corpus analysis. <a href="product.html">← back to product</a></div>
+
+  <div id="chatui">
+    <div class="suggest" id="suggest"></div>
+    <div id="thread"></div>
+    <div class="thinking" id="thinking">Reading the archive…</div>
+    <div class="askrow">
+      <input type="text" class="q" id="q" placeholder="Ask about the writing, the patterns, the decade…" onkeydown="if(event.key==='Enter')ask()">
+      <button class="btn" id="askbtn" onclick="ask()">Ask</button>
+    </div>
+    <div class="hint">Answers are grounded in a curated digest of the real corpus analysis (the same findings shown in the dashboard), served through Longitude\u2019s own backend. The full product runs over the complete archive.</div>
+  </div>
+</div>
+
+<script>
+const WORKER = 'https://understudy-twin.understudy-worker.workers.dev';
+let history = [];
+
+['What did I believe about technology at 13?','When did my grandmother enter my writing?','What steadies me when things feel out of control?','What have I stopped writing about?'].forEach(s=>{
+  const b=document.createElement('button'); b.textContent=s; b.onclick=()=>{document.getElementById('q').value=s; ask();};
+  document.getElementById('suggest').appendChild(b);
+});
+
+function add(role, text, err){
+  const d=document.createElement('div');
+  d.className = role==='q' ? 'chat-q' : ('chat-a'+(err?' err':''));
+  const inner=document.createElement('div'); inner.textContent=text; d.appendChild(inner);
+  document.getElementById('thread').appendChild(d);
+  d.scrollIntoView({behavior:'smooth', block:'end'});
+  return inner;
+}
+
+async function ask(){
+  const qEl=document.getElementById('q'); const q=qEl.value.trim(); if(!q) return;
+  qEl.value=''; add('q', q);
+  history.push({role:'user', content:q});
+  document.getElementById('thinking').style.display='block';
+  document.getElementById('askbtn').disabled=true;
+  try{
+    const r=await fetch(WORKER,{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({ mode:'archive', messages:history.slice(-12) })
+    });
+    const j=await r.json();
+    if(!r.ok || !j.text){
+      add('a', j.error==='rate_limited' ? 'Slow down a moment — the archive is rate-limited.' : 'The archive is offline right now. The dashboard findings on the previous pages still stand.', true);
+      history.pop();
+    } else {
+      history.push({role:'assistant', content:j.text});
+      add('a', j.text);
+    }
+  }catch(e){ add('a','Network error: '+e.message,true); history.pop(); }
+  document.getElementById('thinking').style.display='none';
+  document.getElementById('askbtn').disabled=false;
+  qEl.focus();
+}
+</script>
+</body>
+</html>

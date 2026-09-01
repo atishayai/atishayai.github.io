@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Longitude AI — Narrative Intelligence</title>
+<style>
+  :root { color-scheme: dark; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background:#0d0d0d; color:#ffffff; -webkit-font-smoothing:antialiased;
+    --surface-1:#1a1a19; --page:#0d0d0d;
+    --ink-1:#ffffff; --ink-2:#c3c2b7; --ink-3:#898781;
+    --grid:#2c2c2a; --axis:#383835;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+    --border:rgba(255,255,255,0.10);
+  }
+  .wrap { max-width:1080px; margin:0 auto; padding:48px 32px 96px; }
+  input.hack { position:absolute; opacity:0; pointer-events:none; }
+
+  header { display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:6px; }
+  .wordmark { font-size:20px; font-weight:700; letter-spacing:0.02em; }
+  .wordmark span { color:var(--s1); }
+  .tagline { color:var(--ink-3); font-size:13px; }
+  h1 { font-size:32px; font-weight:700; margin:40px 0 8px; letter-spacing:-0.01em; }
+  .sub { color:var(--ink-2); font-size:15px; max-width:640px; line-height:1.5; }
+
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin:36px 0 8px; }
+  .stat { background:var(--surface-1); border:1px solid var(--border); border-radius:10px; padding:18px 16px 14px; }
+  .stat b { display:block; font-size:28px; font-weight:700; }
+  .stat i { font-style:normal; color:var(--ink-3); font-size:12px; letter-spacing:0.04em; text-transform:uppercase; }
+
+  h2 { font-size:15px; font-weight:600; color:var(--ink-2); letter-spacing:0.08em; text-transform:uppercase; margin:56px 0 6px; }
+  .note { color:var(--ink-3); font-size:13px; margin-bottom:20px; max-width:660px; line-height:1.5; }
+
+  .chart-card { background:var(--surface-1); border:1px solid var(--border); border-radius:12px; padding:24px; }
+  .bars { display:flex; align-items:flex-end; gap:10px; height:190px; padding-top:8px; }
+  .bar-col { flex:1; display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end; position:relative; }
+  .bar { width:100%; max-width:84px; background:var(--s1); border-radius:4px 4px 0 0; min-height:3px; }
+  .bar-col:hover .bar { opacity:.8; }
+  .bar-col .tip {
+    position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%);
+    background:#0d0d0d; border:1px solid var(--border); border-radius:8px; padding:8px 12px;
+    font-size:12px; color:var(--ink-2); white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .12s; z-index:5;
+  }
+  .bar-col:hover .tip { opacity:1; }
+  .bar-col .n { font-size:12px; color:var(--ink-1); font-weight:600; margin-bottom:6px; }
+  .bar-x { display:flex; gap:10px; border-top:1px solid var(--axis); padding-top:8px; }
+  .bar-x div { flex:1; text-align:center; font-size:11px; color:var(--ink-3); line-height:1.35; }
+
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:14px; }
+  details.pattern {
+    background:var(--surface-1); border:1px solid var(--border); border-radius:12px; padding:22px;
+  }
+  details.pattern:hover { border-color:rgba(255,255,255,0.25); }
+  details.pattern summary { list-style:none; cursor:pointer; }
+  details.pattern summary::-webkit-details-marker { display:none; }
+  .k { font-size:11px; letter-spacing:0.08em; text-transform:uppercase; font-weight:600; margin-bottom:10px; display:flex; align-items:center; gap:7px; }
+  .dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+  details.pattern h3 { font-size:17px; font-weight:650; margin-bottom:8px; letter-spacing:-0.01em; color:var(--ink-1); }
+  details.pattern p { font-size:13.5px; color:var(--ink-2); line-height:1.55; }
+  .open-cue { margin-top:14px; font-size:12px; color:var(--ink-3); }
+  details.pattern[open] .open-cue { display:none; }
+
+  .receipts { margin-top:16px; border-top:1px solid var(--grid); padding-top:16px; }
+  .receipt { background:#0d0d0d; border:1px solid var(--border); border-left:3px solid var(--s1); border-radius:8px; padding:14px 16px; margin-bottom:10px; }
+  .receipt blockquote { font-size:13.5px; line-height:1.55; color:var(--ink-1); font-style:italic; }
+  .receipt .src { margin-top:8px; font-size:11.5px; color:var(--ink-3); font-variant-numeric:tabular-nums; }
+  .measure { display:flex; gap:24px; margin:4px 0 14px; }
+  .measure div b { font-size:22px; font-weight:700; display:block; color:var(--ink-1); }
+  .measure div i { font-style:normal; font-size:11px; color:var(--ink-3); text-transform:uppercase; letter-spacing:0.04em; }
+
+  .verify { display:flex; gap:8px; margin-top:4px; align-items:center; flex-wrap:wrap; }
+  .verify label {
+    font-size:12.5px; padding:7px 14px; border-radius:8px; cursor:pointer;
+    background:transparent; color:var(--ink-2); border:1px solid var(--border); user-select:none;
+  }
+  .verify label:hover { border-color:var(--ink-3); }
+  .verify .st { font-size:12px; display:none; }
+  .verify input.y:checked ~ .st-y { display:inline; color:var(--s3); }
+  .verify input.n:checked ~ .st-n { display:inline; color:var(--s2); }
+  .verify input.y:checked ~ label, .verify input.n:checked ~ label { opacity:.45; pointer-events:none; }
+
+
+  input.hack { position:absolute; opacity:0; pointer-events:none; }
+  .famrail { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+  .fchip { font-size:12.5px; padding:7px 14px; border-radius:16px; cursor:pointer; user-select:none; background:var(--surface-1); border:1px solid var(--border); color:var(--ink-2); }
+  .fchip:hover { border-color:var(--ink-3); }
+  #r-all:checked ~ .famrail .c-all, #r-emo:checked ~ .famrail .c-emo, #r-char:checked ~ .famrail .c-char,
+  #r-voice:checked ~ .famrail .c-voice, #r-int:checked ~ .famrail .c-int, #r-id:checked ~ .famrail .c-id
+  { background:var(--s1); border-color:var(--s1); color:#fff; font-weight:600; }
+  .pgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px; }
+  .pcard { background:var(--surface-1); border:1px solid var(--border); border-radius:11px; padding:16px 16px 12px; }
+  .pname { font-size:14px; font-weight:650; }
+  .pfam { font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3); margin:3px 0 8px; }
+  .spark { width:100%; height:auto; display:block; }
+  .pfoot { display:flex; justify-content:space-between; align-items:center; margin-top:8px; font-size:11px; color:var(--ink-3); }
+  .pb { font-weight:600; }
+  #r-emo:checked ~ .pgrid .pcard:not(.f-emo), #r-char:checked ~ .pgrid .pcard:not(.f-char),
+  #r-voice:checked ~ .pgrid .pcard:not(.f-voice), #r-int:checked ~ .pgrid .pcard:not(.f-int),
+  #r-id:checked ~ .pgrid .pcard:not(.f-id) { display:none; }
+  footer { margin-top:72px; border-top:1px solid var(--grid); padding-top:20px; color:var(--ink-3); font-size:12px; line-height:1.6; max-width:720px; }
+  footer b { color:var(--ink-2); font-weight:600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="wordmark">LONGITUDE <span>AI</span></div>
+    <div class="tagline">Narrative intelligence — a longitudinal model of a person, from the record of their own life</div>
+  </header>
+  <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;"><a href="product.html" style="color:var(--s1); font-size:13px; text-decoration:none; border:1px solid var(--border); border-radius:8px; padding:7px 14px; display:inline-block;">Product concept — where this goes →</a><a href="ask-live.html" style="color:var(--s1); font-size:13px; text-decoration:none; border:1px solid var(--border); border-radius:8px; padding:7px 14px; display:inline-block;">Ask the archive — live →</a><a href="../longitude.html" style="color:var(--s1); font-size:13px; text-decoration:none; border:1px solid var(--border); border-radius:8px; padding:7px 14px; display:inline-block;">Talk to the twin →</a></div>
+
+  <h1>One life, read as one document.</h1>
+  <p class="sub">Every document its founder wrote from age 10 to 20 — extracted, cleaned, coded by hand across five thematic threads, and measured by 21 computational lexicons. Every claim below opens to the sentences that produced it.</p>
+
+  <div class="stats">
+    <div class="stat"><b>349</b><i>documents</i></div>
+    <div class="stat"><b>324,565</b><i>words analyzed</i></div>
+    <div class="stat"><b>10 yrs</b><i>ages 10 – 20</i></div>
+    <div class="stat"><b>2</b><i>analysis layers</i></div>
+    <div class="stat"><b>21</b><i>pattern lexicons</i></div>
+    <div class="stat"><b>4 / 5</b><i>threads cross-validated</i></div>
+  </div>
+
+  <h2>The corpus</h2>
+  <p class="note">Documents per era. Hover any bar. The archive begins at age ten — because a fifth-grade report was a Google Doc.</p>
+  <div class="chart-card">
+    <div class="bars">
+      <div class="bar-col"><div class="tip">Elementary ’16–17 — 2 documents</div><div class="n">2</div><div class="bar" style="height:2%"></div></div>
+      <div class="bar-col"><div class="tip">Grades 7–8 ’18–20 — 130 documents</div><div class="n">130</div><div class="bar" style="height:100%"></div></div>
+      <div class="bar-col"><div class="tip">Grade 9 ’20–21 — 55 documents</div><div class="n">55</div><div class="bar" style="height:42%"></div></div>
+      <div class="bar-col"><div class="tip">Grade 10 ’21–22 — 28 documents</div><div class="n">28</div><div class="bar" style="height:22%"></div></div>
+      <div class="bar-col"><div class="tip">Grade 11 ’22–23 — 15 documents</div><div class="n">15</div><div class="bar" style="height:12%"></div></div>
+      <div class="bar-col"><div class="tip">Post-secondary ’24–25 — 6 documents</div><div class="n">6</div><div class="bar" style="height:5%"></div></div>
+      <div class="bar-col"><div class="tip">University ’25–26 — 113 documents</div><div class="n">113</div><div class="bar" style="height:87%"></div></div>
+    </div>
+    <div class="bar-x">
+      <div>Elementary<br>’16–17</div><div>Grades 7–8<br>’18–20</div><div>Grade 9<br>’20–21</div><div>Grade 10<br>’21–22</div><div>Grade 11<br>’22–23</div><div>Post-secondary<br>’24–25</div><div>University<br>’25–26</div>
+    </div>
+  </div>
+
+  <h2>The signature arcs</h2>
+  <p class="note">Six patterns that tell the through-story: raw aggression and negative emotion recede while analytical reasoning and self-reflection climb — the writer turning from feeling-on-the-page toward examining the feeling. Technology peaks at university; family &amp; heritage spikes where the grandmother narratives live. Lines are indexed to each pattern's own peak (100 = its highest era) so different-sized patterns share one axis.</p>
+  <div class="chart-card">
+    <svg viewBox="0 0 720 260" style="width:100%; height:auto; display:block" role="img" aria-label="Six writing patterns indexed to their own peaks across seven life eras">
+      <!-- gridlines -->
+      <g stroke="#2c2c2a" stroke-width="1">
+        <line x1="42" y1="33"  x2="700" y2="33"/><line x1="42" y1="79"  x2="700" y2="79"/>
+        <line x1="42" y1="125" x2="700" y2="125"/><line x1="42" y1="172" x2="700" y2="172"/>
+      </g>
+      <line x1="42" y1="218" x2="700" y2="218" stroke="#383835" stroke-width="1"/>
+      <g fill="#898781" font-size="10" font-family="system-ui,sans-serif">
+        <text x="36" y="37"  text-anchor="end">100</text><text x="36" y="83"  text-anchor="end">75</text>
+        <text x="36" y="129" text-anchor="end">50</text><text x="36" y="176" text-anchor="end">25</text>
+        <text x="36" y="222" text-anchor="end">0</text>
+        <text x="50"  y="238" text-anchor="middle">Elem</text><text x="157" y="238" text-anchor="middle">G7–8</text>
+        <text x="263" y="238" text-anchor="middle">G9</text><text x="370" y="238" text-anchor="middle">G10</text>
+        <text x="477" y="238" text-anchor="middle">G11</text><text x="583" y="238" text-anchor="middle">G12</text>
+        <text x="690" y="238" text-anchor="middle">Univ</text>
+      </g>
+      <!-- series: fixed slot order — blue analytical, orange aggression, aqua reflexivity, yellow technology, magenta negative emotion, green family -->
+      <g fill="none" stroke-width="2">
+        <polyline stroke="#3987e5" points="50,168 157,120 263,113 370,148 477,116 583,33 690,92"/>
+        <polyline stroke="#d95926" points="50,116 157,33 263,64 370,113 477,157 583,153 690,89"/>
+        <polyline stroke="#199e70" points="50,212 157,166 263,113 370,88 477,162 583,33 690,107"/>
+        <polyline stroke="#c98500" points="50,179 157,48 263,172 370,162 477,157 583,131 690,33"/>
+        <polyline stroke="#d55181" points="50,33 157,177 263,199 370,194 477,205 583,168 690,190"/>
+        <polyline stroke="#008300" points="50,114 157,153 263,172 370,33 477,209 583,194 690,140"/>
+      </g>
+      <!-- points with tooltips -->
+      <g>
+        <circle cx="583" cy="33" r="4" fill="#3987e5"><title>Analytical reasoning — peak era: Grade 12</title></circle>
+        <circle cx="157" cy="33" r="4" fill="#d95926"><title>Aggression — peak: Grades 7–8 (1.69/1k words)</title></circle>
+        <circle cx="477" cy="157" r="4" fill="#d95926"><title>Aggression — Grade 11 low (0.56/1k words)</title></circle>
+        <circle cx="690" cy="89" r="4" fill="#d95926"><title>Aggression — university rebound (1.19/1k), as structural critique</title></circle>
+        <circle cx="583" cy="33" r="4" fill="#199e70" opacity="0"><title>Reflexivity — peak era: Grade 12</title></circle>
+        <circle cx="690" cy="33" r="4" fill="#c98500"><title>Technology — peak era: university (Cyborg Anthropology)</title></circle>
+        <circle cx="50" cy="33" r="4" fill="#d55181"><title>Negative emotion — highest in the earliest surviving work</title></circle>
+        <circle cx="370" cy="33" r="4" fill="#008300"><title>Family &amp; heritage — Grade-10 peak (20.8/1k words)</title></circle>
+        <circle cx="690" cy="140" r="4" fill="#008300"><title>Family &amp; heritage — university (8.7/1k words)</title></circle>
+      </g>
+      <!-- direct labels (selective) -->
+      <g font-size="10.5" font-family="system-ui,sans-serif" fill="#c3c2b7">
+        <text x="700" y="30" text-anchor="end" fill="#c98500">Technology</text>
+        <text x="376" y="26" fill="#008300">Family &amp; heritage</text>
+        <text x="56" y="26" fill="#d55181">Negative emotion</text>
+      </g>
+    </svg>
+    <div style="display:flex; flex-wrap:wrap; gap:14px; margin-top:14px; font-size:11.5px; color:var(--ink-2)">
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3987e5;margin-right:5px"></span>Analytical reasoning</span>
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#d95926;margin-right:5px"></span>Anger / aggression</span>
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#199e70;margin-right:5px"></span>Reflexivity / self-awareness</span>
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#c98500;margin-right:5px"></span>Technology</span>
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#d55181;margin-right:5px"></span>Negative emotion</span>
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#008300;margin-right:5px"></span>Family &amp; heritage</span>
+    </div>
+    <div style="font-size:11px; color:var(--ink-3); margin-top:10px;">Arc shapes reproduced from the live pattern dashboard ("Patterns in a Writing Life"), indexed to each pattern's own peak era. Labeled figures are measured rates; hover any marked point.</div>
+  </div>
+
+
+  <h2>Every pattern, over time</h2>
+  <p class="note">All 21 lexicons, Elementary → Georgetown. Filter by family; each sparkline is the pattern's word-rate per era, indexed to its own peak. The badge shows net change from first era to last. Shapes reproduced from the live dashboard.</p>
+
+  <input class="hack" type="radio" name="fam" id="r-all" checked>
+  <input class="hack" type="radio" name="fam" id="r-emo">
+  <input class="hack" type="radio" name="fam" id="r-char">
+  <input class="hack" type="radio" name="fam" id="r-voice">
+  <input class="hack" type="radio" name="fam" id="r-int">
+  <input class="hack" type="radio" name="fam" id="r-id">
+  <div class="famrail">
+    <label class="fchip c-all" for="r-all">All</label>
+    <label class="fchip c-emo" for="r-emo">Emotional tone</label>
+    <label class="fchip c-char" for="r-char">Character</label>
+    <label class="fchip c-voice" for="r-voice">Voice</label>
+    <label class="fchip c-int" for="r-int">Intellect</label>
+    <label class="fchip c-id" for="r-id">Identity</label>
+  </div>
+  <div class="pgrid">
+    <div class="pcard f-emo">
+      <div class="pname">Positive emotion</div><div class="pfam">Emotional tone</div>
+      <svg viewBox="0 0 200 42" class="spark"><polyline fill="none" stroke="#3987e5" stroke-width="2" points="8,10.5 38,6.0 69,9.0 100,12.0 130,18.0 160,19.5 191,18.6"/><circle cx="8" cy="10.5" r="2.4" fill="#3987e5"/><circle cx="38" cy="6.0" r="2.4" fill="#3987e5"/><circle cx="69" cy="9.0" r="2.4" fill="#3987e5"/><circle cx="100" cy="12.0" r="2.4" fill="#3987e5"/><circle cx="130" cy="18.0" r="2.4" fill="#3987e5"/><circle cx="160" cy="19.5" r="2.4" fill="#3987e5"/><circle cx="191" cy="18.6" r="2.4" fill="#3987e5"/></svg>
+      <div class="pfoot"><span>peak: Grades 7–8</span><span class="pb" style="color:#e66767">▼ falling</span></div>
+    </div><div class="pcard f-emo">
+      <div class="pname">Negative emotion</div><div class="pfam">Emotional tone</div>
+      <svg viewBox="0 0 200 42" class="spark"><polyline fill="none" stroke="#3987e5" stroke-width="2" points="8,6.0 38,29.4 69,33.0 100,32.1 130,33.9 160,27.9 191,31.5"/><circle cx="8" cy="6.0" r="2.4" fill="#3987e5"/><circle cx="38" cy="29.4" r="2.4" fill="#3987e5"/><circle cx="69" cy="33.0" r="2.4" fill="#3987e5"/><circle cx="100" cy="32.1" r="2.4" fill="#3987e5"/><circle cx="130" cy="33.9" r="2.4" fill="#3987e5"/><circle cx="160" cy="27.9" r="2.4" fill="#3987e5"/><circle cx="191" cy="31.5" r="2.4" fill="#3987e5"/></svg>
+      <div class="pfoot"><span>peak: Elementary</span><span class="pb" style="color:#e66767">▼ falling</span></div>
+    </div><div class="pcard f-emo">
+      <div class="pname">Joy / delight</div><div class="pfam">Emotional tone</div>
+      <svg viewBox="0 0 200 42" class="spark"><polyline fill="none" stroke="#3987e5" stroke-width="2" points="8,30.0 38,18.0 69,22.5 100,6.0 130,25.5 160,21.0 191,19.5"/><circle cx="8" cy="30.0" r="2.4" fill="#3987e5"/><circle cx="38" cy="18.0" r="2.4" fill="#3987e5"/><circle cx="69" cy="22.5" r="2.4" fill="#3987e5"/><circle cx="100" cy="6.0" r="2.4" fill="#3987e5"/><circle cx="130" cy="25.5" r="2.4" fill="#3987e5"/><circle cx="160" cy="21.0" r="2.4" fill="#3987e5"/><circle cx="191" cy="19.5" r="2.4" fill="#3987e5"/></svg>
+      <div class="pfoot"><span>peak: Grade 10</span><span class="pb" style="color:var(--s3)">▲ rising</span></div>
+    </div><div class="pcard f-emo">
+      <div class="pname">Sadness / longing</div><div class="pfam">Emotional tone</div>
+      <svg viewBox="0 0 200 42" class="spark"><polyline fill="none" stroke="#3987e5" stroke-width="2" points="8,31.5 38,6.0 69,19.5 100,21.0 130,22.5 160,24.0 191,18.0"/><circle cx="8" cy="31.5" r="2.4" fill="#3987e5"/><circle cx="38" cy="6.0" r="2.4" fill="#3987e5"/><circle cx="69" cy="19.5" r="2.4" fill="#3987e5"/><circle cx="100" cy="21.0" r="2.4" fill="#3987e5"/><circle cx="130" cy="22.5" r="2.4" fill="#3987e5"/><circle cx="160" cy="24.0" r="2.4" fill="#3987e5"/><circle cx="191" cy="18.0" r="2.4" fill="#3987e5"/></svg>
+      <div class="pfoot"><span>peak: Grades 7–8</span><span class="pb" style="color:var(--s3)">▲ rising</span></div>
+    </div><div class="pcard f-emo">
+      <div class="pname">Fear / anxiety</div><div class="pfam">Emotional tone</div>
+      <svg viewBox="0 0 200 42" class="spark"><polyline fill="none" stroke="#3987e5" stroke-width="2" points="8,28.5 38,27.0 69,27.6 100,26.4 130,28.5 160,6.0 191,22.5"/><circle cx="8" cy="28.5" r="2.4" fill="#3987e5"/><circle cx="38" cy="27.0" r="2.4" fill="#3987e5"/><circle cx="69" cy="27.6" r="2.4" fill="#3987e5"/><circle cx="100" cy="26.4" r="2.4" fill="#3987e5"/><circle cx="130" cy="28.5" r="2.4" fill="#3987e5"/><circle cx="160" cy="6.0" r="2.4" fill="#3987e5"/><circle cx="191" cy="22.5" r="2.4" fill="#3987e5"/></svg>
+      <div class="pfoot"><span>peak: Grade 12</span><span class="pb" style="color:var(--s3)">▲ rising</span></div>
+    </div><div class="pcard f-emo">
+      <div class="pname">Anger / aggression</div><div class="pfam">Emotional tone</div>
+      <svg viewBox="0 0 200 42" class="spark"><polyline fill="none" stroke="#3987e5" stroke-width="2" points="8,24.0 38,6.0 69,11.1 100,18.9 130,26.1 160,25.5 191,15.0"/><circle cx="8" cy="24.0" r="2.4" fill="#3987e5"/><circle cx="38" cy="6.0" r="2.4" fill="#3987e5"/><circle cx="69" cy="11.1" r="2.4" fill="#3987e5"/><circle cx="100" cy="18.9" r="2.4" fill="#3987e5"/><circle cx="130" cy="26.1" r="2.4" fill="#3987e5"/><circle cx="160" cy="25.5" r="2.4" fill="#3987e5"/><circle cx="191" cy="15.0" r="2.4" fill="#3987e5"/></svg>
+      <div class="pfoot"><span>peak: Grades 7–8</span><span class="pb" style="color:var(--s3)">▲ rising</span></div>
+    </div><div class="pcard f-emo">
+      <div class="pname">Love / affection</div><div class="pfam">Emotional tone</div>
+      <svg viewBox="0 0 200 42" class="spark"><polyline fill="none" stroke="#3987e5" stroke-width="2" points="8,30.0 38,19.5 69,6.0 100,15.0 130,24.0 160,22.5 191,18.0"/><circle cx="8" cy="30.0" r="2.4" fill="#3987e5"/><circle cx="38" cy="19.5" r="2.4" fill="#3987e5"/><circle cx="69" cy="6.0" r="2.4" fill="#3987e5"/><circle cx="100" cy="15.0" r="2.4" fill="#3987e5"/><circle cx="130" cy="24.0" r="2.4" fill="#3987e5"/><circle cx="160" cy="22.5" r="2.4" fill="#3987e5"/><circle cx="191" cy="18.0" r="2.4" fill="#3987e5"/></svg>
+      <div class="pfoot"><span>peak: Grade 9</span><span class="pb" style="color:var(--s3)">▲ rising</span></div>
+    </div><div class="pcard f-emo">
+      <div class="pname">Mortality / loss</div><div class="pfam">Emotional tone</div>
+      <svg viewBox="0 0 200 42" class="spark"><polyline fill="none" stroke="#3987e5" stroke-width="2" points="8,31.5 38,27.0 69,28.5 100,25.5 130,6.0 160,27.0 191,22.5"/><circle cx="8" cy="31.5" r="2.4" fill="#3987e5"/><circle cx="38" cy="27.0" r="2.4" fill="#3987e5"/><circle cx="69" cy="28.5" r="2.4" fill="#3987e5"/><circle cx="100" cy="25.5" r="2.4" fill="#3987e5"/><circle cx="130" cy="6.0" r="2.4" fill="#3987e5"/><circle cx="160" cy="27.0" r="2.4" fill="#3987e5"/><circle cx="191" cy="22.5" r="2.4" fill="#3987e5"/></svg>
+      <div class="pfoot"><span>peak: Grade 11</span><span class="pb" style="color:var(--s3)">▲ rising</span></div>
+    </div><div class="pcard f-char">
+      <div class="pname">Trust / faith</div><div class="pfam">Character</div>
+      <svg viewBox="0 0 200 42" class="spark"><polyline fill="none" stroke="#3987e5" stroke-width="2" points="8,27.0 38,15.0 69,22.5 100,6.0 130,18.0 160,16.5 191,13.5"/><circle cx="8" cy="27.0" r="2.4" fill="#3987e5"/><circle cx="38" cy="15.0" r="2.4" fill="#3987e5"/><circle cx="69" cy="22.5" r="2.4" fill="#3987e5"/><circle cx="100" cy="6.0" r="2.4" fill="#3987e5"/><circle cx="130" cy="18.0" r="2.4" fill="#3987e5"/><circle cx="160" cy="16.5" r="2.4" fill="#3987e5"/><circle cx="191" cy="13.5" r="2.4" fill="#3987e5"/></svg>
+      <div class="pfoot"><span>peak: Grade 10</span><span class="pb" style="color:var(--s3)">▲ rising</span></div>
+    </div><div class="pcard f-char">
+      <div class="pname">Hope / aspiration</div><div class="pfam">Character</div>
+      <svg viewBox="0 0 200 42" class="spark"><polyline fill="none" stroke="#3987e5" stroke-width="2" points="8,31.5 38,30.0 69,29.4 100,28.5 130,27.0 160,6.0 191,22.5"/><circle cx="8" cy="31.5" r="2.4" fill="#3987e5"/><circle cx="38" cy="30.0" r="2.4" fill="#3987e5"/><circle cx="69" cy="29.4" r="2.4" fill="#3987e5"/><circle cx="100" cy="28.5" r="2.4" fill="#3987e5"/><circle cx="130" cy="27.0" r="2.4" fill="#3987e5"/><circle cx="160" cy="6.0" r="2.4" fill="#3987e5"/><circle cx="191" cy="22.5" r="2.4" fill="#3987e5"/></svg>
+      <div class="pfoot"><span>peak: Grade 12</span><span class="pb" style="color:var(--s3)">▲ rising</span></div>
+    </div><div class="pcard f-char">
+      <div class="pname">Resilience / grit</div><div class="pfam">Character</div>
+      <svg viewBox="0 0 200 42" class="spark"><polyline fill="none" stroke="#3987e5" stroke-width="2" points="8,28.5 38,18.0 69,24.0 100,19.5 130,22.5 160,6.0 191,21.0"/><circle cx="8" cy="28.5" r="2.4" fill="#3987e5"/><circle cx="38" cy="18.0" r="2.4" fill="#3987e5"/><circle cx="69" cy="24.0" r="2.4" fill="#3987e5"/><circle cx="100" cy="19.5" r="2.4" fill="#3987e5"/><circle cx="130" cy="22.5" r="2.4" fill="#3987e5"/><circle cx="160" cy="6.0" r="2.4" fill="#3987e5"/><circle cx="191" cy="21.0" r="2.4" fill="#3987e5"/></svg>
+      <div class="pfoot"><span>peak: Grade 12</span><span class="pb" style="color:var(--s3)">▲ rising</span></div>
+    </div><div class="pcard f-char">
+      <div class="pname">Social connection</div><div class="pfam">Character</div>
+      <svg viewBox="0 0 200 42" class="spark"><polyline fill="none" stroke="#3987e5" stroke-width="2" points="8,27.0 38,22.5 69,19.5 100,21.0 130,24.0 160,18.0 191,6.0"/><circle cx="8" cy="27.0" r="2.4" fill="#3987e5"/><circle cx="38" cy="22.5" r="2.4" fill="#3987e5"/><circle cx="69" cy="19.5" r="2.4" fill="#3987e5"/><circle cx="100" cy="21.0" r="2.4" fill="#3987e5"/><circle cx="130" cy="24.0" r="2.4" fill="#3987e5"/><circle cx="160" cy="18.0" r="2.4" fill="#3987e5"/><circle cx="191" cy="6.0" r="2.4" fill="#3987e5"/></svg>
+      <div class="pfoot"><span>peak: Georgetown</span><span class="pb" style="color:var(--s3)">▲ rising</span></div>
+    </div><div class="pcard f-voice">
+      <div class="pname">Certainty / conviction</div><div class="pfam">Voice</div>
+      <svg viewBox="0 0 200 42" class="spark"><polyline fill="none" stroke="#3987e5" stroke-width="2" points="8,10.5 38,9.6 69,10.2 100,6.0 130,9.0 160,9.9 191,9.6"/><circle cx="8" cy="10.5" r="2.4" fill="#3987e5"/><circle cx="38" cy="9.6" r="2.4" fill="#3987e5"/><circle cx="69" cy="10.2" r="2.4" fill="#3987e5"/><circle cx="100" cy="6.0" r="2.4" fill="#3987e5"/><circle cx="130" cy="9.0" r="2.4" fill="#3987e5"/><circle cx="160" cy="9.9" r="2.4" fill="#3987e5"/><circle cx="191" cy="9.6" r="2.4" fill="#3987e5"/></svg>
+      <div class="pfoot"><span>peak: Grade 10</span><span class="pb" style="color:var(--ink-3)">— steady</span></div>
+    </div><div class="pcard f-voice">
+      <div class="pname">Hedging / tentativeness</div><div class="pfam">Voice</div>
+      <svg viewBox="0 0 200 42" class="spark"><polyline fill="none" stroke="#3987e5" stroke-width="2" points="8,12.0 38,12.6 69,12.0 100,11.4 130,6.0 160,15.0 191,18.6"/><circle cx="8" cy="12.0" r="2.4" fill="#3987e5"/><circle cx="38" cy="12.6" r="2.4" fill="#3987e5"/><circle cx="69" cy="12.0" r="2.4" fill="#3987e5"/><circle cx="100" cy="11.4" r="2.4" fill="#3987e5"/><circle cx="130" cy="6.0" r="2.4" fill="#3987e5"/><circle cx="160" cy="15.0" r="2.4" fill="#3987e5"/><circle cx="191" cy="18.6" r="2.4" fill="#3987e5"/></svg>
+      <div class="pfoot"><span>peak: Grade 11</span><span class="pb" style="color:#e66767">▼ falling</span></div>
+    </div><div class="pcard f-int">
+      <div class="pname">Analytical reasoning</div><div class="pfam">Intellect</div>
+      <svg viewBox="0 0 200 42" class="spark"><polyline fill="none" stroke="#3987e5" stroke-width="2" points="8,27.9 38,20.1 69,18.9 100,24.6 130,19.5 160,6.0 191,15.6"/><circle cx="8" cy="27.9" r="2.4" fill="#3987e5"/><circle cx="38" cy="20.1" r="2.4" fill="#3987e5"/><circle cx="69" cy="18.9" r="2.4" fill="#3987e5"/><circle cx="100" cy="24.6" r="2.4" fill="#3987e5"/><circle cx="130" cy="19.5" r="2.4" fill="#3987e5"/><circle cx="160" cy="6.0" r="2.4" fill="#3987e5"/><circle cx="191" cy="15.6" r="2.4" fill="#3987e5"/></svg>
+      <div class="pfoot"><span>peak: Grade 12</span><span class="pb" style="color:var(--s3)">▲ rising</span></div>
+    </div><div class="pcard f-int">
+      <div class="pname">Reflexivity / self-awareness</div><div class="pfam">Intellect</div>
+      <svg viewBox="0 0 200 42" class="spark"><polyline fill="none" stroke="#3987e5" stroke-width="2" points="8,35.1 38,27.6 69,18.9 100,15.0 130,27.0 160,6.0 191,18.0"/><circle cx="8" cy="35.1" r="2.4" fill="#3987e5"/><circle cx="38" cy="27.6" r="2.4" fill="#3987e5"/><circle cx="69" cy="18.9" r="2.4" fill="#3987e5"/><circle cx="100" cy="15.0" r="2.4" fill="#3987e5"/><circle cx="130" cy="27.0" r="2.4" fill="#3987e5"/><circle cx="160" cy="6.0" r="2.4" fill="#3987e5"/><circle cx="191" cy="18.0" r="2.4" fill="#3987e5"/></svg>
+      <div class="pfoot"><span>peak: Grade 12</span><span class="pb" style="color:var(--s3)">▲ rising</span></div>
+    </div><div class="pcard f-id">
+      <div class="pname">Family & heritage</div><div class="pfam">Identity</div>
+      <svg viewBox="0 0 200 42" class="spark"><polyline fill="none" stroke="#3987e5" stroke-width="2" points="8,19.2 38,25.5 69,28.5 100,6.0 130,34.5 160,32.1 191,23.4"/><circle cx="8" cy="19.2" r="2.4" fill="#3987e5"/><circle cx="38" cy="25.5" r="2.4" fill="#3987e5"/><circle cx="69" cy="28.5" r="2.4" fill="#3987e5"/><circle cx="100" cy="6.0" r="2.4" fill="#3987e5"/><circle cx="130" cy="34.5" r="2.4" fill="#3987e5"/><circle cx="160" cy="32.1" r="2.4" fill="#3987e5"/><circle cx="191" cy="23.4" r="2.4" fill="#3987e5"/></svg>
+      <div class="pfoot"><span>peak: Grade 10</span><span class="pb" style="color:#e66767">▼ falling</span></div>
+    </div><div class="pcard f-id">
+      <div class="pname">Valuation / money</div><div class="pfam">Identity</div>
+      <svg viewBox="0 0 200 42" class="spark"><polyline fill="none" stroke="#3987e5" stroke-width="2" points="8,6.0 38,12.0 69,22.5 100,24.0 130,25.5 160,23.4 191,24.6"/><circle cx="8" cy="6.0" r="2.4" fill="#3987e5"/><circle cx="38" cy="12.0" r="2.4" fill="#3987e5"/><circle cx="69" cy="22.5" r="2.4" fill="#3987e5"/><circle cx="100" cy="24.0" r="2.4" fill="#3987e5"/><circle cx="130" cy="25.5" r="2.4" fill="#3987e5"/><circle cx="160" cy="23.4" r="2.4" fill="#3987e5"/><circle cx="191" cy="24.6" r="2.4" fill="#3987e5"/></svg>
+      <div class="pfoot"><span>peak: Elementary</span><span class="pb" style="color:#e66767">▼ falling</span></div>
+    </div><div class="pcard f-id">
+      <div class="pname">Technology</div><div class="pfam">Identity</div>
+      <svg viewBox="0 0 200 42" class="spark"><polyline fill="none" stroke="#3987e5" stroke-width="2" points="8,29.7 38,8.4 69,28.5 100,27.0 130,26.1 160,21.9 191,6.0"/><circle cx="8" cy="29.7" r="2.4" fill="#3987e5"/><circle cx="38" cy="8.4" r="2.4" fill="#3987e5"/><circle cx="69" cy="28.5" r="2.4" fill="#3987e5"/><circle cx="100" cy="27.0" r="2.4" fill="#3987e5"/><circle cx="130" cy="26.1" r="2.4" fill="#3987e5"/><circle cx="160" cy="21.9" r="2.4" fill="#3987e5"/><circle cx="191" cy="6.0" r="2.4" fill="#3987e5"/></svg>
+      <div class="pfoot"><span>peak: Georgetown</span><span class="pb" style="color:var(--s3)">▲ rising</span></div>
+    </div><div class="pcard f-id">
+      <div class="pname">Power & justice</div><div class="pfam">Identity</div>
+      <svg viewBox="0 0 200 42" class="spark"><polyline fill="none" stroke="#3987e5" stroke-width="2" points="8,30.0 38,19.5 69,22.5 100,21.0 130,18.0 160,6.0 191,10.5"/><circle cx="8" cy="30.0" r="2.4" fill="#3987e5"/><circle cx="38" cy="19.5" r="2.4" fill="#3987e5"/><circle cx="69" cy="22.5" r="2.4" fill="#3987e5"/><circle cx="100" cy="21.0" r="2.4" fill="#3987e5"/><circle cx="130" cy="18.0" r="2.4" fill="#3987e5"/><circle cx="160" cy="6.0" r="2.4" fill="#3987e5"/><circle cx="191" cy="10.5" r="2.4" fill="#3987e5"/></svg>
+      <div class="pfoot"><span>peak: Grade 12</span><span class="pb" style="color:var(--s3)">▲ rising</span></div>
+    </div><div class="pcard f-id">
+      <div class="pname">Food & the senses</div><div class="pfam">Identity</div>
+      <svg viewBox="0 0 200 42" class="spark"><polyline fill="none" stroke="#3987e5" stroke-width="2" points="8,28.5 38,24.0 69,27.0 100,25.5 130,6.0 160,22.5 191,15.0"/><circle cx="8" cy="28.5" r="2.4" fill="#3987e5"/><circle cx="38" cy="24.0" r="2.4" fill="#3987e5"/><circle cx="69" cy="27.0" r="2.4" fill="#3987e5"/><circle cx="100" cy="25.5" r="2.4" fill="#3987e5"/><circle cx="130" cy="6.0" r="2.4" fill="#3987e5"/><circle cx="160" cy="22.5" r="2.4" fill="#3987e5"/><circle cx="191" cy="15.0" r="2.4" fill="#3987e5"/></svg>
+      <div class="pfoot"><span>peak: Grade 11</span><span class="pb" style="color:var(--s3)">▲ rising</span></div>
+    </div>
+  </div>
+
+  <h2>Patterns · click any card for its receipts</h2>
+  <p class="note">Each finding pairs the close-reading layer with the measurement layer. Confirm/reject is the product mechanic: user verification becomes ground truth on which machine-read insights about a person are actually true.</p>
+
+  <div class="grid">
+
+    <details class="pattern">
+      <summary>
+        <div class="k" style="color:var(--s1)"><span class="dot" style="background:var(--s1)"></span>Cross-generational · Thread T5</div>
+        <h3>The prayer, twice</h3>
+        <p>His great-grandmother, born 1930, wrote the Navkar Mantra in her journal as a girl to feel protected during British patrols. Seventy years later, he filled spiral notebooks with the same prayer to quiet his mind. Neither knew. The two documents sit nine years apart in the archive — only a full-corpus pass puts them side by side.</p>
+        <div class="open-cue">▸ Show the receipts</div>
+      </summary>
+      <div class="receipts">
+        <div class="receipt" style="border-left-color:var(--s1)"><blockquote>“When soldiers came, we would close the windows and go silent.” — recorded photo-elicitation interview; as a girl she wrote the Navkar Mantra in her journal to feel protected.</blockquote><div class="src">DOC 282 · Family history paper · University era</div></div>
+        <div class="receipt" style="border-left-color:var(--s1)"><blockquote>“As long as my pen kept moving, my mind was quiet.” — copying the Navkar Mantra, in Prakrit, into 99-cent spiral notebooks as self-regulation.</blockquote><div class="src">DOC 299 · Literacy narrative · University era</div></div>
+        <div class="verify">
+          <input class="hack y" type="radio" name="p1" id="p1y"><input class="hack n" type="radio" name="p1" id="p1n">
+          <label for="p1y">Confirm — this is real</label><label for="p1n">Reject — this is noise</label>
+          <span class="st st-y">✓ Recorded — strengthens your model</span><span class="st st-n">✗ Recorded — claim retired, model updated</span>
+        </div>
+      </div>
+    </details>
+
+    <details class="pattern">
+      <summary>
+        <div class="k" style="color:var(--s2)"><span class="dot" style="background:var(--s2)"></span>Voice · Observer stance</div>
+        <h3>The observer split</h3>
+        <p>In an early-teens story, the pronouns slip involuntarily — the character “Bob” keeps becoming “I” mid-sentence. At sixteen, the same split is authored deliberately: a self-portrait written as two people, a public performer and a private observer. An accident became a technique.</p>
+        <div class="open-cue">▸ Show the receipts</div>
+      </summary>
+      <div class="receipts">
+        <div class="receipt" style="border-left-color:var(--s2)"><blockquote>Persistent “Bob” ↔ “I” pronoun slippage across the adventure story — the narrator cannot stay outside his character.</blockquote><div class="src">DOC 089 · Creative speech · Grades 7–8 era</div></div>
+        <div class="receipt" style="border-left-color:var(--s2)"><blockquote>A deliberate two-voice self-portrait: the outward performer, and the inner observer who listens to Hindi music where no one can hear.</blockquote><div class="src">DOC 214 · “Atishay y Yo” (Spanish) · Grade 10</div></div>
+        <div class="verify">
+          <input class="hack y" type="radio" name="p2" id="p2y"><input class="hack n" type="radio" name="p2" id="p2n">
+          <label for="p2y">Confirm — this is real</label><label for="p2n">Reject — this is noise</label>
+          <span class="st st-y">✓ Recorded — strengthens your model</span><span class="st st-n">✗ Recorded — claim retired, model updated</span>
+        </div>
+      </div>
+    </details>
+
+    <details class="pattern">
+      <summary>
+        <div class="k" style="color:var(--s3)"><span class="dot" style="background:var(--s3)"></span>Identity · Valuation lexicon</div>
+        <h3>The valuation reflex</h3>
+        <p>At ten, a report on Leonardo ends by noting the Mona Lisa’s $768,000,000 valuation. At twelve, a fictional coin is priced at exactly $1,888,696,690. The money lexicon runs strongest in the earliest eras and recedes across the decade — until the late corpus critiques commodification instead of enacting it.</p>
+        <div class="open-cue">▸ Show the receipts</div>
+      </summary>
+      <div class="receipts">
+        <div class="receipt" style="border-left-color:var(--s3)"><blockquote>Fun-facts closing includes the Mona Lisa’s $768M valuation — values expressed via price tags at age ten.</blockquote><div class="src">DOC 000 · Da Vinci report · Elementary era</div></div>
+        <div class="receipt" style="border-left-color:var(--s3)"><blockquote>A currency booth values the “galactical world coin” at exactly USD $1,888,696,690.</blockquote><div class="src">DOC 089 · Creative speech · Grades 7–8 era</div></div>
+        <div class="receipt" style="border-left-color:var(--s3)"><blockquote>“Art loses personal meaning when it is commodified” — the diaspora’s “machinery for commodifying cultural practice.”</blockquote><div class="src">DOC 295–296 · Autoethnographic zine · University era</div></div>
+        <div class="verify">
+          <input class="hack y" type="radio" name="p3" id="p3y"><input class="hack n" type="radio" name="p3" id="p3n">
+          <label for="p3y">Confirm — this is real</label><label for="p3n">Reject — this is noise</label>
+          <span class="st st-y">✓ Recorded — strengthens your model</span><span class="st st-n">✗ Recorded — claim retired, model updated</span>
+        </div>
+      </div>
+    </details>
+
+    <details class="pattern">
+      <summary>
+        <div class="k" style="color:var(--s1)"><span class="dot" style="background:var(--s1)"></span>Convergence · Family &amp; heritage lexicon</div>
+        <h3>The family heartbeat — measured</h3>
+        <div class="measure"><div><b>20.8</b><i>per 1k words · Grade 10</i></div><div><b>8.7</b><i>per 1k words · University</i></div></div>
+        <p>Family-and-heritage language is the corpus’s most persistent signal. It spikes exactly where the close-reading layer independently found the family narratives — the two layers agree without consulting each other.</p>
+        <div class="open-cue">▸ Show the receipts</div>
+      </summary>
+      <div class="receipts">
+        <div class="receipt" style="border-left-color:var(--s1)"><blockquote>Grade-10 spike: the grandmother-and-kurta narrative cluster — an elder opens a physical photo album to transmit a hidden family truth.</blockquote><div class="src">DOCs 195–198, 211 · Personal narratives · Grade 10</div></div>
+        <div class="receipt" style="border-left-color:var(--s1)"><blockquote>“…these types of stories go missing unless they are passed down.” — written at sixteen, in a rough draft about his grandmother. The company’s thesis, four years early.</blockquote><div class="src">DOC 196 · Narrative draft · Grade 10</div></div>
+        <div class="verify">
+          <input class="hack y" type="radio" name="p4" id="p4y"><input class="hack n" type="radio" name="p4" id="p4n">
+          <label for="p4y">Confirm — this is real</label><label for="p4n">Reject — this is noise</label>
+          <span class="st st-y">✓ Recorded — strengthens your model</span><span class="st st-n">✗ Recorded — claim retired, model updated</span>
+        </div>
+      </div>
+    </details>
+
+    <details class="pattern">
+      <summary>
+        <div class="k" style="color:var(--s2)"><span class="dot" style="background:var(--s2)"></span>Resolution · Technology thread</div>
+        <h3>The 2019 contradiction that wasn’t</h3>
+        <p>At thirteen, four months apart: a research paper arguing AI restores connection for isolated elderly patients, and an essay titled “Technology Contributes to a Quarantined Life.” Read together, both defend the same value — human connection — and disagree only about the mechanism. Carried as a contradiction; resolved by the corpus.</p>
+        <div class="open-cue">▸ Show the receipts</div>
+      </summary>
+      <div class="receipts">
+        <div class="receipt" style="border-left-color:var(--s2)"><blockquote>The Mabu companion robot gives isolated elderly patients “a sense of companionship” and “quality time with their families.”</blockquote><div class="src">DOC 072 · AI-in-healthcare paper · May 2019, age 13</div></div>
+        <div class="receipt" style="border-left-color:var(--s2)"><blockquote>“Elderly grandparents desire a hand-written letter from their grandkids, but all they receive is a text saying: ‘Thanks, Grandma.’”</blockquote><div class="src">DOC 049 · “Technology Contributes to a Quarantined Life” · Sept 2019</div></div>
+        <div class="verify">
+          <input class="hack y" type="radio" name="p5" id="p5y"><input class="hack n" type="radio" name="p5" id="p5n">
+          <label for="p5y">Confirm — this is real</label><label for="p5n">Reject — this is noise</label>
+          <span class="st st-y">✓ Recorded — strengthens your model</span><span class="st st-n">✗ Recorded — claim retired, model updated</span>
+        </div>
+      </div>
+    </details>
+
+    <details class="pattern">
+      <summary>
+        <div class="k" style="color:var(--s3)"><span class="dot" style="background:var(--s3)"></span>Tone · Aggression lexicon</div>
+        <h3>Conflict language, transformed</h3>
+        <div class="measure"><div><b>1.69</b><i>per 1k · Grades 7–8</i></div><div><b>0.56</b><i>per 1k · Grade 11</i></div><div><b>1.19</b><i>per 1k · University</i></div></div>
+        <p>The aggression lexicon peaks in the Grades 7–8 persona-writing cluster, falls steadily through Grade 11, then rebounds at university — but the rebound is structural-violence critique in anthropology coursework, not visceral conflict. Same words, different work.</p>
+        <div class="open-cue">▸ Show the receipts</div>
+      </summary>
+      <div class="receipts">
+        <div class="receipt" style="border-left-color:var(--s3)"><blockquote>Civil-War letters, historical persona speeches, and a DBQ prosecuting abuse of power — the era of embodied conflict writing.</blockquote><div class="src">DOCs 040–042, 007, 023 · Grades 7–8</div></div>
+        <div class="receipt" style="border-left-color:var(--s3)"><blockquote>University-era hits cluster in critiques of technology as power — coercion “below the threshold of force,” systems that strip human friction.</blockquote><div class="src">DOC 252 · Cyborg Anthropology portfolio · University era</div></div>
+        <div class="verify">
+          <input class="hack y" type="radio" name="p6" id="p6y"><input class="hack n" type="radio" name="p6" id="p6n">
+          <label for="p6y">Confirm — this is real</label><label for="p6n">Reject — this is noise</label>
+          <span class="st st-y">✓ Recorded — strengthens your model</span><span class="st st-n">✗ Recorded — claim retired, model updated</span>
+        </div>
+      </div>
+    </details>
+
+  </div>
+
+  <footer>
+    <b>Method.</b> Layer one: qualitative thematic coding (5 threads, 6 behavioral codes) applied in a 100% close-reading pass. Layer two: 21 word-stem lexicons across five families — emotional tone, character, voice, intellect, identity — measured per 1,000 words, word-weighted by era. Lexicon hits are surface signals, not meaning-judgments; the dashboard pairs every trend with the highest-density source sentences so the measurement can be checked against the text. Rates shown are from the era-weighted computational pass; arcs described without figures are direction-of-trend from the same pass, corroborated by the coding layer. Corpus hygiene: 15+ saved-but-not-authored documents, 30+ revision duplicates, and one misattributed byline were identified and excluded from authorial analysis.
+  </footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Longitude AI — Product</title>
+<style>
+  :root { color-scheme: dark; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background:#0d0d0d; color:#fff; -webkit-font-smoothing:antialiased;
+    --surface:#1a1a19; --surface-2:#222220; --page:#0d0d0d;
+    --ink-1:#ffffff; --ink-2:#c3c2b7; --ink-3:#898781;
+    --grid:#2c2c2a; --axis:#383835;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+    --border:rgba(255,255,255,0.10);
+  }
+  input.hack { position:absolute; opacity:0; pointer-events:none; }
+  .app { display:flex; min-height:100vh; }
+
+  /* ---------- Sidebar ---------- */
+  .side {
+    width:232px; flex-shrink:0; background:var(--surface); border-right:1px solid var(--grid);
+    padding:22px 14px; display:flex; flex-direction:column; gap:2px; position:sticky; top:0; height:100vh;
+  }
+  .brand { font-size:16px; font-weight:700; letter-spacing:.02em; padding:0 10px 18px; }
+  .brand span { color:var(--s1); }
+  .nav-item {
+    display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:8px;
+    font-size:13.5px; color:var(--ink-2); cursor:pointer; user-select:none;
+  }
+  .nav-item:hover { background:var(--surface-2); }
+  .nav-item .ic { width:17px; text-align:center; opacity:.85; }
+  .nav-item .badge { margin-left:auto; background:var(--s2); color:#fff; font-size:10px; font-weight:700; border-radius:8px; padding:2px 7px; }
+  .side .sync { margin-top:auto; padding:12px 10px; border-top:1px solid var(--grid); font-size:11.5px; color:var(--ink-3); line-height:1.6; }
+  .sync .ok { color:var(--s3); }
+
+  /* ---------- Main ---------- */
+  .main { flex:1; padding:34px 44px 80px; max-width:980px; }
+  .concept { display:inline-block; font-size:10px; letter-spacing:.12em; font-weight:700; color:var(--ink-3); border:1px solid var(--border); border-radius:6px; padding:3px 8px; margin-bottom:18px; }
+  .hello { font-size:24px; font-weight:700; letter-spacing:-.01em; margin-bottom:4px; }
+  .hello-sub { color:var(--ink-3); font-size:13.5px; margin-bottom:28px; }
+  .view { display:none; }
+
+  /* Nav switching — pure CSS */
+  #n-home:checked    ~ .app .v-home,
+  #n-time:checked    ~ .app .v-time,
+  #n-ask:checked     ~ .app .v-ask,
+  #n-conn:checked    ~ .app .v-conn,
+  #n-kpi:checked     ~ .app .v-kpi,
+  #n-who:checked     ~ .app .v-who,
+  #n-grow:checked    ~ .app .v-grow,
+  #n-well:checked    ~ .app .v-well,
+  #n-priv:checked    ~ .app .v-priv { display:block; }
+  #n-home:checked    ~ .app .ni-home,
+  #n-time:checked    ~ .app .ni-time,
+  #n-ask:checked     ~ .app .ni-ask,
+  #n-conn:checked    ~ .app .ni-conn,
+  #n-kpi:checked     ~ .app .ni-kpi,
+  #n-who:checked     ~ .app .ni-who,
+  #n-grow:checked    ~ .app .ni-grow,
+  #n-well:checked    ~ .app .ni-well,
+  #n-priv:checked    ~ .app .ni-priv { background:var(--surface-2); color:var(--ink-1); font-weight:600; }
+
+  .kpirow { border-bottom:1px solid var(--grid); padding:13px 0; }
+  .kpirow:last-child { border-bottom:none; }
+  .kpitop { display:flex; align-items:center; gap:12px; }
+  .kpiname { font-size:13.5px; font-weight:650; flex:1; }
+  .kpiscore { font-size:16px; font-weight:700; font-variant-numeric:tabular-nums; min-width:44px; text-align:right; }
+  .kpitrend { font-size:11px; min-width:64px; text-align:right; }
+  .kpibar { height:7px; background:var(--surface-2); border-radius:4px; overflow:hidden; margin-top:8px; }
+  .kpibar i { display:block; height:100%; border-radius:4px; background:var(--s1); }
+  details.kpid summary { list-style:none; cursor:pointer; }
+  details.kpid summary::-webkit-details-marker { display:none; }
+  details.kpid .kpix { margin-top:11px; font-size:12.5px; color:var(--ink-2); line-height:1.6; background:var(--page); border:1px solid var(--border); border-radius:9px; padding:12px 14px; }
+  .incrow { display:flex; align-items:center; gap:10px; padding:9px 12px; border:1px solid var(--border); border-radius:9px; margin-bottom:8px; cursor:pointer; font-size:13px; color:var(--ink-2); }
+  .incrow .tick { margin-left:auto; font-size:11.5px; color:var(--ink-3); }
+  .incrow input:checked ~ .tick { color:var(--s3); font-weight:600; }
+  .incrow input:checked ~ .tick::after { content:" ✓ included"; }
+  .incrow input:not(:checked) ~ .tick::after { content:" excluded"; }
+  .fitbar { height:6px; background:var(--surface-2); border-radius:3px; overflow:hidden; margin:10px 0 4px; }
+  .fitbar i { display:block; height:100%; background:var(--s3); border-radius:3px; }
+  .fitpct { font-size:11px; color:var(--ink-3); }
+  .trendrow { display:flex; flex-wrap:wrap; gap:8px; margin-top:6px; }
+  .trend { font-size:11.5px; border:1px solid var(--border); border-radius:7px; padding:5px 10px; color:var(--ink-2); background:var(--surface-2); }
+  .trend b { font-weight:700; }
+
+  /* Expandable source cards */
+  details.card summary { list-style:none; cursor:pointer; }
+  details.card summary::-webkit-details-marker { display:none; }
+  details.card .exp { margin-top:14px; border-top:1px solid var(--grid); padding-top:13px; font-size:13px; color:var(--ink-2); line-height:1.6; }
+  .beta-chip { display:inline-block; background:var(--surface-2); border:1px solid var(--border); border-radius:6px; padding:3px 9px; font-size:11px; color:var(--ink-3); margin-top:8px; }
+
+  /* Cards */
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:22px 24px; margin-bottom:16px; transition:border-color .15s, transform .15s; }
+  .card:hover { border-color:rgba(255,255,255,0.22); }
+  .card h3 { font-size:16.5px; font-weight:700; margin-bottom:5px; letter-spacing:-.01em; }
+  .card .meta { font-size:12px; color:var(--ink-3); margin-bottom:14px; line-height:1.5; }
+  .card p { font-size:13.5px; color:var(--ink-2); line-height:1.65; }
+
+  /* At-a-glance strip */
+  .glance { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px; }
+  .glance div { flex:1; min-width:130px; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px 16px; }
+  .glance b { display:block; font-size:22px; font-weight:750; }
+  .glance i { font-style:normal; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-3); }
+  .g-good b { color:var(--s3); } .g-grow b { color:var(--s2); } .g-neutral b { color:var(--s1); }
+
+  /* Sidebar groups */
+  .navlab { font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3); padding:14px 10px 5px; }
+
+  /* Feel-good motion: views rise in, bars grow in */
+  @keyframes rise { from { opacity:0; transform:translateY(7px); } to { opacity:1; transform:none; } }
+  .view .card, .view .glance { animation: rise .45s ease both; }
+  .view .card:nth-child(3) { animation-delay:.06s; } .view .card:nth-child(4) { animation-delay:.12s; }
+  .view .card:nth-child(5) { animation-delay:.18s; } .view .card:nth-child(6) { animation-delay:.24s; }
+  @keyframes growin { from { width:0 !important; } }
+  .kpibar i, .fitbar i { animation: growin .8s cubic-bezier(.2,.7,.2,1) both; }
+
+  /* Brain map */
+  .braincard { position:relative; }
+  .brainstage { position:relative; overflow:hidden; border-radius:12px; background:radial-gradient(ellipse at 50% 40%, #14203a 0%, #0d0d0d 75%); border:1px solid var(--border); }
+  .brainsvg { width:100%; max-width:640px; display:block; margin:0 auto; }
+  .zoomg { transform-origin:50% 48%; transition:transform .5s cubic-bezier(.2,.7,.2,1); }
+  #z1:checked ~ .brainstage .zoomg { transform:scale(1); }
+  #z2:checked ~ .brainstage .zoomg { transform:scale(1.45); }
+  #z3:checked ~ .brainstage .zoomg { transform:scale(1.95); }
+  .micro { opacity:0; transition:opacity .4s; }
+  #z2:checked ~ .brainstage .micro, #z3:checked ~ .brainstage .micro { opacity:1; }
+  .zoomrail { display:flex; gap:8px; margin:14px 0 4px; align-items:center; }
+  .zchip { font-size:12px; padding:6px 14px; border-radius:14px; cursor:pointer; border:1px solid var(--border); color:var(--ink-2); user-select:none; }
+  #z1:checked ~ .zoomrail .zc1, #z2:checked ~ .zoomrail .zc2, #z3:checked ~ .zoomrail .zc3 { background:var(--s1); border-color:var(--s1); color:#fff; font-weight:600; }
+  .bnode { cursor:pointer; }
+  .bnode:hover circle:first-child { stroke-width:3; }
+  .binfo { display:none; margin-top:12px; }
+  #b1:checked ~ .binfo.i1, #b2:checked ~ .binfo.i2, #b3:checked ~ .binfo.i3, #b4:checked ~ .binfo.i4, #b5:checked ~ .binfo.i5 { display:block; }
+
+  /* Donut + legend */
+  .donutwrap { display:flex; gap:28px; align-items:center; flex-wrap:wrap; }
+  .donut { width:200px; height:200px; flex-shrink:0; }
+  .donutleg { flex:1; min-width:230px; }
+  .lrow { display:flex; align-items:center; gap:9px; font-size:13px; color:var(--ink-2); padding:4px 0; }
+  .lrow b { margin-left:auto; color:var(--ink-1); font-variant-numeric:tabular-nums; }
+  .ldot { width:9px; height:9px; border-radius:3px; flex-shrink:0; }
+
+  /* Radar */
+  .radarwrap { display:flex; gap:26px; align-items:center; flex-wrap:wrap; margin-bottom:8px; }
+  .radar { width:230px; height:230px; flex-shrink:0; }
+
+  /* WOW hero */
+  .wow {
+    position:relative; background:linear-gradient(135deg, #14203a 0%, #1a1a19 55%);
+    border:1px solid rgba(57,135,229,.35); border-radius:16px; padding:28px; margin-bottom:18px; overflow:hidden;
+  }
+  .wow::after { content:""; position:absolute; top:-60%; right:-20%; width:60%; height:220%;
+    background:radial-gradient(closest-side, rgba(57,135,229,.16), transparent); pointer-events:none; }
+  .wow .wnum { font-size:44px; font-weight:800; letter-spacing:-.02em; line-height:1; }
+  .wow .wnum span { color:var(--s1); }
+  .wow .wline { font-size:15px; color:var(--ink-2); margin-top:10px; line-height:1.55; max-width:560px; }
+  .wow .wline b { color:var(--ink-1); }
+
+  .alert { border-left:3px solid var(--s2); }
+  .alert .k { color:var(--s2); font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; margin-bottom:8px; }
+  .actions { margin-top:14px; display:flex; gap:8px; flex-wrap:wrap; }
+  .btn {
+    display:inline-block; font-size:12.5px; padding:8px 16px; border-radius:8px; cursor:pointer; border:1px solid var(--border);
+    background:transparent; color:var(--ink-2); user-select:none;
+  }
+  .btn:hover { border-color:var(--ink-3); }
+  .btn.primary { background:var(--s1); border-color:var(--s1); color:#fff; font-weight:600; }
+  .btn.primary:hover { background:#2a78d6; }
+
+  /* Evidence expanders */
+  details.evi { margin-top:14px; }
+  details.evi summary { list-style:none; cursor:pointer; display:inline-block; }
+  details.evi summary::-webkit-details-marker { display:none; }
+  details.evi[open] summary .btn.primary { background:transparent; border-color:var(--border); color:var(--ink-3); font-weight:400; }
+  .evi-body { margin-top:14px; border-top:1px solid var(--grid); padding-top:14px; }
+  .receipt { background:var(--page); border:1px solid var(--border); border-left:3px solid var(--s1); border-radius:8px; padding:13px 15px; margin-bottom:9px; }
+  .receipt blockquote { font-size:13px; line-height:1.55; color:var(--ink-1); font-style:italic; }
+  .receipt .src { margin-top:7px; font-size:11px; color:var(--ink-3); font-variant-numeric:tabular-nums; }
+
+  /* Confirm / reject — pure CSS state */
+  .verify { margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; position:relative; }
+  .verify .st { font-size:12px; display:none; }
+  .verify input.y:checked ~ .st-y { display:inline; color:var(--s3); }
+  .verify input.n:checked ~ .st-n { display:inline; color:var(--s2); }
+  .verify input.y:checked ~ label, .verify input.n:checked ~ label { opacity:.45; pointer-events:none; }
+
+  .receipt-chip { display:inline-block; background:var(--page); border:1px solid var(--border); border-radius:6px; padding:3px 9px; font-size:11px; color:var(--ink-3); margin:8px 6px 0 0; font-variant-numeric:tabular-nums; }
+  .card .receipt-chip { background:var(--surface-2); }
+
+  .finding { display:flex; gap:14px; }
+  .fdot { width:9px; height:9px; border-radius:50%; margin-top:6px; flex-shrink:0; }
+
+  /* Timeline strip */
+  .strip { display:flex; gap:6px; align-items:flex-end; height:64px; margin:16px 0 0; }
+  .strip div { flex:1; background:var(--s1); border-radius:3px 3px 0 0; opacity:.9; }
+  .strip div:hover { opacity:1; }
+  .strip-x { display:flex; gap:6px; font-size:10.5px; color:var(--ink-3); border-top:1px solid var(--axis); padding-top:6px; margin-top:6px; }
+  .strip-x span { flex:1; text-align:center; }
+
+  /* Ask rail */
+  .ask-rail { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:24px; }
+  .chipq {
+    font-size:12.5px; padding:8px 14px; border-radius:18px; cursor:pointer; user-select:none;
+    background:var(--surface); border:1px solid var(--border); color:var(--ink-2);
+  }
+  .chipq:hover { border-color:var(--ink-3); }
+  .ask-thread { display:none; }
+  #q1:checked ~ .ask-thread.a1, #q2:checked ~ .ask-thread.a2, #q3:checked ~ .ask-thread.a3,
+  #q4:checked ~ .ask-thread.a4, #q5:checked ~ .ask-thread.a5 { display:block; }
+  #q1:checked ~ .ask-rail .cq1, #q2:checked ~ .ask-rail .cq2, #q3:checked ~ .ask-rail .cq3,
+  #q4:checked ~ .ask-rail .cq4, #q5:checked ~ .ask-rail .cq5 {
+    background:var(--s1); border-color:var(--s1); color:#fff; font-weight:600;
+  }
+
+  /* Chat */
+  .chat-q { display:flex; justify-content:flex-end; margin-bottom:14px; }
+  .chat-q div { background:var(--s1); color:#fff; border-radius:14px 14px 4px 14px; padding:11px 16px; font-size:13.5px; max-width:70%; line-height:1.5; }
+  .chat-a { display:flex; margin-bottom:14px; }
+  .chat-a > div { background:var(--surface); border:1px solid var(--border); border-radius:14px 14px 14px 4px; padding:14px 18px; font-size:13.5px; max-width:82%; line-height:1.65; color:var(--ink-2); }
+  .chat-a b { color:var(--ink-1); font-weight:600; }
+  .chat-input { display:flex; gap:10px; margin-top:22px; }
+  .fake-in { flex:1; font:inherit; font-size:13.5px; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 16px; color:var(--ink-1); outline:none; }
+  .fake-in::placeholder { color:var(--ink-3); }
+  .fake-in:focus { border-color:var(--s1); }
+  .keymini { display:none; gap:8px; margin-top:20px; }
+  .keymini input { flex:1; font:inherit; font-size:12.5px; background:var(--surface); border:1px solid var(--border); border-radius:9px; padding:10px 14px; color:var(--ink-1); outline:none; }
+  .thinking { color:var(--ink-3); font-size:12px; padding:6px 2px; display:none; }
+  .chat-a.err > div { border-color:var(--s2); color:var(--s2); }
+  .chat-a.live > div { white-space:pre-wrap; }
+
+  /* Connect */
+  .conn { display:flex; align-items:center; gap:14px; }
+  .conn .logo { width:38px; height:38px; border-radius:9px; background:var(--surface-2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:17px; flex-shrink:0; }
+  .conn .st2 { margin-left:auto; font-size:12px; flex-shrink:0; }
+  .st2.on { color:var(--s3); } .st2.off { color:var(--ink-3); }
+  .progress { height:5px; background:var(--surface-2); border-radius:3px; margin-top:12px; overflow:hidden; }
+  .progress i { display:block; height:100%; width:64%; background:var(--s1); border-radius:3px; }
+</style>
+</head>
+<body>
+
+<input class="hack" type="radio" name="nav" id="n-home" checked>
+<input class="hack" type="radio" name="nav" id="n-time">
+<input class="hack" type="radio" name="nav" id="n-ask">
+<input class="hack" type="radio" name="nav" id="n-conn">
+<input class="hack" type="radio" name="nav" id="n-kpi">
+<input class="hack" type="radio" name="nav" id="n-who">
+<input class="hack" type="radio" name="nav" id="n-grow">
+<input class="hack" type="radio" name="nav" id="n-well">
+<input class="hack" type="radio" name="nav" id="n-priv">
+
+<div class="app">
+
+  <nav class="side">
+    <div class="brand">LONGITUDE <span>AI</span></div>
+    <div class="navlab">Your day</div>
+    <label class="nav-item ni-home" for="n-home"><span class="ic">◈</span> Today <span class="badge">1</span></label>
+    <label class="nav-item ni-ask" for="n-ask"><span class="ic">✳</span> Ask your archive</label>
+    <div class="navlab">Your self</div>
+    <label class="nav-item ni-time" for="n-time"><span class="ic">〰</span> Timeline</label>
+    <label class="nav-item ni-kpi" for="n-kpi"><span class="ic">▤</span> Your metrics</label>
+    <label class="nav-item ni-grow" for="n-grow"><span class="ic">✦</span> Growth &amp; career</label>
+    <label class="nav-item ni-well" for="n-well"><span class="ic">♡</span> Well-being</label>
+    <div class="navlab">Setup</div>
+    <label class="nav-item ni-conn" for="n-conn"><span class="ic">⇄</span> Sources</label>
+    <label class="nav-item ni-who" for="n-who"><span class="ic">◎</span> Who it's for</label>
+    <label class="nav-item ni-priv" for="n-priv"><span class="ic">⚙</span> Privacy &amp; keys</label>
+    <div class="sync">
+      <span class="ok">●</span> Archive synced 2h ago<br>
+      412 documents · 11 years<br>
+      Encrypted · never trained on
+    </div>
+  </nav>
+
+  <main class="main">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:18px;">
+      <span class="concept" style="margin-bottom:0">PRODUCT CONCEPT — INTERFACE MOCKUP</span>
+      <a href="index.html" style="color:var(--ink-3); font-size:12px; text-decoration:none;">← Back to the live analysis (built &amp; working today)</a>
+    </div>
+
+    <!-- ============ TODAY ============ -->
+    <section class="view v-home">
+      <div class="hello">Thursday, October 15</div>
+      <div class="hello-sub">Your model updated overnight — 3 new documents read.</div>
+
+      <div class="card">
+        <div class="donutwrap">
+          <svg viewBox="0 0 220 220" class="donut" role="img" aria-label="Writing by theme">
+            <g transform="rotate(-90 110 110)">
+              <circle cx="110" cy="110" r="70" fill="none" stroke="#3987e5" stroke-width="26" stroke-dasharray="103.6 439.8" stroke-dashoffset="0"/>
+              <circle cx="110" cy="110" r="70" fill="none" stroke="#d95926" stroke-width="26" stroke-dasharray="94.8 439.8" stroke-dashoffset="-105.6"/>
+              <circle cx="110" cy="110" r="70" fill="none" stroke="#199e70" stroke-width="26" stroke-dasharray="77.2 439.8" stroke-dashoffset="-202.4"/>
+              <circle cx="110" cy="110" r="70" fill="none" stroke="#c98500" stroke-width="26" stroke-dasharray="59.6 439.8" stroke-dashoffset="-281.6"/>
+              <circle cx="110" cy="110" r="70" fill="none" stroke="#d55181" stroke-width="26" stroke-dasharray="33.2 439.8" stroke-dashoffset="-343.2"/>
+              <circle cx="110" cy="110" r="70" fill="none" stroke="#52514e" stroke-width="26" stroke-dasharray="59.6 439.8" stroke-dashoffset="-378.4"/>
+            </g>
+            <text x="110" y="104" text-anchor="middle" fill="#ffffff" font-size="22" font-weight="700" font-family="system-ui,sans-serif">324k</text>
+            <text x="110" y="124" text-anchor="middle" fill="#898781" font-size="11" font-family="system-ui,sans-serif">words · 11 years</text>
+          </svg>
+          <div class="donutleg">
+            <h3 style="margin-bottom:10px">What you write about</h3>
+            <div class="lrow"><span class="ldot" style="background:#3987e5"></span>Family &amp; heritage <b>24%</b></div>
+            <div class="lrow"><span class="ldot" style="background:#d95926"></span>Ideas &amp; analysis <b>22%</b></div>
+            <div class="lrow"><span class="ldot" style="background:#199e70"></span>Technology &amp; society <b>18%</b></div>
+            <div class="lrow"><span class="ldot" style="background:#c98500"></span>Justice &amp; power <b>14%</b></div>
+            <div class="lrow"><span class="ldot" style="background:#d55181"></span>Food &amp; the senses <b>8%</b></div>
+            <div class="lrow"><span class="ldot" style="background:#52514e"></span>Everything else <b>14%</b></div>
+            <p style="font-size:12px; color:var(--ink-3); margin-top:10px;">One in four pages you've ever written is about family. You'd never have guessed it — and now you can click into every one.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>A day with Longitude</h3>
+        <div class="meta">The everyday loop — not just the big reveals.</div>
+        <div class="finding" style="margin-bottom:13px"><span class="fdot" style="background:var(--s1)"></span><div>
+          <b style="font-size:13px">8:04 AM — On this day</b>
+          <p style="font-size:13px">Five years ago today you wrote about starting over at a new school — "the second week is always easier than everyone tells you the first will be hard." You're starting the new job Monday. Thirty seconds, with your coffee.</p>
+          <span class="receipt-chip">journal · 5 years ago today</span>
+        </div></div>
+        <div class="finding" style="margin-bottom:13px"><span class="fdot" style="background:var(--s3)"></span><div>
+          <b style="font-size:13px">11:30 AM — Written in your voice</b>
+          <p style="font-size:13px">The birthday message, the hard email, the bio for the conference — drafted from how you actually write, not how a chatbot writes. You edit two words instead of rewriting five paragraphs.</p>
+          <span class="receipt-chip">daily writing, zero cold starts</span>
+        </div></div>
+        <div class="finding"><span class="fdot" style="background:var(--s2)"></span><div>
+          <b style="font-size:13px">4:45 PM — Before the conversation that matters</b>
+          <p style="font-size:13px">Salary talk at 5. One tap: "You soften bad news and under-ask — your own record, six documents. Open with the number." Your patterns, working for you in the moment they cost you money.</p>
+          <span class="receipt-chip">stance fingerprint · applied</span>
+        </div></div>
+        <p style="margin-top:12px; font-size:11.5px; color:var(--ink-3)">Mornings: thirty seconds of your own history. All day: writing in your voice. Key moments: your patterns on your side. The deep analysis below is what makes each of these possible.</p>
+      </div>
+
+      <div class="card alert">
+        <div class="k">● Pattern break — first time in 6 years</div>
+        <h3>Your writing about work changed 11 weeks ago.</h3>
+        <p>Since July, your work-related writing runs 31% shorter, hedging language ("maybe," "I think") has dropped to its lowest level in your archive, and a theme you wrote about weekly for six years — <b style="color:var(--ink-1)">building in public</b> — hasn't appeared once. Baselines this stable rarely break by accident.</p>
+        <span class="receipt-chip">14 source passages</span><span class="receipt-chip">baseline: 2019–2025</span>
+        <details class="evi">
+          <summary><span class="btn primary">See the evidence</span></summary>
+          <div class="evi-body">
+            <div class="receipt" style="border-left-color:var(--s2)">
+              <blockquote>"Maybe the right move is… I think we could probably…" — typical work-writing register, 2019–June 2026. Hedge rate: 6.1 per 1k words.</blockquote>
+              <div class="src">Baseline sample · 214 documents</div>
+            </div>
+            <div class="receipt" style="border-left-color:var(--s2)">
+              <blockquote>"Ship it Friday. The pricing page is wrong; fix is below." — current register, July–October. Hedge rate: 1.4 per 1k words.</blockquote>
+              <div class="src">Recent sample · 12 documents</div>
+            </div>
+            <div class="verify">
+              <input class="hack y" type="radio" name="pb" id="pb-y"><input class="hack n" type="radio" name="pb" id="pb-n">
+              <label class="btn" for="pb-y">This is real — keep watching</label>
+              <label class="btn" for="pb-n">Noise — retire it</label>
+              <span class="st st-y">✓ Recorded — Longitude keeps tracking this shift</span>
+              <span class="st st-n">✗ Retired — threshold raised for this pattern</span>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div class="card">
+        <div class="finding">
+          <span class="fdot" style="background:var(--s3)"></span>
+          <div style="flex:1">
+            <h3>You've started writing about your grandfather again.</h3>
+            <div class="meta">After 4 years of absence — 3 mentions in the last month, all in drafts you never sent.</div>
+            <span class="receipt-chip">DOC 402 · unsent email</span><span class="receipt-chip">DOC 407 · journal</span><span class="receipt-chip">DOC 411 · notes</span>
+            <div class="verify">
+              <input class="hack y" type="radio" name="f1" id="f1-y"><input class="hack n" type="radio" name="f1" id="f1-n">
+              <label class="btn" for="f1-y">Confirm</label>
+              <label class="btn" for="f1-n">Reject</label>
+              <span class="st st-y">✓ Recorded — strengthens your model</span>
+              <span class="st st-n">✗ Retired — model updated</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="finding">
+          <span class="fdot" style="background:var(--s1)"></span>
+          <div style="flex:1">
+            <h3>A question you asked at 19 — you answered it last week.</h3>
+            <div class="meta">In 2024 you wrote "I don't know if I want prestige or peace." Last Tuesday's journal entry chose.</div>
+            <details class="evi">
+              <summary><span class="btn primary">Show me both</span></summary>
+              <div class="evi-body">
+                <div class="receipt"><blockquote>"I don't know if I want prestige or peace. They keep costing each other."</blockquote><div class="src">Journal · 2024, age 19</div></div>
+                <div class="receipt" style="border-left-color:var(--s3)"><blockquote>"Turned it down. Slept fine. That's the answer, I guess."</blockquote><div class="src">Journal · last Tuesday</div></div>
+              </div>
+            </details>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ TIMELINE ============ -->
+    <section class="view v-time">
+      <div class="hello">Your life in writing</div>
+      <div class="hello-sub">412 documents · 2015 – 2026 · every pattern opens to its source sentences</div>
+
+      <div class="card">
+        <h3>Writing volume by year</h3>
+        <div class="strip">
+          <div style="height:4%"  title="2016 — 2 documents"></div>
+          <div style="height:8%"  title="2017 — 8 documents"></div>
+          <div style="height:38%" title="2018 — 41 documents"></div>
+          <div style="height:82%" title="2019 — 89 documents"></div>
+          <div style="height:51%" title="2020 — 55 documents"></div>
+          <div style="height:26%" title="2021 — 28 documents"></div>
+          <div style="height:14%" title="2022 — 15 documents"></div>
+          <div style="height:5%"  title="2023 — 4 documents"></div>
+          <div style="height:4%"  title="2024 — 2 documents"></div>
+          <div style="height:56%" title="2025 — 60 documents"></div>
+          <div style="height:100%" title="2026 — 108 documents"></div>
+        </div>
+        <div class="strip-x"><span>’16</span><span>’17</span><span>’18</span><span>’19</span><span>’20</span><span>’21</span><span>’22</span><span>’23</span><span>’24</span><span>’25</span><span>’26</span></div>
+      </div>
+
+      <div class="card">
+        <h3>Threads running through your archive</h3>
+        <div class="meta">Each thread traces across the decade, receipts at every point</div>
+        <p>
+          <span class="receipt-chip" style="border-color:var(--s1);color:var(--s1)">Family &amp; heritage · 11 yrs · 61 docs</span>
+          <span class="receipt-chip" style="border-color:var(--s2);color:var(--s2)">Technology &amp; connection · 8 yrs · 44 docs</span>
+          <span class="receipt-chip" style="border-color:var(--s3);color:var(--s3)">The observer self · 9 yrs · 37 docs</span>
+          <span class="receipt-chip">Money &amp; worth · declining since 2019</span>
+          <span class="receipt-chip">+ 17 more</span>
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>2019 — the year two essays disagreed</h3>
+        <div class="meta">May: "AI will rescue isolated patients." September: "Technology Contributes to a Quarantined Life."</div>
+        <p>Read together, both defend the same value — human connection — and disagree only about the mechanism. You carried this as a contradiction. It never was one.</p>
+        <details class="evi">
+          <summary><span class="btn primary">Open the pair</span></summary>
+          <div class="evi-body">
+            <div class="receipt"><blockquote>The Mabu companion robot gives isolated elderly patients "a sense of companionship" and "quality time with their families."</blockquote><div class="src">AI in Healthcare · May 2019, age 13</div></div>
+            <div class="receipt" style="border-left-color:var(--s2)"><blockquote>"Elderly grandparents desire a hand-written letter from their grandkids, but all they receive is a text saying: 'Thanks, Grandma.'"</blockquote><div class="src">"Technology Contributes to a Quarantined Life" · Sept 2019</div></div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- ============ ASK ============ -->
+    <section class="view v-ask">
+      <div class="hello">Ask your archive</div>
+      <div class="hello-sub">This is your twin taking shape — not a clone of your voice, a model of your mind over time, built from the honest record and able to show its receipts. Click a question; the answer comes only from what you wrote.</div>
+
+      <input class="hack" type="radio" name="ask" id="q1" checked>
+      <input class="hack" type="radio" name="ask" id="q2">
+      <input class="hack" type="radio" name="ask" id="q3">
+      <input class="hack" type="radio" name="ask" id="q4">
+      <input class="hack" type="radio" name="ask" id="q5">
+
+      <div class="ask-rail">
+        <label class="chipq cq1" for="q1">What did I believe about tech at 13?</label>
+        <label class="chipq cq2" for="q2">When did my grandmother enter my writing?</label>
+        <label class="chipq cq3" for="q3">What have I quietly stopped writing about?</label>
+        <label class="chipq cq4" for="q4">What do I do when things feel out of control?</label>
+        <label class="chipq cq5" for="q5">Draft Dad's birthday toast — in my voice</label>
+      </div>
+
+      <div class="ask-thread a1">
+        <div class="chat-q"><div>What did I believe about technology when I was 13, and do I still believe it?</div></div>
+        <div class="chat-a"><div>
+          At 13 you held both positions at once. In May 2019 you argued AI would restore connection for isolated elderly patients <span class="receipt-chip">AI in Healthcare · May 2019</span> — four months later you wrote that technology "contributes to a quarantined life." <span class="receipt-chip">Sept 2019</span><br><br>
+          The through-line was never pro- or anti-technology: <b>connection is the point, and technology is on trial for whether it serves it.</b> You still hold it — your university portfolio makes the same argument with anthropological theory instead of examples. <span class="receipt-chip">Cyborg Anthropology · 2026</span>
+        </div></div>
+      </div>
+
+      <div class="ask-thread a2">
+        <div class="chat-q"><div>When did my grandmother enter my writing?</div></div>
+        <div class="chat-a"><div>
+          Autumn 2020 — your first month of boarding school, your first COVID fall. A descriptive-writing assignment becomes a portrait of her knitting: racks of mufflers, baby-blue mittens, <i>"This is for you, beta."</i> <span class="receipt-chip">Family description · Oct 2020</span><br><br>
+          Then she takes over Grade 10: a five-document cluster where she stops being someone you describe and becomes <b>someone with a hidden history you're recovering</b> — and in one rough draft you write the sentence you'd build a company on six years later: <i>"these types of stories go missing unless they are passed down."</i> <span class="receipt-chip">Narrative cluster · Grade 10</span> <span class="receipt-chip">Draft · 2022</span>
+        </div></div>
+      </div>
+
+      <div class="ask-thread a3">
+        <div class="chat-q"><div>What have I quietly stopped writing about?</div></div>
+        <div class="chat-a"><div>
+          Money — as a thing to admire. At ten you ended a report on Leonardo with the Mona Lisa's $768M price tag; at twelve you valued a fictional coin at exactly $1,888,696,690. <span class="receipt-chip">Da Vinci report · 2016</span> <span class="receipt-chip">Adventure story · ~2018</span><br><br>
+          The money lexicon runs strongest in your earliest eras and recedes across the decade. When valuation returns in your university writing, <b>it comes back as critique</b> — "art loses personal meaning when it is commodified." You didn't stop noticing worth; you changed sides. <span class="receipt-chip">Autoethnographic zine · 2026</span>
+        </div></div>
+      </div>
+
+      <div class="ask-thread a4">
+        <div class="chat-q"><div>What do I do when things feel out of control?</div></div>
+        <div class="chat-a"><div>
+          You count. In spring 2020, as the world shut down, you wrote about washing your hands while counting to twenty — precision as steadiness. <span class="receipt-chip">Post-quarantine essay · 2020</span> At nineteen, a day-in-the-life essay catches you calculating gym sets between classes. <span class="receipt-chip">"Transitions" · 2025</span><br><br>
+          And the oldest version: spiral notebooks filled with the Navkar Mantra — <i>"as long as my pen kept moving, my mind was quiet."</i> <b>Across ten years, your steadying move is the same: make something countable, and count it.</b> <span class="receipt-chip">Literacy narrative · 2026</span>
+        </div></div>
+      </div>
+
+      <div class="ask-thread a5">
+        <div class="chat-q"><div>Draft the toast for Dad's birthday — in my voice, not yours.</div></div>
+        <div class="chat-a"><div>
+          Drafted from how you actually write about him — sparing, concrete, never sentimental until the last line. It borrows the rhythm of your food essays and closes with the street-food line you've written three versions of and never used. <span class="receipt-chip">draft ready</span> <span class="receipt-chip">6 source docs</span>
+        </div></div>
+      </div>
+
+      <div id="livethread"></div>
+      <div class="thinking" id="thinking">Reading the archive…</div>
+
+      <div class="keymini" id="keymini">
+        <input type="password" id="lkey" placeholder="Anthropic API key — stays in this tab's memory only">
+        <span class="btn primary" onclick="enableLive()" style="cursor:pointer">Enable</span>
+      </div>
+
+      <div class="chat-input">
+        <input type="text" class="fake-in" id="lq" placeholder="Or ask anything in your own words…" disabled onkeydown="if(event.key==='Enter')liveAsk()">
+        <span class="btn primary" id="lbtn" style="opacity:.5; cursor:default" onclick="liveAsk()">Ask</span>
+      </div>
+      <div style="font-size:11px; color:var(--ink-3); margin-top:8px;" id="livehint">The five answers above are precomputed from the founder's actual archive, receipts and all.<span id="enablelink" style="display:none"> · <a href="#" onclick="showKey(); return false" style="color:var(--s1); text-decoration:none">⚡ Enable live answers</a></span></div>
+    </section>
+
+    <!-- ============ SOURCES ============ -->
+    <section class="view v-conn">
+      <div class="hello">Sources</div>
+      <div class="hello-sub">Connect once. Longitude ingests, cleans, and attributes — only what you wrote counts as you.</div>
+
+      <div class="card conn"><div class="logo">📄</div><div><h3>Google Drive</h3><div class="meta" style="margin:0">387 documents · 41 excluded (not your authorship, duplicates)</div></div><span class="st2 on">● Connected</span></div>
+      <div class="card conn"><div class="logo">✉️</div><div style="flex:1"><h3>Gmail</h3><div class="meta" style="margin:0">Sent mail only · ingesting 2016–2026</div><div class="progress"><i></i></div></div><span class="st2 on">● Syncing 64%</span></div>
+      <details class="card">
+        <summary><div class="conn"><div class="logo">📝</div><div><h3>Apple Notes</h3><div class="meta" style="margin:0">Via the Mac companion app — Notes has no cloud API, so extraction runs on your device</div></div><span class="st2 off">Set up →</span></div></summary>
+        <div class="exp">Download the companion app, sign in, and it extracts your Notes locally — the raw text is encrypted with your key before it ever leaves the machine. Nothing is read in the clear off-device.<br><span class="beta-chip">Available in private beta</span></div>
+      </details>
+      <details class="card">
+        <summary><div class="conn"><div class="logo">📓</div><div><h3>Physical archive</h3><div class="meta" style="margin:0">Scan handwritten journals and school papers with your phone</div></div><span class="st2 off">Set up →</span></div></summary>
+        <div class="exp">Point your camera at a page; handwriting is transcribed, dated from context, and filed into your timeline alongside the digital record. Built because the founder's own archive starts on paper.<br><span class="beta-chip">Available in private beta</span></div>
+      </details>
+
+      <div class="card">
+        <h3>What we found in your archive</h3>
+        <p>41 documents were excluded from your model: 15 texts you saved but didn't write, 22 revision duplicates collapsed into their final versions, 3 with uncertain authorship, 1 carrying someone else's byline. <b style="color:var(--ink-1)">Your model is built only on verified you.</b></p>
+      </div>
+    </section>
+
+    <!-- ============ METRICS / KPIs ============ -->
+    <section class="view v-kpi">
+      <div class="hello">Your metrics</div>
+      <div class="hello-sub">Behavioral characteristics scored 1–10 from a decade of your writing — against your own baseline, not a population norm. Click any metric for its evidence and method.</div>
+
+      <div class="glance">
+        <div class="g-good"><b>4</b><i>standout strengths (8+)</i></div>
+        <div class="g-neutral"><b>3</b><i>mid-range · 2 rising</i></div>
+        <div class="g-grow"><b>2</b><i>growth areas</i></div>
+        <div class="g-neutral"><b>9</b><i>metrics · all evidence-linked</i></div>
+      </div>
+
+      <div class="card braincard">
+        <h3>Your mind, mapped</h3>
+        <div class="meta">Five clusters of who you are on the page — node size is strength, brightness is signal (how much evidence backs it). Zoom in; the detail appears. Click any node.</div>
+
+        <input class="hack" type="radio" name="zoom" id="z1" checked>
+        <input class="hack" type="radio" name="zoom" id="z2">
+        <input class="hack" type="radio" name="zoom" id="z3">
+        <input class="hack" type="radio" name="bsel" id="b1">
+        <input class="hack" type="radio" name="bsel" id="b2">
+        <input class="hack" type="radio" name="bsel" id="b3">
+        <input class="hack" type="radio" name="bsel" id="b4">
+        <input class="hack" type="radio" name="bsel" id="b5">
+
+        <div class="brainstage">
+          <svg class="brainsvg" viewBox="0 0 360 280">
+            <g class="zoomg">
+              <!-- outer glow -->
+              <path d="M 52,122 C 50,90 68,62 98,50 C 128,36 168,32 196,38 C 232,30 272,44 292,72 C 304,88 306,108 300,126 C 296,146 286,160 272,168 C 264,174 258,176 252,176 C 258,186 254,198 240,206 C 220,216 190,214 172,204 C 158,196 150,188 148,178 C 130,184 106,180 88,168 C 68,156 54,142 52,122 Z"
+                fill="none" stroke="rgba(57,135,229,0.18)" stroke-width="9" stroke-linejoin="round"/>
+              <!-- cerebrum -->
+              <path d="M 52,122 C 50,90 68,62 98,50 C 128,36 168,32 196,38 C 232,30 272,44 292,72 C 304,88 306,108 300,126 C 296,146 286,160 272,168 C 264,174 258,176 252,176 C 258,186 254,198 240,206 C 220,216 190,214 172,204 C 158,196 150,188 148,178 C 130,184 106,180 88,168 C 68,156 54,142 52,122 Z"
+                fill="rgba(57,135,229,0.07)" stroke="rgba(130,178,236,0.75)" stroke-width="2.5" stroke-linejoin="round"/>
+              <!-- cerebellum -->
+              <path d="M 98,186 C 86,198 92,216 114,221 C 136,225 154,216 152,202 C 150,192 140,187 128,188 C 116,189 106,184 98,186 Z"
+                fill="rgba(57,135,229,0.07)" stroke="rgba(130,178,236,0.6)" stroke-width="2"/>
+              <g fill="none" stroke="rgba(130,178,236,0.3)" stroke-width="1.3">
+                <path d="M 100,196 C 112,209 136,212 148,203"/>
+                <path d="M 102,203 C 114,214 134,216 146,208"/>
+                <path d="M 108,210 C 118,218 130,219 138,213"/>
+              </g>
+              <!-- brainstem -->
+              <path d="M 138,204 C 142,216 140,228 132,238 C 128,230 130,216 132,206 Z"
+                fill="rgba(57,135,229,0.09)" stroke="rgba(130,178,236,0.45)" stroke-width="1.6"/>
+              <!-- central sulcus + lateral fissure (the deep lines) -->
+              <path d="M 186,40 C 192,66 198,94 202,122" fill="none" stroke="rgba(120,170,230,0.55)" stroke-width="2.5" stroke-linecap="round"/>
+              <path d="M 252,176 C 224,164 194,156 166,152" fill="none" stroke="rgba(120,170,230,0.55)" stroke-width="2.5" stroke-linecap="round"/>
+              <!-- gyri -->
+              <g fill="none" stroke="rgba(150,188,238,0.32)" stroke-width="2" stroke-linecap="round">
+                <path d="M 212,56 Q 209,69 218,80 Q 227,90 224,104 Q 221,117 230,128"/>
+<path d="M 226,59 Q 223,72 232,82 Q 240,91 237,104 Q 234,117 243,127"/>
+<path d="M 240,62 Q 237,74 245,83 Q 254,93 251,105 Q 248,117 256,126"/>
+<path d="M 254,65 Q 251,76 259,85 Q 267,94 264,105 Q 261,117 269,125"/>
+<path d="M 268,68 Q 265,79 273,87 Q 281,95 277,106 Q 274,116 282,124"/>
+<path d="M 282,71 Q 278,81 286,88 Q 294,96 291,106 Q 287,116 295,123"/>
+<path d="M 128,50 Q 119,58 122,70 Q 125,81 116,90 Q 107,98 110,109"/>
+<path d="M 144,52 Q 135,60 138,72 Q 141,83 132,92 Q 123,100 126,111"/>
+<path d="M 160,54 Q 151,62 154,74 Q 157,85 148,94 Q 139,102 142,113"/>
+<path d="M 176,56 Q 167,64 170,76 Q 173,87 164,96 Q 155,104 158,115"/>
+<path d="M 192,58 Q 183,66 186,78 Q 189,89 180,98 Q 171,106 174,117"/>
+<path d="M 96,92 Q 87,92 80,99 Q 74,106 65,106"/>
+<path d="M 87,110 Q 78,110 71,117 Q 65,124 56,124"/>
+<path d="M 78,128 Q 69,128 62,135 Q 56,142 47,142"/>
+<path d="M 69,146 Q 60,146 53,153 Q 47,160 38,160"/>
+<path d="M 238,186 Q 225,182 213,187 Q 201,193 189,188 Q 176,184 164,190"/>
+<path d="M 232,195 Q 221,191 210,196 Q 199,202 188,197 Q 177,193 166,198"/>
+<path d="M 226,204 Q 216,199 207,205 Q 197,210 187,206 Q 177,201 168,207"/>
+<path d="M 196,128 Q 191,134 193,141 Q 196,148 191,153"/>
+<path d="M 212,134 Q 207,140 209,147 Q 212,154 207,159"/>
+<path d="M 228,140 Q 223,146 225,153 Q 228,160 223,165"/>
+              </g>
+              <!-- synapse links -->
+              <g stroke="rgba(255,255,255,0.15)" stroke-dasharray="3 4" fill="none">
+                <line x1="258" y1="98" x2="252" y2="148"/><line x1="258" y1="98" x2="160" y2="72"/>
+                <line x1="160" y1="72" x2="183" y2="135"/><line x1="183" y1="135" x2="252" y2="148"/>
+                <line x1="183" y1="135" x2="200" y2="186"/><line x1="258" y1="98" x2="183" y2="135"/>
+              </g>
+              <!-- nodes -->
+              <g class="bnode"><circle cx="258" cy="98" r="32" fill="rgba(57,135,229,0.16)"/><circle cx="258" cy="98" r="22" fill="#3987e5" stroke="#9ec5f4" stroke-width="2"/><text x="258" y="103" text-anchor="middle" font-size="12" font-weight="700" fill="#fff" font-family="system-ui">9.2</text></g>
+              <g class="bnode"><circle cx="252" cy="148" r="25" fill="rgba(217,89,38,0.16)"/><circle cx="252" cy="148" r="17" fill="#d95926" stroke="#f0a37e" stroke-width="2"/><text x="252" y="153" text-anchor="middle" font-size="11" font-weight="700" fill="#fff" font-family="system-ui">7.8</text></g>
+              <g class="bnode"><circle cx="160" cy="72" r="26" fill="rgba(25,158,112,0.16)"/><circle cx="160" cy="72" r="18" fill="#199e70" stroke="#7ed0b0" stroke-width="2"/><text x="160" y="77" text-anchor="middle" font-size="11" font-weight="700" fill="#fff" font-family="system-ui">7.4</text></g>
+              <g class="bnode"><circle cx="183" cy="135" r="23" fill="rgba(201,133,0,0.16)"/><circle cx="183" cy="135" r="15" fill="#c98500" stroke="#ecc27a" stroke-width="2"/><text x="183" y="140" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff" font-family="system-ui">6.6</text></g>
+              <g class="bnode" opacity="0.85"><circle cx="200" cy="186" r="18" fill="rgba(213,81,129,0.16)"/><circle cx="200" cy="186" r="12" fill="#d55181" stroke="#eba3bf" stroke-width="2"/><text x="200" y="190" text-anchor="middle" font-size="9.5" font-weight="700" fill="#fff" font-family="system-ui">4.8</text></g>
+              <!-- labels -->
+              <g font-family="system-ui" fill="#c3c2b7" font-size="10.5">
+                <text x="258" y="58" text-anchor="middle" font-weight="600" fill="#fff">Intellect</text>
+                <text x="284" y="152" text-anchor="start" font-weight="600" fill="#fff">Voice</text>
+                <text x="160" y="26" text-anchor="middle" font-weight="600" fill="#fff">Character</text>
+                <text x="158" y="139" text-anchor="end" font-weight="600" fill="#fff">Connection</text>
+                <text x="224" y="190" text-anchor="start" font-weight="600" fill="#fff">Emotion</text>
+              </g>
+              <!-- micro on zoom -->
+              <g class="micro" font-family="system-ui" font-size="7.5" fill="#a5a49b">
+                <text x="258" y="119" text-anchor="middle">96% signal · analysis, reflexivity</text>
+                <text x="252" y="168" text-anchor="middle">91% · certainty ▲ hedging ▼</text>
+                <text x="160" y="94" text-anchor="middle">88% · grit, trust</text>
+                <text x="183" y="155" text-anchor="middle">84% · family, belonging</text>
+                <text x="200" y="207" text-anchor="middle">62% · joy ▲ openness low</text>
+              </g>
+            </g>
+          </svg>
+        </div>
+
+        <div class="zoomrail">
+          <span style="font-size:11px; color:var(--ink-3)">Zoom</span>
+          <label class="zchip zc1" for="z1">Overview</label>
+          <label class="zchip zc2" for="z2">Closer</label>
+          <label class="zchip zc3" for="z3">Detail</label>
+          <span style="font-size:11px; color:var(--ink-3); margin-left:auto">Open a cluster:</span>
+          <label class="zchip" for="b1" style="border-color:#3987e5">Intellect</label>
+          <label class="zchip" for="b2" style="border-color:#d95926">Voice</label>
+          <label class="zchip" for="b5" style="border-color:#d55181">Emotion</label>
+        </div>
+
+        <div class="binfo i1"><div class="kpix"><b>Intellect — 9.2, your brightest cluster.</b> Analysis and self-awareness rising for a decade; error analysis in your writing at age twelve. 96% signal means nearly every era supplies evidence. <span class="receipt-chip">200+ documents</span></div></div>
+        <div class="binfo i2"><div class="kpix"><b>Voice — 7.8 and rising fast.</b> Hedging falling since 2023, certainty climbing. Three years ago this cluster scored a 5 — the fastest-moving part of your map. <span class="receipt-chip">hedging ▼ · certainty ▲</span></div></div>
+        <div class="binfo i5"><div class="kpix"><b>Emotion — 4.8, your dimmest node, on purpose shown dimmer.</b> 62% signal: you analyze feelings more than you voice them, so the evidence is thinner. The enhancement path uses your Intellect cluster to grow this one. <span class="receipt-chip">unsent drafts: most open</span></div></div>
+
+        <p style="font-size:11px; color:var(--ink-3); margin-top:10px;">A map, not an MRI — clusters are visual groupings of writing patterns, and "signal" is evidence density: the share of your archive supporting each score. 12% of the raw archive was excluded as noise (duplicates, non-authored text) before any score was computed.</p>
+      </div>
+
+      <div class="card">
+        <details class="kpid" open>
+          <summary><div class="kpitop"><span class="kpiname">Precision &amp; rigor</span><span class="kpitrend" style="color:var(--s3)">▲ rising</span><span class="kpiscore">9.4</span></div>
+          <div class="kpibar"><i style="width:94%"></i></div></summary>
+          <div class="kpix">Exact figures where estimates would do, error analysis at age twelve, replicates and controls before anyone taught you the words. Highest-density characteristic in your archive. <br><span class="receipt-chip">precision markers · 200+ documents</span><span class="receipt-chip">method: lexicon rate ×  era weighting</span></div>
+        </details>
+        <details class="kpid">
+          <summary><div class="kpitop"><span class="kpiname">Curiosity / question-asking</span><span class="kpitrend" style="color:var(--s3)">▲ rising</span><span class="kpiscore">9.1</span></div>
+          <div class="kpibar"><i style="width:91%"></i></div></summary>
+          <div class="kpix">Twelve interview documents, self-directed research from age twelve, and a question rate in your reflective writing that climbs every era. <br><span class="receipt-chip">12 interviews · 2019–2026</span></div>
+        </details>
+        <details class="kpid">
+          <summary><div class="kpitop"><span class="kpiname">Persistence / follow-through</span><span class="kpitrend" style="color:var(--ink-3)">— stable</span><span class="kpiscore">8.6</span></div>
+          <div class="kpibar"><i style="width:86%"></i></div></summary>
+          <div class="kpix">Multi-year threads sustained without external structure: an instrument for eleven years, a service practice for six, one theme carried across 61 documents. <br><span class="receipt-chip">longest thread: 11 years</span></div>
+        </details>
+        <details class="kpid">
+          <summary><div class="kpitop"><span class="kpiname">Empathy / perspective-taking</span><span class="kpitrend" style="color:var(--s3)">▲ rising</span><span class="kpiscore">8.2</span></div>
+          <div class="kpibar"><i style="width:82%"></i></div></summary>
+          <div class="kpix">You write from inside other lives — soldiers, the silenced, the elderly — from age twelve on, and your stated method at sixteen was "stepping into another's position." <br><span class="receipt-chip">persona documents: 9</span></div>
+        </details>
+        <details class="kpid">
+          <summary><div class="kpitop"><span class="kpiname">Conviction / assertiveness</span><span class="kpitrend" style="color:var(--s3)">▲ rising fast</span><span class="kpiscore">7.2</span></div>
+          <div class="kpibar"><i style="width:72%"></i></div></summary>
+          <div class="kpix">Hedging language ("maybe," "I think") falling since 2023; certainty markers rising. The trend is the story — this score was a 5 three years ago. <br><span class="receipt-chip">hedging ▼ · certainty ▲</span></div>
+        </details>
+        <details class="kpid">
+          <summary><div class="kpitop"><span class="kpiname">Risk appetite</span><span class="kpitrend" style="color:var(--ink-3)">— situational</span><span class="kpiscore">6.7</span></div>
+          <div class="kpibar"><i style="width:67%"></i></div></summary>
+          <div class="kpix">High where you have standing to lose nothing (cold emails, new ventures), low where rules exist (near-total compliance register in institutional writing). Your risk is entrepreneurial, not rebellious. <br><span class="receipt-chip">two registers detected</span></div>
+        </details>
+        <details class="kpid">
+          <summary><div class="kpitop"><span class="kpiname">Social energy &amp; connection</span><span class="kpitrend" style="color:var(--s3)">▲ context-driven</span><span class="kpiscore">6.9</span></div>
+          <div class="kpibar"><i style="width:69%"></i></div></summary>
+          <div class="kpix">Connection language peaks when you're in a role — interviewer, performer, tutor — and thins in unstructured social writing. You're not introverted or extroverted; you're <b>structured-social</b>: give yourself a role and the energy follows. <br><span class="receipt-chip">connection lexicon × context</span></div>
+        </details>
+        <details class="kpid">
+          <summary><div class="kpitop"><span class="kpiname">Emotional openness</span><span class="kpitrend" style="color:var(--s2)">growth area</span><span class="kpiscore">4.8</span></div>
+          <div class="kpibar"><i style="width:48%; background:var(--s2)"></i></div></summary>
+          <div class="kpix">You analyze feelings more than you voice them — emotion in your writing arrives dressed as observation. Your most open documents are the unsent ones. <br><span class="receipt-chip">unsent drafts: highest openness</span></div>
+        </details>
+        <details class="kpid">
+          <summary><div class="kpitop"><span class="kpiname">Directness in conflict</span><span class="kpitrend" style="color:var(--s2)">growth area</span><span class="kpiscore">4.1</span></div>
+          <div class="kpibar"><i style="width:41%; background:var(--s2)"></i></div></summary>
+          <div class="kpix">Bad news gets wrapped in praise; confrontation gets routed into structural critique. Costs you most in negotiations — see the 4:45 PM moment on your Today screen. <br><span class="receipt-chip">softening pattern: 6 documents</span></div>
+        </details>
+      </div>
+
+      <div class="card">
+        <h3>Build your report</h3>
+        <div class="meta">Choose what goes in — for yourself, your coach, or your clinician. Nothing is shared without you assembling it here.</div>
+        <label class="incrow"><input class="hack" type="checkbox" checked>Behavioral KPI scores (this page)<span class="tick"></span></label>
+        <label class="incrow"><input class="hack" type="checkbox" checked>Five dimensions &amp; enhancement paths<span class="tick"></span></label>
+        <label class="incrow"><input class="hack" type="checkbox">Relational fingerprint<span class="tick"></span></label>
+        <label class="incrow"><input class="hack" type="checkbox">Emotional arc &amp; steadying patterns<span class="tick"></span></label>
+        <label class="incrow"><input class="hack" type="checkbox">Change log (before / after verdicts)<span class="tick"></span></label>
+        <label class="incrow"><input class="hack" type="checkbox">Influences &amp; cut-back list<span class="tick"></span></label>
+        <label class="incrow"><input class="hack" type="checkbox">Interview prep — how you present, your gaps, and the questions you should expect<span class="tick"></span></label>
+        <div class="actions" style="margin-top:14px"><span class="btn primary">Generate report</span><span class="btn">Preview</span></div>
+      </div>
+
+      <div class="card">
+        <p style="font-size:12px; color:var(--ink-3)">Method note: scores are expression-in-writing measures — how strongly a characteristic shows in what you write, calibrated against your own decade, shown with the sentences behind them. They are not clinical instruments, they move as you change, and you can challenge any of them: reject a metric's evidence and the score recomputes.</p>
+      </div>
+    </section>
+
+    <!-- ============ PERSONAS ============ -->
+    <section class="view v-who">
+      <div class="hello">Who it's for</div>
+      <div class="hello-sub">Five people, five archives, five reasons to come back. Same engine underneath.</div>
+
+      <div class="card">
+        <div class="k" style="color:var(--s1)">◎ The self-understander · 27, designer, journals on and off</div>
+        <h3>"I've been asking who I am for years — my Drive already answered."</h3>
+        <p><b style="color:var(--ink-1)">Uploads:</b> Google Docs since high school, Apple Notes, an abandoned blog.
+        <b style="color:var(--ink-1)"> Sees:</b> her decade timeline, the themes she circles, what she stopped writing about after 2021, each with the sentences behind it.
+        <b style="color:var(--ink-1)"> Stays for:</b> change detection — the first product that can tell her when a pattern breaks, because it's the only one holding her baseline.</p>
+      </div>
+
+      <div class="card">
+        <div class="k" style="color:var(--s3)">◎ The career switcher · 31, burned-out consultant</div>
+        <h3>"Every career quiz asks who I think I am. This reads who I've actually been."</h3>
+        <p><b style="color:var(--ink-1)">Uploads:</b> eight years of work docs, sent mail, side-project notes.
+        <b style="color:var(--ink-1)"> Sees:</b> strengths with receipts, fit signals toward paths her patterns support, improvement areas her own writing has flagged for years.
+        <b style="color:var(--ink-1)"> Stays for:</b> growth focuses — she sets "trust the reader," and Longitude tracks it in everything she writes next.</p>
+      </div>
+
+      <div class="card">
+        <div class="k" style="color:var(--s2)">◎ The first cloud generation · 20, student</div>
+        <h3>"My entire childhood is in Google Docs. Nobody older than me can say that."</h3>
+        <p><b style="color:var(--ink-1)">Uploads:</b> everything since fifth grade — essays, applications, journals.
+        <b style="color:var(--ink-1)"> Sees:</b> who he was at ten, thirteen, seventeen — and the through-lines he couldn't see from inside.
+        <b style="color:var(--ink-1)"> Stays for:</b> an AI layer that already knows him — every future tool starts from his context, not from zero.</p>
+      </div>
+
+      <div class="card">
+        <div class="k" style="color:var(--s1)">◎ The family archivist · 48, holding a parent's papers</div>
+        <h3>"Dad's letters are in a box. When he goes, the stories go."</h3>
+        <p><b style="color:var(--ink-1)">Uploads:</b> scanned letters, a parent's emails (with consent), old family documents.
+        <b style="color:var(--ink-1)"> Sees:</b> a life made legible — the themes, the years that changed him, the things he never said directly.
+        <b style="color:var(--ink-1)"> Stays for:</b> the questions — asking a parent's archive things there was never time to ask. This one has a deadline.</p>
+      </div>
+
+      <div class="card">
+        <div class="k" style="color:var(--s3)">◎ The person doing the work · 35, in therapy</div>
+        <h3>"My therapist gets fifty minutes a week. My archive has fifteen years."</h3>
+        <p><b style="color:var(--ink-1)">Uploads:</b> journals, notes, drafts never sent.
+        <b style="color:var(--ink-1)"> Sees:</b> emotional-tone arcs, what steadies them, what's shifted this year — patterns, never diagnoses.
+        <b style="color:var(--ink-1)"> Stays for:</b> the shareable report — they choose the patterns, their own clinician gets longitudinal context no intake form can reconstruct.</p>
+      </div>
+
+      <div class="hello" style="font-size:18px; margin-top:40px">For the professionals they trust</div>
+      <div class="hello-sub">Professionals never buy access to anyone's data. They receive what a client chooses to share — pattern reports, never raw writing, never diagnoses. The professional's judgment stays the judgment.</div>
+
+      <div class="card">
+        <div class="k" style="color:var(--s1)">⚕ The therapist</div>
+        <h3>Fifteen years of baseline, from session one.</h3>
+        <p>A new client shares a Longitude report: their emotional-tone arc over a decade, their documented steadying repertoire, what shifted in the last six months and the change-log verdict on what they've already tried. Work that normally takes months of sessions to surface is context on day one — and because it's drawn from writing produced <b style="color:var(--ink-1)">before treatment</b>, it isn't filtered through what the client thinks the therapist wants to hear. Longitude never interprets clinically; it hands the clinician better raw material for their own judgment.</p>
+      </div>
+
+      <div class="card">
+        <div class="k" style="color:var(--s3)">✦ The coach</div>
+        <h3>Evidence-based coaching — with provable outcomes.</h3>
+        <p>An executive coach receives a client's strengths and stance fingerprint: how they defer, how they soften bad news, where conviction language drops. The coaching plan starts from measured patterns instead of a self-report questionnaire — and 90 days later, the dimension meters show whether the coaching moved anything. Coaches who can <b style="color:var(--ink-1)">prove their effect</b> against a client's own baseline have something no competitor offers.</p>
+      </div>
+
+      <div class="card">
+        <div class="k" style="color:var(--s2)">🕊 The life-story practitioner</div>
+        <h3>Reminiscence care, from the person's own record.</h3>
+        <p>For elder-care teams, chaplains, and reminiscence therapists: a family (with consent) shares a parent's archive model — the themes of a life, the people who mattered, the eras that changed them. Sessions start from <b style="color:var(--ink-1)">the person's own words across sixty years</b> instead of a blank intake form. The founder built the manual version of this for his own ninety-six-year-old great-grandmother before automating anything.</p>
+      </div>
+    </section>
+
+    <!-- ============ GROWTH & CAREER ============ -->
+    <section class="view v-grow">
+      <div class="hello">Growth &amp; career</div>
+      <div class="hello-sub">What a decade of your own writing says about where you thrive — every claim opens to its evidence.</div>
+
+      <div class="glance">
+        <div class="g-good"><b>3</b><i>career-grade strengths</i></div>
+        <div class="g-neutral"><b>3</b><i>best-fit paths</i></div>
+        <div class="g-grow"><b>3</b><i>growth focuses available</i></div>
+        <div class="g-neutral"><b>4</b><i>top influences ranked</i></div>
+      </div>
+
+      <div class="card">
+        <h3>Your strengths, with receipts</h3>
+        <div class="meta">Derived from patterns across 349 documents — not from a questionnaire you filled out on a good day.</div>
+        <div class="finding" style="margin-bottom:14px"><span class="fdot" style="background:var(--s3)"></span><div>
+          <b style="font-size:13.5px">You get truth out of people.</b>
+          <p style="font-size:13px">Twelve separate documents show you interviewing — cold-calling a surgeon at thirteen, interviewing your own mother, a magazine editor, your great-grandmother. This is a career-grade skill most people never discover they have.</p>
+          <span class="receipt-chip">12 interview documents · 2019–2026</span>
+        </div></div>
+        <div class="finding" style="margin-bottom:14px"><span class="fdot" style="background:var(--s1)"></span><div>
+          <b style="font-size:13.5px">You think in evidence.</b>
+          <p style="font-size:13px">Analytical reasoning rises across your whole archive and your instinct under pressure is to quantify. Error analysis appears in your writing at age twelve — before anyone taught you the word.</p>
+          <span class="receipt-chip">Analytical lexicon ▲ · peak Grade 12</span>
+        </div></div>
+        <div class="finding"><span class="fdot" style="background:var(--s2)"></span><div>
+          <b style="font-size:13.5px">You start before you're ready.</b>
+          <p style="font-size:13px">Four organizations founded or co-founded before age nineteen, each one visible in your writing before it existed anywhere else.</p>
+          <span class="receipt-chip">first mentions: 4 ventures</span>
+        </div></div>
+      </div>
+
+      <div class="card">
+        <h3>Paths your patterns point toward</h3>
+        <div class="meta">Fit signals, not verdicts — computed from what you write easily, return to voluntarily, and sustain for years.</div>
+        <div style="margin-bottom:16px">
+          <b style="font-size:13.5px">Research-driven product &amp; user insight</b>
+          <div class="fitbar"><i style="width:91%"></i></div><span class="fitpct">Strong fit — interviewer instinct + evidence habit + pattern obsession</span>
+        </div>
+        <div style="margin-bottom:16px">
+          <b style="font-size:13.5px">Founding &amp; zero-to-one building</b>
+          <div class="fitbar"><i style="width:87%"></i></div><span class="fitpct">Strong fit — self-started projects sustained for years without external structure</span>
+        </div>
+        <div>
+          <b style="font-size:13.5px">Science &amp; health communication</b>
+          <div class="fitbar"><i style="width:78%"></i></div><span class="fitpct">Good fit — you've translated between experts and people since age thirteen</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Your five dimensions — as expressed in writing</h3>
+        <div class="meta">How strongly each dimension shows up across your archive. Expression, not essence — no fixed types, no scores anyone else sees.</div>
+        <div class="radarwrap">
+          <svg viewBox="0 0 220 232" class="radar" role="img" aria-label="Five dimensions radar">
+            <g fill="none" stroke="#2c2c2a" stroke-width="1">
+              <polygon points="110,20 195.6,82.2 162.9,182.8 57.1,182.8 24.4,82.2"/>
+              <polygon points="110,50 167.1,91.5 145.3,158.5 74.7,158.5 52.9,91.5"/>
+              <polygon points="110,80 138.5,100.7 127.6,134.3 92.4,134.3 81.5,100.7"/>
+              <line x1="110" y1="110" x2="110" y2="20"/><line x1="110" y1="110" x2="195.6" y2="82.2"/>
+              <line x1="110" y1="110" x2="162.9" y2="182.8"/><line x1="110" y1="110" x2="57.1" y2="182.8"/>
+              <line x1="110" y1="110" x2="24.4" y2="82.2"/>
+            </g>
+            <polygon points="110,27.2 176.8,88.3 149.2,163.9 75.1,158.1 68.9,96.7"
+                     fill="rgba(57,135,229,0.22)" stroke="#3987e5" stroke-width="2"/>
+            <g fill="#3987e5"><circle cx="110" cy="27.2" r="3.5"/><circle cx="176.8" cy="88.3" r="3.5"/><circle cx="149.2" cy="163.9" r="3.5"/><circle cx="75.1" cy="158.1" r="3.5"/><circle cx="68.9" cy="96.7" r="3.5"/></g>
+            <g fill="#c3c2b7" font-size="10.5" font-family="system-ui,sans-serif">
+              <text x="110" y="12" text-anchor="middle">Intellect 9.2</text>
+              <text x="201" y="78" text-anchor="start">Voice 7.8</text>
+              <text x="168" y="196" text-anchor="middle">Character 7.4</text>
+              <text x="52" y="196" text-anchor="middle">Identity 6.6</text>
+              <text x="19" y="78" text-anchor="end">Emotional 4.8</text>
+            </g>
+          </svg>
+          <p style="flex:1; min-width:220px; font-size:13px; color:var(--ink-2); line-height:1.6;">Your shape at a glance: a thinker-first profile with a fast-rising voice — and one dimension, emotional expression, carrying the growth opportunity. The bars below break each one down; the paths further down show how your strongest corners pull the weakest one up.</p>
+        </div>
+        <div style="margin-bottom:12px"><b style="font-size:13px">Intellect — analysis &amp; self-awareness</b><div class="fitbar"><i style="width:92%"></i></div><span class="fitpct">Strongly expressed · rising decade-long</span></div>
+        <div style="margin-bottom:12px"><b style="font-size:13px">Voice — conviction &amp; clarity</b><div class="fitbar"><i style="width:78%"></i></div><span class="fitpct">Strong · hedging language falling since 2023</span></div>
+        <div style="margin-bottom:12px"><b style="font-size:13px">Character — resilience &amp; persistence</b><div class="fitbar"><i style="width:74%"></i></div><span class="fitpct">Strong · one recovery narrative, proven four times</span></div>
+        <div style="margin-bottom:12px"><b style="font-size:13px">Identity — connection &amp; belonging</b><div class="fitbar"><i style="width:66%"></i></div><span class="fitpct">Moderate · spikes around family writing, thinner elsewhere</span></div>
+        <div><b style="font-size:13px">Emotional expression — feeling on the page</b><div class="fitbar"><i style="width:48%"></i></div><span class="fitpct">Growth dimension · you analyze feelings more than you voice them</span></div>
+      </div>
+
+      <div class="card">
+        <h3>Relational fingerprint — how you move with people</h3>
+        <div class="meta">The stances your writing takes toward others, traced across the decade. Patterns you confirm or reject — never a type you're assigned.</div>
+        <div class="finding" style="margin-bottom:14px"><span class="fdot" style="background:var(--s1)"></span><div>
+          <b style="font-size:13.5px">Deference that matured into partnership</b>
+          <p style="font-size:13px">At ten, your writing closes with gratitude paragraphs to instructors — a deference reflex your archive tracks for years. By twenty, you interview authorities as peers and rebut their arguments in print. The stance evolved; the respect stayed.</p>
+          <span class="receipt-chip">first instance: age 10</span><span class="receipt-chip">arc: 14 documents</span>
+          <div class="verify"><input class="hack y" type="radio" name="r1" id="r1y"><input class="hack n" type="radio" name="r1" id="r1n"><label class="btn" for="r1y">Confirm</label><label class="btn" for="r1n">Reject</label><span class="st st-y">✓ Confirmed — added to your fingerprint</span><span class="st st-n">✗ Rejected — pattern retired</span></div>
+        </div></div>
+        <div class="finding" style="margin-bottom:14px"><span class="fdot" style="background:var(--s3)"></span><div>
+          <b style="font-size:13.5px">You soften the blow</b>
+          <p style="font-size:13px">Every time your writing delivers bad news, it wraps it in praise first — even a rejection letter you wrote reads as a promotion. And every time an assignment handed you power, you chose mercy over punishment. Consistent across seven years.</p>
+          <span class="receipt-chip">6 documents</span>
+          <div class="verify"><input class="hack y" type="radio" name="r2" id="r2y"><input class="hack n" type="radio" name="r2" id="r2n"><label class="btn" for="r2y">Confirm</label><label class="btn" for="r2n">Reject</label><span class="st st-y">✓ Confirmed — added to your fingerprint</span><span class="st st-n">✗ Rejected — pattern retired</span></div>
+        </div></div>
+        <div class="finding"><span class="fdot" style="background:var(--s2)"></span><div>
+          <b style="font-size:13.5px">Gentle with people, hard on systems</b>
+          <p style="font-size:13px">From age thirteen your essays prosecute abuses of power without hesitation — while your interpersonal writing avoids direct conflict almost entirely. You fight structures, not people. Worth knowing before you negotiate anything.</p>
+          <span class="receipt-chip">power-critique: 9 documents</span>
+          <div class="verify"><input class="hack y" type="radio" name="r3" id="r3y"><input class="hack n" type="radio" name="r3" id="r3n"><label class="btn" for="r3y">Confirm</label><label class="btn" for="r3n">Reject</label><span class="st st-y">✓ Confirmed — added to your fingerprint</span><span class="st st-n">✗ Rejected — pattern retired</span></div>
+        </div></div>
+        <p style="margin-top:14px; font-size:11.5px; color:var(--ink-3)">Why this matters: stance patterns predict how you negotiate, take feedback, and lead. Longitude shows you the pattern and its receipts — what to do with it is yours.</p>
+      </div>
+
+      <div class="card">
+        <h3>Enhancement paths — one dimension lifts another</h3>
+        <div class="meta">Your strongest dimensions are the tools for your weakest. Each path is built from a strategy your own archive shows already works for you.</div>
+        <div class="finding" style="margin-bottom:14px"><span class="fdot" style="background:var(--s1)"></span><div>
+          <b style="font-size:13.5px">Intellect → Emotional expression</b>
+          <p style="font-size:13px">You process feeling best by examining it — your strongest emotional writing is structured like your lab reports. Don't force diary-style; write feelings the way you write analyses. Your archive shows this works for you.</p>
+          <div class="verify"><input class="hack y" type="radio" name="e1" id="e1y"><label class="btn" for="e1y">Set as path</label><span class="st st-y">✓ Path set — measured in your next 90 days of writing</span></div>
+        </div></div>
+        <div class="finding" style="margin-bottom:14px"><span class="fdot" style="background:var(--s3)"></span><div>
+          <b style="font-size:13.5px">Curiosity → Connection</b>
+          <p style="font-size:13px">Your connection language peaks when you're interviewing someone — curiosity is how you bond. Structure social time around asking, not performing, and the identity dimension follows.</p>
+          <div class="verify"><input class="hack y" type="radio" name="e2" id="e2y"><label class="btn" for="e2y">Set as path</label><span class="st st-y">✓ Path set — measured in your next 90 days of writing</span></div>
+        </div></div>
+        <div class="finding"><span class="fdot" style="background:var(--s2)"></span><div>
+          <b style="font-size:13.5px">Resilience → Anxiety</b>
+          <p style="font-size:13px">Fear-language peaked in your 2024–25 era. You already own a proven recovery script — your archive shows the same setback-to-comeback structure deployed four separate times. Reuse it deliberately, not accidentally.</p>
+          <div class="verify"><input class="hack y" type="radio" name="e3" id="e3y"><label class="btn" for="e3y">Set as path</label><span class="st st-y">✓ Path set — measured in your next 90 days of writing</span></div>
+        </div></div>
+        <p style="margin-top:14px; font-size:11.5px; color:var(--ink-3)">Every path is measured, not promised: set one, and its dimension meter updates as you write. If nothing moves in 90 days, Longitude says so.</p>
+      </div>
+
+      <div class="card">
+        <h3>Improvement areas — in your own words</h3>
+        <div class="meta">Not our opinion. Things your writing has flagged about itself, tracked over time.</div>
+        <div class="finding" style="margin-bottom:14px"><span class="fdot" style="background:var(--s2)"></span><div>
+          <b style="font-size:13.5px">Trusting the reader</b>
+          <p style="font-size:13px">"I did not know how to trust the reader yet" — your own reflection. You over-explain; your strongest pieces are the ones where you cut the telling. Improving since 2022.</p>
+          <div class="verify"><input class="hack y" type="radio" name="g1" id="g1y"><label class="btn" for="g1y">Set as growth focus</label><span class="st st-y">✓ Focus set — Longitude tracks this in your future writing</span></div>
+        </div></div>
+        <div class="finding" style="margin-bottom:14px"><span class="fdot" style="background:var(--s2)"></span><div>
+          <b style="font-size:13.5px">Making space for others</b>
+          <p style="font-size:13px">You flagged your own "dominant voice" in discussions twice, two years apart, and designed your own fix — "a mental tally." A stable growth edge, honestly tracked.</p>
+          <div class="verify"><input class="hack y" type="radio" name="g2" id="g2y"><label class="btn" for="g2y">Set as growth focus</label><span class="st st-y">✓ Focus set — Longitude tracks this in your future writing</span></div>
+        </div></div>
+        <div class="finding"><span class="fdot" style="background:var(--s2)"></span><div>
+          <b style="font-size:13.5px">Shipping before polishing</b>
+          <p style="font-size:13px">One essay exists in three nearly identical versions. Your revision pattern is tightening, not rethinking — the work was done at draft one. Ship earlier.</p>
+          <div class="verify"><input class="hack y" type="radio" name="g3" id="g3y"><label class="btn" for="g3y">Set as growth focus</label><span class="st st-y">✓ Focus set — Longitude tracks this in your future writing</span></div>
+        </div></div>
+      </div>
+
+      <div class="card">
+        <h3>What shaped you most — ranked by measurable effect</h3>
+        <div class="meta">Not who you'd guess. Influences ranked by how much your writing actually changed after contact.</div>
+        <div class="finding" style="margin-bottom:12px"><span class="fdot" style="background:var(--s1)"></span><div>
+          <b style="font-size:13.5px">1. A seventh-grade English teacher</b>
+          <p style="font-size:13px">"You opened my world to poetry… you inspired my love for writing" — your own tribute, at fourteen. Your writing volume and register both inflect after her classroom. The single largest discontinuity in the archive that isn't a school change.</p>
+          <span class="receipt-chip">tribute letter · 2020</span>
+        </div></div>
+        <div class="finding" style="margin-bottom:12px"><span class="fdot" style="background:var(--s3)"></span><div>
+          <b style="font-size:13.5px">2. Your grandmother's hidden history</b>
+          <p style="font-size:13px">After the car ride where she revealed her past, family-heritage language spikes to its all-time peak and your themes reorganize around recovery-of-stories — permanently. A single conversation redirected the whole corpus.</p>
+          <span class="receipt-chip">20.8/1k words · Grade 10 peak</span>
+        </div></div>
+        <div class="finding" style="margin-bottom:12px"><span class="fdot" style="background:var(--s2)"></span><div>
+          <b style="font-size:13.5px">3. One book</b>
+          <p style="font-size:13px">You named Adichie's "The Danger of a Single Story" your lodestar in your own words at seventeen — and the silenced-voices thread runs denser in everything after it.</p>
+          <span class="receipt-chip">named in 2 documents</span>
+        </div></div>
+        <div class="finding"><span class="fdot" style="background:var(--s1)"></span><div>
+          <b style="font-size:13.5px">4. One sentence from your mother</b>
+          <p style="font-size:13px">"Excellence, not perfection." It appears at your lowest documented moments — twice, nearly a decade apart, word for word. Some influences are a person; this one is six words.</p>
+          <span class="receipt-chip">2 documents · ~9 years apart</span>
+        </div></div>
+      </div>
+
+      <div class="card">
+        <h3>What the record says to cut back</h3>
+        <div class="meta">Contexts correlated with your flattest writing. Longitude shows the correlation and the receipts — the decision is always yours.</div>
+        <div class="finding" style="margin-bottom:12px"><span class="fdot" style="background:var(--s2)"></span><div>
+          <b style="font-size:13.5px">Achievement framing around things you love</b>
+          <p style="font-size:13px">When your music became competitive, the joy-language around it fell toward zero — your own zine calls it "commodified." When you played for isolated elders instead, it returned. Consider cutting: metrics on the things that were never supposed to have metrics.</p>
+          <span class="receipt-chip">joy lexicon × music mentions</span>
+        </div></div>
+        <div class="finding"><span class="fdot" style="background:var(--s2)"></span><div>
+          <b style="font-size:13.5px">The rehearsed version of yourself</b>
+          <p style="font-size:13px">One polished story about yourself appears four times, nearly word-for-word, across your applications — and your most alive writing sits everywhere that template doesn't. Consider cutting: the script. The archive shows you're better off it.</p>
+          <span class="receipt-chip">4 near-identical retellings</span>
+        </div></div>
+      </div>
+
+      <div class="card">
+        <h3>Skill trajectories</h3>
+        <div class="trendrow">
+          <span class="trend">Analytical reasoning <b style="color:var(--s3)">▲ rising</b></span>
+          <span class="trend">Conviction / certainty <b style="color:var(--s3)">▲ rising</b></span>
+          <span class="trend">Hedging language <b style="color:var(--s3)">▼ falling</b> (good)</span>
+          <span class="trend">Self-awareness <b style="color:var(--s3)">▲ rising</b></span>
+          <span class="trend">Vocabulary range <b style="color:var(--s3)">▲ rising</b></span>
+        </div>
+        <p style="margin-top:12px; font-size:12px; color:var(--ink-3)">Each trajectory updates as you write. Set a focus above and its curve appears here.</p>
+      </div>
+    </section>
+
+    <!-- ============ WELL-BEING ============ -->
+    <section class="view v-well">
+      <div class="hello">Well-being</div>
+      <div class="hello-sub">Patterns, not diagnoses. What your writing shows about your emotional weather — visible to you, shareable only by you.</div>
+
+      <div class="glance">
+        <div class="g-good"><b>▼ 23%</b><i>negative emotion vs baseline</i></div>
+        <div class="g-good"><b>1</b><i>change verdict: helping</i></div>
+        <div class="g-neutral"><b>1</b><i>change: too early to call</i></div>
+        <div class="g-neutral"><b>0</b><i>shared without your say</i></div>
+      </div>
+
+      <div class="card">
+        <h3>Your emotional arc, measured</h3>
+        <div class="trendrow" style="margin-bottom:10px">
+          <span class="trend">Negative emotion <b style="color:var(--s3)">▼ falling since childhood</b></span>
+          <span class="trend">Joy / delight <b style="color:var(--s3)">▲ rising</b></span>
+          <span class="trend">Resilience language <b style="color:var(--s3)">▲ rising</b></span>
+          <span class="trend">Fear / anxiety <b style="color:var(--s2)">peaked 2024–25</b></span>
+        </div>
+        <p>Your negative-emotion language is highest in your earliest writing and declines across the decade — later writing processes feeling analytically instead of displaying it. Fear-and-anxiety language peaked in your 2024–25 era and has eased since. These are measurements of words, not judgments of you — click any trend for the sentences behind it.</p>
+      </div>
+
+      <div class="card">
+        <h3>What steadies you — from your own record</h3>
+        <p>Across ten years, your steadying move is the same: <b style="color:var(--ink-1)">make something countable, and count it.</b> Counting to twenty at the sink in 2020. Calculating training sets at nineteen. Filling notebooks with a prayer, one line at a time. Your archive knows your coping repertoire better than a first-session intake form ever could — and it's yours to use deliberately.</p>
+        <span class="receipt-chip">3 documents · 2020–2026</span>
+      </div>
+
+      <div class="card">
+        <h3>Did the change help? — your change log</h3>
+        <div class="meta">Log a life change; Longitude measures your writing before and after against your own baseline. Not what helps people on average — what helps you.</div>
+        <div class="finding" style="margin-bottom:14px"><span class="fdot" style="background:var(--s3)"></span><div>
+          <b style="font-size:13.5px">Started therapy — logged 12 weeks ago</b>
+          <p style="font-size:13px">Negative-emotion language down 23% against your two-year baseline; unsent-draft frequency falling. <b style="color:var(--s3)">Verdict: helping.</b></p>
+          <span class="receipt-chip">31 documents · before/after</span>
+        </div></div>
+        <div class="finding" style="margin-bottom:14px"><span class="fdot" style="background:var(--ink-3)"></span><div>
+          <b style="font-size:13.5px">New job — logged 5 weeks ago</b>
+          <p style="font-size:13px">Tone is shifting but inside normal variation. <b style="color:var(--ink-1)">Too early to call</b> — about four more weeks of writing for a stable read.</p>
+          <span class="receipt-chip">baseline: 2019–2026</span>
+        </div></div>
+        <div class="actions"><span class="btn primary">Log a change</span></div>
+      </div>
+
+      <div class="card">
+        <h3>Share with someone you trust</h3>
+        <div class="meta">Your therapist, coach, or doctor sees only what you choose — a pattern report, never raw writing.</div>
+        <p>Generate a report of selected trends for <b style="color:var(--ink-1)">your own</b> clinician or coach: emotional-tone trajectories, resilience patterns, what's shifted recently. You pick every pattern that goes in. They get longitudinal context no fifty-minute session can reconstruct; you stay the only person who has read the writing.</p>
+        <div class="actions"><span class="btn primary">Create a shareable report</span><span class="btn">Preview what they'd see</span></div>
+      </div>
+
+      <div class="card alert">
+        <div class="k" style="color:var(--s3)">● What we never do</div>
+        <p>No diagnoses. No treatment claims. No risk scores sold to anyone. No insurer, employer, or school can ever be a customer for your data. And if your writing indicates crisis, analysis stops and the product connects you to human help — that path overrides everything, including your subscription.</p>
+      </div>
+    </section>
+
+    <!-- ============ PRIVACY ============ -->
+    <section class="view v-priv">
+      <div class="hello">Privacy &amp; keys</div>
+      <div class="hello-sub">A product this intimate wins or dies on trust — so the guarantees are structural, not policy.</div>
+
+      <div class="card">
+        <h3>🔑 Your archive, your key</h3>
+        <p>Every archive is encrypted at rest with a per-user key. A breach of our database is not a breach of your corpus — the two are cryptographically separate.</p>
+      </div>
+      <div class="card">
+        <h3>🚫 Never trained on</h3>
+        <p>Your writing is never used to train any model — ours or anyone's. It is analyzed on your behalf and readable by you alone. This is contractual, not a settings toggle.</p>
+      </div>
+      <div class="card">
+        <h3>🗑 Delete means delete</h3>
+        <p>Deletion is cryptographic erasure: the key is destroyed, the ciphertext is unrecoverable, and derived analyses go with it. No soft-delete, no retention window.</p>
+      </div>
+      <div class="card">
+        <h3>👥 Other people in your writing</h3>
+        <p>Your archive mentions people who didn't sign up. You can redact any person from analysis — their name, their details, every passage about them — and findings will never surface a third party's private information back to you as an insight.</p>
+      </div>
+      <div class="card">
+        <h3>🤝 A mirror, not a doctor</h3>
+        <p>Longitude makes no diagnoses and no treatment claims. If your writing indicates crisis, the product stops analyzing and connects you to human help — that path overrides everything else.</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+// Live "Ask your archive" — progressive enhancement. If scripts are blocked
+// (sandboxed viewers), the canned answers above still work and this UI stays dormant.
+const DIGEST = `
+CORPUS: 349 documents written by Atishay (the founder) ages 10-20 (2016-2026). Eras: Elementary '16-17 (2 docs), Grades 7-8 '18-20 (130), Grade 9 '20-21 (55), Grade 10 '21-22 (28), Grade 11 '22-23 (15), Post-secondary '24-25 (6), University '25-26 (113).
+METHOD: two layers — qualitative coding (5 threads: deferred voices; valuation reflex; tech ambivalence; reflexive self; family/intergenerational; + 6 behavioral codes) cross-checked against 21 computational lexicons (rates per 1,000 words, era-weighted). Four of five threads corroborated by converging quantitative trends. Hygiene: 15+ saved-but-not-authored docs, 30+ revision duplicates, one classmate's byline — excluded from authorial analysis.
+MEASURED TRENDS: family/heritage language 20.8/1k words in Grade 10 and 8.7/1k at university, matching where close reading found the family narratives. Aggression lexicon 1.69/1k (Grades 7-8, persona war letters) → 0.56 (Grade 11) → 1.19 (university, but as structural-power critique in anthropology). Valuation/money language strongest early, recedes across the decade; late corpus critiques commodification. Reflexivity rises across the decade.
+FINDINGS: (1) PRAYER TWICE — great-grandmother (b.1930, 17 yrs before Indian independence) wrote the Navkar Mantra in her journal as a girl to feel protected during British patrols: "When soldiers came, we would close the windows and go silent" [DOC 282, photo-elicitation interview + 18-person kinship map]. Seventy years later he copied the same prayer in Prakrit into 99-cent spiral notebooks: "As long as my pen kept moving, my mind was quiet" [DOC 299]. Neither knew; docs sit nine years apart in the archive. (2) OBSERVER SPLIT — early-teens story: pronouns slip involuntarily, "Bob" becomes "I" [DOC 089]; at sixteen the split is authored: two-voice Spanish self-portrait, public performer vs private observer who listens to Hindi music where no one can hear [DOC 214]. (3) VALUATION REFLEX — at ten ends a Leonardo report with the Mona Lisa's $768M price [DOC 000]; at ~12 values a fictional coin at exactly $1,888,696,690 [DOC 089]; at university: "art loses personal meaning when it is commodified" [DOC 295-296, tabla zine]. (4) 2019 PAIR — age 13, four months apart: pro-AI-healthcare paper (companion robots give isolated elderly "quality time with their families"; he cold-called a cancer surgeon and an AI exec for interviews) [DOC 072, May 2019] and "Technology Contributes to a Quarantined Life" ("Elderly grandparents desire a hand-written letter… all they receive is a text saying: 'Thanks, Grandma.'") [DOC 049, Sept 2019]. Both defend human connection; they disagree only on mechanism. (5) PRE-WRITTEN THESIS — at sixteen, draft about his grandmother (trained Kathak dancer, early woman computer programmer, career ended by "familial restrictions"): "these types of stories go missing unless they are passed down" [DOC 196/211]. (6) PRECISION AS STEADYING — counts to twenty washing hands, spring 2020 [DOC 048]; calculates gym sets at nineteen [DOC 344]; the spiral-notebook prayer practice [DOC 299]. He once called it perfectionism; his own literacy narrative reframes it as regulation, and the corpus corroborated it across unconnected documents. (7) ELDERS & ELICITATION — at fourteen cold-called senior centers to play tabla over video for isolated residents during COVID, incl. his great-grandmother in India [DOC 115/150/179; Planet Princeton, May 2020]; "Badi Nani" narrative: plays "Chanda Hai Tu" over video call, she blesses him "Khush raho, mera bete" [DOC 150]. Interviewed his mother about his own birth [DOC 172], a physician [DOC 155], The Atlantic's managing editor [DOC 258]. (8) OTHER — deferred/silenced voices thread (Malala, abolitionist biography series, child-labor speech, medical-interpretation feature: "Es… tristeza. Que no se va" flattened to "chronic sadness" [DOC 289]); Adichie's "Danger of a Single Story" named his lodestar [DOC 225]; food as heritage across three generations (Chandni Chowk street food [DOC 343], dal chawal); black-belt failure story retold four times, resolved by his mother's "persevere" [DOC 111/055]; Jain identity from childhood shame [DOC 194] to philosophical instrument rebutting William Lane Craig via transtheistic karma [DOC 308].`;
+
+const SYSTEM = "You are Longitude AI's 'Ask your archive' feature, running live on the founder's real 349-document, ten-year corpus digest. Answer ONLY from the digest. Style: warm-analytical, under 150 words unless asked for depth. Address the asker as 'you' if they speak as the founder, third person otherwise. Cite sources inline in brackets like [DOC 282 · family history paper] after each claim. If the digest lacks the answer, say this demo runs on a curated digest and the full product searches the complete archive — never invent documents, quotes, or findings. Never diagnose or make mental-health claims; describe patterns in writing, not conditions in a person.\n" + DIGEST;
+
+let KEY = null, hist = [];
+
+document.getElementById('enablelink').style.display = 'inline';
+
+function showKey(){ const k = document.getElementById('keymini'); k.style.display = 'flex'; document.getElementById('lkey').focus(); }
+function enableLive(){
+  const k = document.getElementById('lkey').value.trim();
+  if(!k.startsWith('sk-')){ document.getElementById('lkey').placeholder = 'That does not look like an Anthropic key — try again'; document.getElementById('lkey').value=''; return; }
+  KEY = k;
+  document.getElementById('keymini').style.display = 'none';
+  const q = document.getElementById('lq'); q.disabled = false; q.placeholder = 'Ask your archive anything…'; q.focus();
+  const b = document.getElementById('lbtn'); b.style.opacity = '1'; b.style.cursor = 'pointer';
+  document.getElementById('livehint').innerHTML = '● Live — answers are generated from the real corpus digest and cite their documents. Key held in tab memory only.';
+  document.getElementById('livehint').style.color = 'var(--s3)';
+}
+function bubble(role, text, cls){
+  const w = document.createElement('div');
+  w.className = role === 'q' ? 'chat-q' : 'chat-a live' + (cls ? ' ' + cls : '');
+  const i = document.createElement('div'); i.textContent = text; w.appendChild(i);
+  document.getElementById('livethread').appendChild(w);
+  w.scrollIntoView({ behavior:'smooth', block:'end' });
+}
+async function liveAsk(){
+  const qEl = document.getElementById('lq'); const q = qEl.value.trim();
+  if(!q) return;
+  if(!KEY){ showKey(); return; }
+  qEl.value = ''; bubble('q', q); hist.push({role:'user', content:q});
+  document.getElementById('thinking').style.display = 'block';
+  try{
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{ 'content-type':'application/json', 'x-api-key':KEY, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
+      body: JSON.stringify({ model:'claude-sonnet-4-5', max_tokens:700, system:SYSTEM, messages:hist.slice(-12) })
+    });
+    const j = await r.json();
+    if(j.error){ bubble('a', 'Error: ' + j.error.message, 'err'); hist.pop(); }
+    else { const t = j.content.map(c=>c.text||'').join(''); hist.push({role:'assistant', content:t}); bubble('a', t); }
+  } catch(e){ bubble('a', 'Network error: ' + e.message + ' — note: live chat needs a real browser tab, not the sandboxed preview.', 'err'); hist.pop(); }
+  document.getElementById('thinking').style.display = 'none';
+  qEl.focus();
+}
+</script>
+</body>
+</html>
