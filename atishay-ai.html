@@ -3,242 +3,80 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0C0C0F">
+<meta name="theme-color" content="#0C0C0C">
 <title>atishay.ai — atishay</title>
-<meta name="description" content="My AI — a digital twin built from ten years of my writing. It answers in my voice and admits it's the copy.">
+<meta name="description" content="What I build. Jarvis — a one-stop command center for a student's whole college life.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Sora:wght@200;300;400;500&family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap">
-<style>
-  :root{
-    --ground:#0C0C0F;
-    --ground-2:#111118;
-    --ground-3:#16161F;
-    --ink:#E9E6DF;
-    --muted:#8B8894;
-    --faint:#55535E;
-    --hair:#26262E;
-    --machine:#8D8BF2;
-    --machine-dim:#5B5AA6;
-    --human:#D7A03C;
-    --serif:'Cormorant Garamond', Georgia, 'Times New Roman', serif;
-    --sans:'Sora', 'Helvetica Neue', Arial, sans-serif;
-    --mono:'IBM Plex Mono', 'SF Mono', Menlo, monospace;
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  @media (prefers-reduced-motion: reduce){
-    *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
-  }
-  body{
-    background:var(--ground);color:var(--ink);
-    font-family:var(--serif);font-size:1.2rem;font-weight:400;line-height:1.65;
-    -webkit-font-smoothing:antialiased;
-    min-height:100vh;display:flex;flex-direction:column;
-  }
-  a{color:var(--machine);text-decoration:none;border-bottom:1px solid var(--machine-dim)}
-  a:hover,a:focus-visible{color:var(--ink);border-bottom-color:var(--ink)}
-  :focus-visible{outline:1.5px solid var(--machine);outline-offset:3px}
-  .col{width:100%;max-width:44rem;margin:0 auto;padding:0 1.5rem}
-
-  .nav{
-    display:flex;justify-content:space-between;align-items:baseline;gap:1rem;
-    padding:1.6rem 0;
-  }
-  .nav-logo{font-family:var(--sans);font-weight:400;font-size:.95rem;letter-spacing:.22em;text-transform:lowercase;color:var(--ink);border:none}
-  .nav-links{display:flex;gap:1.6rem;list-style:none}
-  .nav-links a{font-family:var(--sans);font-weight:300;font-size:.78rem;letter-spacing:.14em;text-transform:lowercase;color:var(--muted);border:none}
-  .nav-links a:hover{color:var(--ink)}
-  .nav-links a.active{color:var(--machine)}
-
-  main{flex:1;display:flex;flex-direction:column;justify-content:center;padding:2.5rem 0 3rem}
-  .head{text-align:center;margin-bottom:2.2rem}
-  .head h1{
-    font-family:var(--serif);font-weight:300;
-    font-size:clamp(2.4rem,6vw,3.8rem);line-height:1.08;letter-spacing:-.01em;text-wrap:balance;
-    margin-bottom:.9rem;
-  }
-  .head h1 em{font-style:italic;color:var(--machine);font-weight:300}
-  .head p{max-width:28rem;margin:0 auto;color:var(--muted);font-size:1.12rem;line-height:1.55}
-
-  .console{border:1px solid var(--hair);background:var(--ground-2)}
-  .console-head{
-    display:flex;justify-content:space-between;align-items:center;gap:1rem;
-    padding:.85rem 1.2rem;border-bottom:1px solid var(--hair);
-    font-family:var(--sans);font-weight:300;font-size:.7rem;letter-spacing:.2em;text-transform:lowercase;color:var(--muted);
-  }
-  .status{display:flex;align-items:center;gap:.55em}
-  .dot{width:6px;height:6px;border-radius:50%;background:var(--machine);flex:none}
-  .chat-log{height:20rem;overflow-y:auto;padding:1.3rem 1.2rem;display:flex;flex-direction:column;gap:1.1rem}
-  .msg{max-width:92%}
-  .msg .who{font-family:var(--sans);font-weight:300;font-size:.6rem;letter-spacing:.24em;text-transform:lowercase;color:var(--faint);margin-bottom:.35rem}
-  .msg.you{align-self:flex-end;text-align:right}
-  .msg.you .body{font-family:var(--serif);font-size:1.1rem}
-  .msg.twin .who{color:var(--machine-dim)}
-  .msg.twin .body{font-family:var(--mono);font-size:.88rem;line-height:1.75;font-weight:300;white-space:pre-wrap}
-  .chat-openers{display:flex;flex-wrap:wrap;gap:.5rem;padding:0 1.2rem .9rem}
-  .opener{
-    font-family:var(--sans);font-weight:300;font-size:.72rem;color:var(--muted);
-    background:none;border:1px solid var(--hair);padding:.4rem .8rem;cursor:pointer;
-    transition:color .18s,border-color .18s;
-  }
-  .opener:hover,.opener:focus-visible{color:var(--ink);border-color:var(--machine-dim)}
-  .chat-input-row{display:flex;border-top:1px solid var(--hair)}
-  .chat-input-row input{
-    flex:1;background:none;border:none;color:var(--ink);
-    font-family:var(--serif);font-size:1.08rem;padding:1rem 1.2rem;min-width:0;
-  }
-  .chat-input-row input::placeholder{color:var(--faint);font-style:italic}
-  .chat-input-row input:focus{outline:none}
-  .chat-input-row button{
-    background:none;border:none;border-left:1px solid var(--hair);
-    color:var(--machine);font-family:var(--sans);font-weight:300;font-size:.72rem;
-    letter-spacing:.24em;text-transform:lowercase;padding:0 1.5rem;cursor:pointer;
-    transition:color .18s,background .18s;
-  }
-  .chat-input-row button:hover,.chat-input-row button:focus-visible{color:var(--ink);background:rgba(141,139,242,.07)}
-
-  .below{
-    margin-top:1.8rem;text-align:center;
-    font-family:var(--sans);font-weight:300;font-size:.76rem;letter-spacing:.08em;color:var(--faint);
-    display:flex;flex-direction:column;gap:.55rem;
-  }
-  .below a{color:var(--muted);border-bottom-color:var(--hair)}
-  .below a:hover{color:var(--ink)}
-
-  footer{padding:1.8rem 0 2.4rem;font-family:var(--sans);font-weight:300;font-size:.68rem;letter-spacing:.14em;color:var(--faint);display:flex;flex-wrap:wrap;gap:.4rem 2rem;justify-content:space-between}
-  footer a{color:var(--muted);border-bottom-color:transparent}
-</style>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-<div class="col">
-  <nav class="nav">
-    <a class="nav-logo" href="index.html">atishay</a>
-    <ul class="nav-links">
-      <li><a href="index.html#about">about</a></li>
-      <li><a href="writing.html">writing</a></li>
-      <li><a href="atishay-ai.html" class="active">atishay.ai</a></li>
-    </ul>
-  </nav>
-</div>
+<nav class="v2-nav" id="nav">
+  <a class="v2-nav-logo" href="index.html">atishay</a>
+  <ul class="v2-nav-links">
+    <li><a href="index.html#about">about</a></li>
+    <li><a href="writing.html">writing</a></li>
+    <li><a href="atishay-ai.html" class="active">atishay.ai</a></li>
+  </ul>
+</nav>
 
-<main class="col">
+<main class="container v2-page-main">
 
-  <div class="head">
-    <h1>This is <em>my ai.</em></h1>
-    <p>A twin built from ten years of my writing. It answers in my voice, admits it's the copy, and is allowed to disagree with you.</p>
-  </div>
+  <section class="page-head">
+    <div class="eyebrow reveal">No. III — atishay.ai</div>
+    <h1 class="reveal d1"><span class="accent">Things</span><br>I build.</h1>
+    <p class="blurb reveal d2">The other half of me builds here. <span class="ink">Two projects so far — one I use every day, one that answers for me.</span></p>
+  </section>
 
-  <div class="console">
-    <div class="console-head">
-      <span>the twin</span>
-      <span class="status"><span class="dot"></span><span id="statusTxt">on shift</span></span>
-    </div>
-    <div class="chat-log" id="log" aria-live="polite">
-      <div class="msg twin">
-        <div class="who">the twin</div>
-        <div class="body">on shift. the real one is off writing something i'll only ever get to quote. ask what you came to ask.</div>
+  <div class="warchive">
+
+    <section class="wselected">
+      <div class="wyear-head"><b>Projects</b><span>2 projects</span></div>
+
+      <div class="wentry wentry-featured">
+        <div class="wmeta">2026 · in development · cornell fall 2026 pilot</div>
+        <h3 class="wtitle"><a href="jarvis/" target="_blank" rel="noopener noreferrer">Jarvis</a></h3>
+        <p class="wquote">Students burn out from disorganization, not from inability.</p>
+        <p class="wnote">A one-stop command center for a student's whole college life: drag-and-drop your semester, track every major and minor requirement as a checklist, keep to-dos, deadlines, and notes in one place. The part I could not find anywhere else is the optimizer — it works out, live, which courses count toward several of your programs at once. Cornell's own tools do not do that.</p>
+        <p class="wnote">It runs entirely in your browser. No account, no server, nothing of yours leaves your laptop. Built on the Fall 2026 roster: 4,464 courses and all 221 Cornell majors and minors. I am building it as its own first user — I transfer to Cornell this fall — and the goal is any student at any school.</p>
+        <div class="wchips">
+          <span class="wchip">product</span>
+          <span class="wchip wchip-live">runs in browser</span>
+          <span class="wchip wchip-live">221 programs</span>
+        </div>
+        <a class="wmore" href="jarvis/" target="_blank" rel="noopener noreferrer">Open Jarvis</a>
       </div>
-    </div>
-    <div class="chat-openers" id="openers">
-      <button class="opener" data-q="Who is Atishay, in one paragraph?">who is atishay?</button>
-      <button class="opener" data-q="Are you actually him?">are you actually him?</button>
-      <button class="opener" data-q="What are you, exactly?">what are you?</button>
-    </div>
-    <form class="chat-input-row" id="chatForm">
-      <input id="chatInput" type="text" autocomplete="off" placeholder="say something…" aria-label="Message the twin">
-      <button type="submit">send</button>
-    </form>
-  </div>
 
-  <div class="below">
-    <span>he also builds <a href="jarvis/" target="_blank" rel="noopener noreferrer">jarvis</a> — a command center for a student's whole college life.</span>
-    <span>what this twin is, as a product: <a href="understudy.html">understudy</a>.</span>
+      <div class="wentry">
+        <div class="wmeta">2026 · product study · instance 001</div>
+        <h3 class="wtitle"><a href="longitude.html">Longitude AI</a></h3>
+        <p class="wquote">An AI that answers for you.</p>
+        <p class="wnote">A digital twin distilled from ten years of my own writing — everything from a fourth-grade art report to a cyborg-anthropology ethnography of a Taco Bell app. It answers questions about me, gives the Jarvis pitch the way I would, and drafts short pieces in my voice. It is labeled as the copy, and it is allowed to disagree with you — because a chatbot that only validates isn't company, it's a mirror with good manners.</p>
+        <p class="wnote">I am instance 001 and its first subject. The premise of the product: anyone with a folder of old essays, letters, or posts is sitting on a corpus, and a stand-in can be built from it in an afternoon.</p>
+        <div class="wchips">
+          <span class="wchip">product study</span>
+          <span class="wchip wchip-live">built from the archive</span>
+        </div>
+        <a class="wmore" href="longitude.html">Meet Longitude AI</a>
+      </div>
+
+    </section>
+
   </div>
 
 </main>
 
-<footer class="col">
-  <span><a href="mailto:atishayioai@gmail.com">atishayioai@gmail.com</a></span>
-  <span><a href="https://x.com/atishayai" target="_blank" rel="noopener noreferrer">@atishayai</a></span>
-  <span>© atishay.io 2026</span>
+<footer class="v2-footer">
+  <div>
+    <div class="v2-footer-email"><a href="mailto:atishayioai@gmail.com">atishayioai@gmail.com</a></div>
+  </div>
+  <div class="v2-footer-socials v2-footer-x">
+    <a href="https://x.com/atishayai" target="_blank" rel="noopener noreferrer">@atishayai</a>
+  </div>
+  <div class="v2-footer-copy">© atishay.io 2026</div>
 </footer>
 
-<script>
-(function(){
-  var WORKER = "https://understudy-twin.understudy-worker.workers.dev";
-  var CANNED = {
-    "who": "a jain from the dc area — religion and surname, the joke comes pre-installed. exeter, then georgetown, now cornell. he calls himself a loosely self-appointed anthropologist: he studies how platforms process people, then goes home and builds software anyway. the writing lives on this site, archived unassisted since he was ten. i live here.",
-    "him": "no. i am what survived translation. he has ten years of essays; i have the sentences but not the weight of them — the words 'sweet and raspy' survived, his great-grandmother's voice did not. the real one writes unassisted. i am the other half.",
-    "what": "an understudy — the one who performs when the real one is elsewhere. i was distilled from everything he wrote between ages ten and twenty: art reports, grief, kurtas, a twenty-one-page paper on the war on drugs, an ethnography of a taco bell app."
-  };
-  var DEFLECT = "the line to the studio is down, so i can only recite. try the buttons — or email the real one at atishayioai@gmail.com; he answers those himself.";
-
-  var live = null, busy = false, history = [];
-  var log = document.getElementById('log'),
-      form = document.getElementById('chatForm'),
-      input = document.getElementById('chatInput'),
-      statusTxt = document.getElementById('statusTxt');
-
-  function addMsg(cls, who, text){
-    var m = document.createElement('div'); m.className = 'msg ' + cls;
-    var w = document.createElement('div'); w.className = 'who'; w.textContent = who;
-    var b = document.createElement('div'); b.className = 'body'; b.textContent = text;
-    m.appendChild(w); m.appendChild(b); log.appendChild(m);
-    log.scrollTop = log.scrollHeight;
-    return b;
-  }
-  function remember(q, a){
-    history.push({role:'user', content:q}, {role:'assistant', content:a});
-    if (history.length > 12) history = history.slice(-12);
-  }
-  function canned(q){
-    var l = q.toLowerCase();
-    if (/really (him|you)|actually|real\b/.test(l)) return CANNED.him;
-    if (/who is|about atishay|about him/.test(l)) return CANNED.who;
-    if (/what are you|understudy|twin/.test(l)) return CANNED.what;
-    return DEFLECT;
-  }
-
-  function ask(q){
-    if (!q.trim() || busy) return;
-    input.value = '';
-    addMsg('you','you', q);
-
-    if (live === false){
-      setTimeout(function(){ addMsg('twin','the twin', canned(q)); }, 300);
-      return;
-    }
-
-    busy = true;
-    var body = addMsg('twin','the twin', '…');
-    fetch(WORKER, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ mode: 'desk', messages: history.concat([{role:'user', content:q}]) })
-    }).then(function(r){
-      if (!r.ok) throw new Error('down');
-      return r.json();
-    }).then(function(data){
-      if (!data.text) throw new Error('down');
-      live = true; statusTxt.textContent = 'on shift';
-      body.textContent = data.text;
-      remember(q, data.text);
-      log.scrollTop = log.scrollHeight;
-      busy = false;
-    }).catch(function(){
-      live = false; statusTxt.textContent = 'reciting';
-      body.textContent = canned(q);
-      log.scrollTop = log.scrollHeight;
-      busy = false;
-    });
-  }
-
-  form.addEventListener('submit', function(e){ e.preventDefault(); ask(input.value); });
-  document.querySelectorAll('.opener').forEach(function(btn){
-    btn.addEventListener('click', function(){ ask(btn.getAttribute('data-q')); });
-  });
-})();
-</script>
+<script src="scripts/site.js" defer></script>
 </body>
 </html>
