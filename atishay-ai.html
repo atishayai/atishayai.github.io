@@ -3,81 +3,359 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0C0C0C">
-<title>atishay.ai — atishay</title>
-<meta name="description" content="What I build. Jarvis — a one-stop command center for a student's whole college life.">
+<meta name="theme-color" content="#0C0C0F">
+<title>Longitude AI — atishay</title>
+<meta name="description" content="Ever wonder what your digital version thinks of you — from your own words? Longitude reads your archive whole and builds a digital you, with receipts.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Sora:wght@200;300;400;500&family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap">
+<style>
+  :root{
+    --ground:#0C0C0F;
+    --ground-2:#111118;
+    --ground-3:#16161F;
+    --ink:#E9E6DF;
+    --muted:#8B8894;
+    --faint:#55535E;
+    --hair:#26262E;
+    --machine:#8D8BF2;
+    --machine-dim:#5B5AA6;
+    --human:#D7A03C;
+    --serif:'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+    --sans:'Sora', 'Helvetica Neue', Arial, sans-serif;
+    --mono:'IBM Plex Mono', 'SF Mono', Menlo, monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto}
+    *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+  }
+  body{
+    background:var(--ground);color:var(--ink);
+    font-family:var(--serif);font-size:1.2rem;font-weight:400;line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--machine);text-decoration:none;border-bottom:1px solid var(--machine-dim)}
+  a:hover,a:focus-visible{color:var(--ink);border-bottom-color:var(--ink)}
+  :focus-visible{outline:1.5px solid var(--machine);outline-offset:3px}
+  .col{width:100%;max-width:44rem;margin:0 auto;padding:0 1.5rem}
+
+  .nav{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;padding:1.6rem 0}
+  .nav-logo{font-family:var(--sans);font-weight:400;font-size:.95rem;letter-spacing:.22em;text-transform:lowercase;color:var(--ink);border:none}
+  .nav-links{display:flex;gap:1.6rem;list-style:none}
+  .nav-links a{font-family:var(--sans);font-weight:300;font-size:.78rem;letter-spacing:.14em;text-transform:lowercase;color:var(--muted);border:none}
+  .nav-links a:hover{color:var(--ink)}
+  .nav-links a.active{color:var(--machine)}
+
+  /* hero */
+  .hero{padding:5.5rem 0 3.5rem;text-align:center}
+  .hero .mark{font-family:var(--sans);font-weight:300;font-size:.72rem;letter-spacing:.3em;text-transform:lowercase;color:var(--faint);margin-bottom:1.4rem}
+  .hero .mark b{color:var(--machine);font-weight:400}
+  .hero h1{
+    font-family:var(--serif);font-weight:300;
+    font-size:clamp(2.5rem,6.6vw,4.4rem);line-height:1.08;letter-spacing:-.01em;
+    text-wrap:balance;margin-bottom:1.4rem;
+  }
+  .hero h1 em{font-style:italic;color:var(--machine);font-weight:300}
+  .hero-sub{max-width:31rem;margin:0 auto;color:var(--muted);font-size:1.18rem;line-height:1.6}
+  .hero-cta{margin-top:2.2rem;display:flex;justify-content:center;gap:1rem;flex-wrap:wrap}
+  .cta{
+    display:inline-block;font-family:var(--sans);font-weight:300;font-size:.78rem;
+    letter-spacing:.24em;text-transform:lowercase;
+    color:var(--ground);background:var(--machine);border:1px solid var(--machine);
+    padding:.85rem 1.7rem;cursor:pointer;transition:background .18s,color .18s;
+  }
+  .cta:hover,.cta:focus-visible{background:transparent;color:var(--machine)}
+  a.cta{border-bottom-width:1px}
+
+  /* sections */
+  section{padding:3.6rem 0}
+  section + section{border-top:1px solid var(--hair)}
+  .eyebrow{font-family:var(--sans);font-weight:300;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:var(--faint);margin-bottom:1.2rem}
+  .eyebrow b{color:var(--machine);font-weight:400}
+
+  /* problem */
+  .problem p{max-width:34rem;font-size:1.3rem;line-height:1.6}
+  .problem p + p{margin-top:1.1rem}
+  .problem .dim{color:var(--muted)}
+  .problem .turn{color:var(--human);font-style:italic}
+
+  /* demo console */
+  .demo-lede{color:var(--muted);max-width:34rem;margin-bottom:1.8rem}
+  .demo-lede b{color:var(--ink);font-weight:500}
+  .console{border:1px solid var(--hair);background:var(--ground-2)}
+  .console-head{
+    display:flex;justify-content:space-between;align-items:center;gap:1rem;
+    padding:.85rem 1.2rem;border-bottom:1px solid var(--hair);
+    font-family:var(--sans);font-weight:300;font-size:.7rem;letter-spacing:.2em;text-transform:lowercase;color:var(--muted);
+  }
+  .status{display:flex;align-items:center;gap:.55em}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--machine);flex:none}
+  .chat-log{height:21rem;overflow-y:auto;padding:1.3rem 1.2rem;display:flex;flex-direction:column;gap:1.1rem}
+  .msg{max-width:92%}
+  .msg .who{font-family:var(--sans);font-weight:300;font-size:.6rem;letter-spacing:.24em;text-transform:lowercase;color:var(--faint);margin-bottom:.35rem}
+  .msg.you{align-self:flex-end;text-align:right}
+  .msg.you .body{font-family:var(--serif);font-size:1.1rem}
+  .msg.twin .who{color:var(--machine-dim)}
+  .msg.twin .body{font-family:var(--mono);font-size:.88rem;line-height:1.75;font-weight:300;white-space:pre-wrap}
+  .chat-openers{display:flex;flex-wrap:wrap;gap:.5rem;padding:0 1.2rem .9rem}
+  .opener{
+    font-family:var(--sans);font-weight:300;font-size:.72rem;color:var(--muted);
+    background:none;border:1px solid var(--hair);padding:.4rem .8rem;cursor:pointer;
+    transition:color .18s,border-color .18s;
+  }
+  .opener:hover,.opener:focus-visible{color:var(--ink);border-color:var(--machine-dim)}
+  .chat-input-row{display:flex;border-top:1px solid var(--hair)}
+  .chat-input-row input{
+    flex:1;background:none;border:none;color:var(--ink);
+    font-family:var(--serif);font-size:1.08rem;padding:1rem 1.2rem;min-width:0;
+  }
+  .chat-input-row input::placeholder{color:var(--faint);font-style:italic}
+  .chat-input-row input:focus{outline:none}
+  .chat-input-row button{
+    background:none;border:none;border-left:1px solid var(--hair);
+    color:var(--machine);font-family:var(--sans);font-weight:300;font-size:.72rem;
+    letter-spacing:.24em;text-transform:lowercase;padding:0 1.5rem;cursor:pointer;
+    transition:color .18s,background .18s;
+  }
+  .chat-input-row button:hover,.chat-input-row button:focus-visible{color:var(--ink);background:rgba(141,139,242,.07)}
+  .fine{font-family:var(--sans);font-weight:300;font-size:.68rem;color:var(--faint);line-height:1.6;letter-spacing:.04em;margin-top:.9rem}
+
+  /* receipts */
+  .receipts-lede{color:var(--muted);max-width:34rem;margin-bottom:1.8rem}
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--hair);border:1px solid var(--hair)}
+  @media(max-width:760px){.cards{grid-template-columns:1fr}}
+  .card{background:var(--ground-2);padding:1.6rem 1.4rem;display:flex;flex-direction:column;gap:.7rem}
+  .card h3{font-family:var(--serif);font-weight:500;font-size:1.3rem}
+  .card p{font-size:1rem;color:var(--muted);line-height:1.55;flex:1}
+  .card .doc{font-family:var(--mono);font-size:.7rem;color:var(--machine-dim)}
+  .evidence-link{margin-top:1.4rem;font-family:var(--sans);font-weight:300;font-size:.78rem;letter-spacing:.1em}
+
+  /* how */
+  .how{list-style:none;max-width:36rem;counter-reset:step}
+  .how li{display:grid;grid-template-columns:2.4rem 1fr;gap:1rem;padding:1rem 0;border-bottom:1px solid var(--hair);align-items:baseline}
+  .how li:last-child{border-bottom:none}
+  .how .n{font-family:var(--mono);font-size:.78rem;color:var(--machine-dim)}
+  .how .t{font-size:1.14rem}
+  .how .t i{color:var(--muted);font-size:.9em}
+
+  /* waitlist */
+  .wait{text-align:center;padding:4.2rem 0}
+  .wait h2{font-family:var(--serif);font-weight:300;font-size:clamp(1.9rem,4.5vw,2.8rem);line-height:1.15;text-wrap:balance;margin-bottom:.9rem}
+  .wait h2 em{font-style:italic;color:var(--human)}
+  .wait p{color:var(--muted);max-width:26rem;margin:0 auto 1.8rem}
+
+  footer{border-top:1px solid var(--hair);padding:2rem 0 2.6rem;font-family:var(--sans);font-weight:300;font-size:.7rem;letter-spacing:.12em;color:var(--faint);display:flex;flex-wrap:wrap;gap:.4rem 1.8rem;justify-content:space-between}
+  footer a{color:var(--muted);border-bottom-color:transparent}
+</style>
 </head>
 <body>
 
-<nav class="v2-nav" id="nav">
-  <a class="v2-nav-logo" href="index.html">atishay</a>
-  <ul class="v2-nav-links">
-    <li><a href="index.html#about">about</a></li>
-    <li><a href="writing.html">writing</a></li>
-    <li><a href="atishay-ai.html" class="active">atishay.ai</a></li>
-  </ul>
-</nav>
+<div class="col">
+  <nav class="nav">
+    <a class="nav-logo" href="index.html">atishay</a>
+    <ul class="nav-links">
+      <li><a href="index.html#about">about</a></li>
+      <li><a href="writing.html">writing</a></li>
+      <li><a href="atishay-ai.html" class="active">atishay.ai</a></li>
+    </ul>
+  </nav>
+</div>
 
-<main class="container v2-page-main">
+<main>
 
-  <section class="page-head">
-    <div class="eyebrow reveal">No. III — atishay.ai</div>
-    <h1 class="reveal d1"><span class="accent">Things</span><br>I build.</h1>
-    <p class="blurb reveal d2">The other half of me builds here. <span class="ink">Two projects so far — one I use every day, one that reads my decade of writing back to me.</span></p>
+  <!-- hero -->
+  <header class="hero col">
+    <div class="mark">longitude <b>ai</b></div>
+    <h1>Ever wonder what your <em>digital version</em> thinks of you?</h1>
+    <p class="hero-sub">
+      Not from your clicks. From your own words — every essay, journal, and
+      note you've ever written, read whole for the first time.
+    </p>
+    <div class="hero-cta">
+      <a class="cta" href="#demo">ask mine anything</a>
+    </div>
+  </header>
+
+  <!-- problem -->
+  <section class="col problem">
+    <div class="eyebrow">the <b>problem</b></div>
+    <p>You've written hundreds of thousands of words in your life. School essays,
+    journals, notes, letters — the most honest record of you that exists.</p>
+    <p class="dim">Nobody has ever read it whole. Not even you.</p>
+    <p class="dim">Every AI today models you from what you click, to hold your attention.
+    <span class="turn">Longitude models you from what you wrote — and hands you back to yourself.</span></p>
   </section>
 
-  <div class="warchive">
-
-    <section class="wselected">
-      <div class="wyear-head"><b>Projects</b><span>2 projects</span></div>
-
-      <div class="wentry wentry-featured">
-        <div class="wmeta">2026 · in development · cornell fall 2026 pilot</div>
-        <h3 class="wtitle"><a href="jarvis/" target="_blank" rel="noopener noreferrer">Jarvis</a></h3>
-        <p class="wquote">Students burn out from disorganization, not from inability.</p>
-        <p class="wnote">A one-stop command center for a student's whole college life: drag-and-drop your semester, track every major and minor requirement as a checklist, keep to-dos, deadlines, and notes in one place. The part I could not find anywhere else is the optimizer — it works out, live, which courses count toward several of your programs at once. Cornell's own tools do not do that.</p>
-        <p class="wnote">It runs entirely in your browser. No account, no server, nothing of yours leaves your laptop. Built on the Fall 2026 roster: 4,464 courses and all 221 Cornell majors and minors. I am building it as its own first user — I transfer to Cornell this fall — and the goal is any student at any school.</p>
-        <div class="wchips">
-          <span class="wchip">product</span>
-          <span class="wchip wchip-live">runs in browser</span>
-          <span class="wchip wchip-live">221 programs</span>
-        </div>
-        <a class="wmore" href="jarvis/" target="_blank" rel="noopener noreferrer">Open Jarvis</a>
+  <!-- demo -->
+  <section class="col" id="demo">
+    <div class="eyebrow">the <b>proof</b></div>
+    <p class="demo-lede">
+      <b>The founder went first.</b> 349 documents, ages ten to twenty, read by two
+      independent analysis layers. This is his digital version — it answers in his
+      voice, cites the exact documents behind every claim, and admits what a copy
+      can't know. Ask it anything.
+    </p>
+    <div class="console">
+      <div class="console-head">
+        <span>atishay — digital version</span>
+        <span class="status"><span class="dot"></span><span id="statusTxt">reading the archive</span></span>
       </div>
-
-      <div class="wentry">
-        <div class="wmeta">2026 · in development · yc w2027 applicant</div>
-        <h3 class="wtitle"><a href="longitude/">Longitude AI</a></h3>
-        <p class="wquote">Turns your writing into narrative intelligence.</p>
-        <p class="wnote">Everyone has written hundreds of thousands of words — Google Docs, old essays, journals, notes — produced before they knew what would matter to them. It is the most honest record of a person that exists, and nobody has ever read it whole. Longitude ingests the archive and opens a timeline of your life in writing, with every pattern clickable down to the exact sentences that produced it. Evidence, not a horoscope.</p>
-        <p class="wnote">Built and validated on my own archive first: 349 documents across ten years, ages ten to twenty. Two independent analysis layers — qualitative coding and 21 computational lexicons — run separately, and they agree. You can read the findings on the dashboard, ask the archive questions directly, or <a href="longitude.html">talk to the twin</a> it produced.</p>
-        <div class="wchips">
-          <span class="wchip">product</span>
-          <span class="wchip wchip-live">349 documents</span>
-          <span class="wchip wchip-live">ages 10–20</span>
+      <div class="chat-log" id="log" aria-live="polite">
+        <div class="msg twin">
+          <div class="who">the digital version</div>
+          <div class="body">ask me who he is. i'll answer from ten years of his own words — and show you the receipts.</div>
         </div>
-        <a class="wmore" href="longitude/">Open Longitude AI</a>
       </div>
+      <div class="chat-openers" id="openers">
+        <button class="opener" data-q="Who is he, really?">who is he, really?</button>
+        <button class="opener" data-q="What steadies him when things feel out of control?">what steadies him?</button>
+        <button class="opener" data-q="What has he quietly stopped writing about?">what has he stopped writing about?</button>
+        <button class="opener" data-q="Are you actually him?">are you actually him?</button>
+      </div>
+      <form class="chat-input-row" id="chatForm">
+        <input id="chatInput" type="text" autocomplete="off" placeholder="ask his digital version…" aria-label="Ask the digital version">
+        <button type="submit">ask</button>
+      </form>
+    </div>
+    <p class="fine">Answers draw on a curated digest of the real corpus analysis. Nothing you type is stored.</p>
+  </section>
 
-    </section>
+  <!-- receipts -->
+  <section class="col">
+    <div class="eyebrow">the <b>receipts</b></div>
+    <p class="receipts-lede">
+      A digital version is only worth talking to if you can check it. Every pattern
+      links to the sentences that produced it. Three of the findings:
+    </p>
+    <div class="cards">
+      <div class="card">
+        <h3>The prayer, twice</h3>
+        <p>His great-grandmother wrote the Navkar Mantra in her journal as a girl, to feel
+        protected during British patrols. Seventy years later he filled spiral notebooks
+        with the same prayer. Neither knew the other had done it.</p>
+        <span class="doc">DOC 282 · DOC 299 — nine years apart</span>
+      </div>
+      <div class="card">
+        <h3>Counting as calm</h3>
+        <p>Hand-washing counted to twenty. Gym sets calculated between classes. A prayer
+        copied line after line. Ten years of the same steadying move: make something
+        countable, and count it. He called it perfectionism. The archive disagreed.</p>
+        <span class="doc">DOC 048 · 299 · 344</span>
+      </div>
+      <div class="card">
+        <h3>The grandmother spike</h3>
+        <p>Family-and-heritage language jumps to 20.8 per 1,000 words in tenth grade —
+        exactly where the close reading, run separately, found the grandmother
+        narratives. Two layers, no coordination, same answer.</p>
+        <span class="doc">20.8/1k · grade 10 — DOC 196/211</span>
+      </div>
+    </div>
+    <p class="evidence-link"><a href="longitude/">every finding, with its sentences — the full evidence →</a></p>
+  </section>
 
-  </div>
+  <!-- how -->
+  <section class="col">
+    <div class="eyebrow">how it <b>works</b></div>
+    <ul class="how">
+      <li><span class="n">01</span><span class="t">Hand it your archive. <i>The words already exist — Google Docs, notes, old folders. You write nothing new.</i></span></li>
+      <li><span class="n">02</span><span class="t">Two independent layers read it whole. <i>Close reading and 21 computational lexicons — a claim survives only if they agree.</i></span></li>
+      <li><span class="n">03</span><span class="t">Meet your digital version. <i>Question it, argue with it, check it. Evidence, not a horoscope.</i></span></li>
+    </ul>
+  </section>
+
+  <!-- waitlist -->
+  <section class="col wait">
+    <h2>Your words are <em>already waiting.</em></h2>
+    <p>Longitude is being built now, one archive at a time. Say the word and yours is next.</p>
+    <a class="cta" href="mailto:atishayioai@gmail.com?subject=my%20archive%20—%20longitude%20waitlist">join the waitlist</a>
+  </section>
 
 </main>
 
-<footer class="v2-footer">
-  <div>
-    <div class="v2-footer-email"><a href="mailto:atishayioai@gmail.com">atishayioai@gmail.com</a></div>
-  </div>
-  <div class="v2-footer-socials v2-footer-x">
-    <a href="https://x.com/atishayai" target="_blank" rel="noopener noreferrer">@atishayai</a>
-  </div>
-  <div class="v2-footer-copy">© atishay.io 2026</div>
+<footer class="col">
+  <span>a product by <a href="index.html">atishay</a></span>
+  <span>also: <a href="jarvis/" target="_blank" rel="noopener noreferrer">jarvis</a> — a command center for college</span>
+  <span><a href="mailto:atishayioai@gmail.com">atishayioai@gmail.com</a> · <a href="https://x.com/atishayai" target="_blank" rel="noopener noreferrer">@atishayai</a></span>
 </footer>
 
-<script src="scripts/site.js" defer></script>
+<script>
+(function(){
+  var WORKER = "https://understudy-twin.understudy-worker.workers.dev";
+  var CANNED = {
+    "who": "a jain from the dc area — religion and surname, the joke comes pre-installed. exeter, then georgetown, now cornell. a loosely self-appointed anthropologist who studies how platforms process people, then goes home and builds software anyway. ten years of his writing built me; the receipts are on this page.",
+    "him": "no. i am what survived translation. he has ten years of essays; i have the sentences but not the weight of them — the words 'sweet and raspy' survived, his great-grandmother's voice did not.",
+    "steady": "counting. the prayer copied line after line, hand-washing counted to twenty, gym sets calculated between classes [DOC 048, 299, 344]. he called it perfectionism once; his own archive reframed it as regulation."
+  };
+  var DEFLECT = "the line to the archive is down, so i can only recite. the receipts below still stand — or email the real one, he answers those himself.";
+
+  var live = null, busy = false, history = [];
+  var log = document.getElementById('log'),
+      form = document.getElementById('chatForm'),
+      input = document.getElementById('chatInput'),
+      statusTxt = document.getElementById('statusTxt');
+
+  function addMsg(cls, who, text){
+    var m = document.createElement('div'); m.className = 'msg ' + cls;
+    var w = document.createElement('div'); w.className = 'who'; w.textContent = who;
+    var b = document.createElement('div'); b.className = 'body'; b.textContent = text;
+    m.appendChild(w); m.appendChild(b); log.appendChild(m);
+    log.scrollTop = log.scrollHeight;
+    return b;
+  }
+  function remember(q, a){
+    history.push({role:'user', content:q}, {role:'assistant', content:a});
+    if (history.length > 12) history = history.slice(-12);
+  }
+  function canned(q){
+    var l = q.toLowerCase();
+    if (/really (him|you)|actually|real\b/.test(l)) return CANNED.him;
+    if (/stead|calm|control|anxi/.test(l)) return CANNED.steady;
+    if (/who is|about him|about atishay/.test(l)) return CANNED.who;
+    return DEFLECT;
+  }
+
+  function ask(q){
+    if (!q.trim() || busy) return;
+    input.value = '';
+    addMsg('you','you', q);
+
+    if (live === false){
+      setTimeout(function(){ addMsg('twin','the digital version', canned(q)); }, 300);
+      return;
+    }
+
+    busy = true;
+    var body = addMsg('twin','the digital version', '…');
+    statusTxt.textContent = 'reading the archive';
+    fetch(WORKER, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ mode: 'desk', messages: history.concat([{role:'user', content:q}]) })
+    }).then(function(r){
+      if (!r.ok) throw new Error('down');
+      return r.json();
+    }).then(function(data){
+      if (!data.text) throw new Error('down');
+      live = true; statusTxt.textContent = 'on the record';
+      body.textContent = data.text;
+      remember(q, data.text);
+      log.scrollTop = log.scrollHeight;
+      busy = false;
+    }).catch(function(){
+      live = false; statusTxt.textContent = 'reciting';
+      body.textContent = canned(q);
+      log.scrollTop = log.scrollHeight;
+      busy = false;
+    });
+  }
+
+  form.addEventListener('submit', function(e){ e.preventDefault(); ask(input.value); });
+  document.querySelectorAll('.opener').forEach(function(btn){
+    btn.addEventListener('click', function(){ ask(btn.getAttribute('data-q')); });
+  });
+})();
+</script>
 </body>
 </html>
