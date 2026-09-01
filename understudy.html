@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0C0C0F">
+<title>Understudy — atishay.ai</title>
+<meta name="description" content="An AI that answers for Atishay — built from ten years of his writing. Instance 001 of Understudy.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Sora:wght@200;300;400;500&family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap">
+<style>
+  :root{
+    --ground:#0C0C0F;
+    --ground-2:#111118;
+    --ground-3:#16161F;
+    --ink:#E9E6DF;
+    --muted:#8B8894;
+    --faint:#55535E;
+    --hair:#26262E;
+    --machine:#8D8BF2;
+    --machine-dim:#5B5AA6;
+    --human:#D7A03C;
+    --serif:'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+    --sans:'Sora', 'Helvetica Neue', Arial, sans-serif;
+    --mono:'IBM Plex Mono', 'SF Mono', Menlo, monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto}
+    *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+  }
+  body{
+    background:var(--ground);color:var(--ink);
+    font-family:var(--serif);font-size:1.2rem;font-weight:400;line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--machine);text-decoration:none;border-bottom:1px solid var(--machine-dim)}
+  a:hover,a:focus-visible{color:var(--ink);border-bottom-color:var(--ink)}
+  :focus-visible{outline:1.5px solid var(--machine);outline-offset:3px}
+  .col{max-width:44rem;margin:0 auto;padding:0 1.5rem}
+
+  .nav{
+    display:flex;justify-content:space-between;align-items:baseline;gap:1rem;flex-wrap:wrap;
+    padding:1.6rem 0;border-bottom:1px solid var(--hair);
+  }
+  .wordmark{font-family:var(--sans);font-weight:400;font-size:.95rem;letter-spacing:.22em;text-transform:lowercase;color:var(--ink);border:none}
+  .wordmark b{color:var(--machine);font-weight:400}
+  .nav-back{font-family:var(--mono);font-size:.72rem;color:var(--faint);border:none}
+  .nav-back:hover{color:var(--muted)}
+
+  .hero{padding:4.5rem 0 3.2rem;text-align:center}
+  .hero .tag{font-family:var(--mono);font-size:.72rem;color:var(--faint);margin-bottom:1.2rem}
+  .hero .tag em{color:var(--human);font-style:normal}
+  .hero h1{
+    font-family:var(--serif);font-weight:300;
+    font-size:clamp(2.6rem,7vw,4.6rem);line-height:1.05;letter-spacing:-.01em;
+    text-wrap:balance;margin-bottom:1.1rem;
+  }
+  .hero h1 em{font-style:italic;color:var(--machine);font-weight:300}
+  .hero-sub{max-width:30rem;margin:0 auto;color:var(--muted);font-size:1.18rem;line-height:1.6}
+
+  section{padding:3.4rem 0}
+  section + section{border-top:1px solid var(--hair)}
+  .eyebrow{font-family:var(--sans);font-weight:300;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:var(--faint);margin-bottom:1.2rem}
+  .eyebrow b{color:var(--machine);font-weight:400}
+
+  .console{border:1px solid var(--hair);background:var(--ground-2)}
+  .console-head{
+    display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;
+    padding:.85rem 1.2rem;border-bottom:1px solid var(--hair);
+    font-family:var(--sans);font-weight:300;font-size:.7rem;letter-spacing:.2em;text-transform:lowercase;color:var(--muted);
+  }
+  .status{display:flex;align-items:center;gap:.55em}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--machine);flex:none}
+  .modes{display:flex;border-bottom:1px solid var(--hair)}
+  .mode{
+    flex:1;background:none;border:none;border-right:1px solid var(--hair);
+    font-family:var(--sans);font-weight:300;font-size:.74rem;letter-spacing:.18em;text-transform:lowercase;
+    color:var(--faint);padding:.9rem .5rem;cursor:pointer;transition:color .18s,background .18s;
+  }
+  .mode:last-child{border-right:none}
+  .mode:hover,.mode:focus-visible{color:var(--muted)}
+  .mode[aria-selected="true"]{color:var(--machine);background:var(--ground-3)}
+  .mode-desc{
+    padding:.7rem 1.2rem;border-bottom:1px solid var(--hair);
+    font-family:var(--serif);font-style:italic;font-size:1rem;color:var(--muted);
+  }
+  .chat-log{height:21rem;overflow-y:auto;padding:1.3rem 1.2rem;display:flex;flex-direction:column;gap:1.1rem}
+  .msg{max-width:92%}
+  .msg .who{font-family:var(--sans);font-weight:300;font-size:.6rem;letter-spacing:.24em;text-transform:lowercase;color:var(--faint);margin-bottom:.35rem}
+  .msg.you{align-self:flex-end;text-align:right}
+  .msg.you .body{font-family:var(--serif);font-size:1.1rem}
+  .msg.twin .who{color:var(--machine-dim)}
+  .msg.twin .body{font-family:var(--mono);font-size:.88rem;line-height:1.75;font-weight:300;white-space:pre-wrap}
+  .chat-openers{display:flex;flex-wrap:wrap;gap:.5rem;padding:0 1.2rem .9rem}
+  .opener{
+    font-family:var(--sans);font-weight:300;font-size:.72rem;color:var(--muted);
+    background:none;border:1px solid var(--hair);padding:.4rem .8rem;cursor:pointer;
+    transition:color .18s,border-color .18s;
+  }
+  .opener:hover,.opener:focus-visible{color:var(--ink);border-color:var(--machine-dim)}
+  .chat-input-row{display:flex;border-top:1px solid var(--hair)}
+  .chat-input-row input{
+    flex:1;background:none;border:none;color:var(--ink);
+    font-family:var(--serif);font-size:1.08rem;padding:1rem 1.2rem;min-width:0;
+  }
+  .chat-input-row input::placeholder{color:var(--faint);font-style:italic}
+  .chat-input-row input:focus{outline:none}
+  .chat-input-row button{
+    background:none;border:none;border-left:1px solid var(--hair);
+    color:var(--machine);font-family:var(--sans);font-weight:300;font-size:.72rem;
+    letter-spacing:.24em;text-transform:lowercase;padding:0 1.5rem;cursor:pointer;
+    transition:color .18s,background .18s;
+  }
+  .chat-input-row button:hover,.chat-input-row button:focus-visible{color:var(--ink);background:rgba(141,139,242,.07)}
+  .fine{font-family:var(--sans);font-weight:300;font-size:.68rem;color:var(--faint);line-height:1.6;letter-spacing:.04em;margin-top:.9rem}
+
+  .word-intro{color:var(--muted);margin-bottom:1.4rem;max-width:32rem}
+  .cta{
+    display:inline-block;font-family:var(--sans);font-weight:300;font-size:.76rem;
+    letter-spacing:.24em;text-transform:lowercase;
+    color:var(--ground);background:var(--machine);border:1px solid var(--machine);
+    padding:.8rem 1.6rem;cursor:pointer;transition:background .18s,color .18s;white-space:nowrap;
+  }
+  .cta:hover,.cta:focus-visible{background:transparent;color:var(--machine)}
+
+  footer{border-top:1px solid var(--hair);padding:2.2rem 0 3rem;font-family:var(--sans);font-weight:300;font-size:.7rem;letter-spacing:.14em;color:var(--faint);display:flex;flex-wrap:wrap;gap:.4rem 2rem;justify-content:space-between}
+  footer a{color:var(--muted);border-bottom-color:var(--hair)}
+</style>
+</head>
+<body>
+
+<div class="col">
+  <nav class="nav">
+    <a class="wordmark" href="atishay-ai.html">under<b>study</b></a>
+    <a class="nav-back" href="atishay-ai.html">← back to atishay.ai</a>
+  </nav>
+</div>
+
+<main>
+
+  <header class="hero col">
+    <div class="tag">instance <em>001</em> — atishay</div>
+    <h1>An AI that <em>answers for you.</em></h1>
+    <p class="hero-sub">
+      Built from ten years of Atishay's writing. It speaks in his voice,
+      admits it's the copy, and tells you exactly what it is. Try it.
+    </p>
+  </header>
+
+  <section class="col" style="padding-top:0">
+    <div class="console">
+      <div class="console-head">
+        <span>the twin</span>
+        <span class="status"><span class="dot"></span><span>reciting</span></span>
+      </div>
+      <div class="modes" role="tablist" aria-label="Twin jobs">
+        <button class="mode" role="tab" aria-selected="true" data-mode="desk">ask about him</button>
+        <button class="mode" role="tab" aria-selected="false" data-mode="pitch">the jarvis pitch</button>
+        <button class="mode" role="tab" aria-selected="false" data-mode="ghost">write like him</button>
+      </div>
+      <div class="mode-desc" id="modeDesc">it answers for the real one. pick a question.</div>
+      <div class="chat-log" id="log" aria-live="polite">
+        <div class="msg twin">
+          <div class="who">the twin</div>
+          <div class="body">on shift. fair warning: out here on the open web i can only recite — lines rehearsed from the archive. the version that talks back lives in the studio. the buttons are me at my best.</div>
+        </div>
+      </div>
+      <div class="chat-openers" id="openers"></div>
+      <form class="chat-input-row" id="chatForm">
+        <input id="chatInput" type="text" autocomplete="off" placeholder="say something…" aria-label="Message the twin">
+        <button type="submit">send</button>
+      </form>
+    </div>
+    <p class="fine">Rehearsed version — every reply was distilled from the archive and approved by the real one. Nothing you type here is sent or stored anywhere.</p>
+  </section>
+
+  <section class="col">
+    <div class="eyebrow">leave <b>word</b></div>
+    <p class="word-intro">
+      The twin takes messages; the real one reads them. This opens your own email —
+      nothing passes through the copy.
+    </p>
+    <a class="cta" href="mailto:atishayioai@gmail.com?subject=via%20the%20understudy">email the real one</a>
+  </section>
+
+  <section class="col">
+    <div class="eyebrow">instance <b>002</b></div>
+    <p class="word-intro">
+      Your old essays, posts, and letters could do this too. Instance 001 took an
+      afternoon. If you want yours next, say so.
+    </p>
+    <a class="cta" href="mailto:atishayioai@gmail.com?subject=instance%20002">join the waitlist</a>
+  </section>
+
+  <footer class="col">
+    <span>an atishay.ai product study</span>
+    <span>the writing: <a href="writing.html">atishay.io</a></span>
+    <span>© atishay.io 2026</span>
+  </footer>
+
+</main>
+
+<script>
+(function(){
+  var SIGN = "\n\n— drafted by the understudy; the real one signs his own.";
+  var MODES = {
+    desk: {
+      desc: "it answers for the real one. pick a question.",
+      openers: [
+        ["who is atishay?", "a jain from the dc area — religion and surname, the joke comes pre-installed. exeter, then georgetown, now cornell. he calls himself a loosely self-appointed anthropologist: he studies how platforms process people, then goes home and builds software anyway. the writing lives on this site, archived unassisted since he was ten. i live here."],
+        ["are you actually him?", "no. i am what survived translation. he has ten years of essays; i have the sentences but not the weight of them — the words 'sweet and raspy' survived, his great-grandmother's voice did not. the real one writes unassisted. i am the other half."],
+        ["what are you, exactly?", "an understudy — the one who performs when the real one is elsewhere. i was distilled from everything he wrote between ages ten and twenty: art reports, grief, kurtas, a twenty-one-page paper on the war on drugs, an ethnography of a taco bell app. out here i recite. in the studio, i talk back."]
+      ]
+    },
+    pitch: {
+      desc: "it sells jarvis the way he would — no hype, just the arithmetic.",
+      openers: [
+        ["give me the pitch", "students burn out from disorganization, not from inability. jarvis is a command center for your whole college life — drag-and-drop your semester, every requirement as a checklist, and an optimizer that works out live which courses count toward several of your programs at once. cornell's own tools don't do that. it runs entirely in your browser: no account, no server, nothing of yours leaves your laptop."],
+        ["how is it different?", "your school's audit tool tells you what you've already done. jarvis works out what to do next — which courses double-count across your majors and minors, before you register. built on the fall 2026 roster: 4,464 courses, all 221 cornell programs. and it doesn't watch you. he read too much about what the kiosks do with your data to build another one."],
+        ["i'm a skeptic. convince me", "fair. if your degree is one major, no minors, and you like your registrar's interface, you don't need jarvis. it earns its keep when programs overlap and the arithmetic gets ugly. he built it because he transferred and had to redo that math himself. if that's not your problem, keep walking — a pitch that can't concede isn't credible."]
+      ]
+    },
+    ghost: {
+      desc: "give it a thought; it recites one in his voice.",
+      openers: [
+        ["a dedication for a book", "for the ones who cooked before i could write — the roti came first, the sentences after." + SIGN],
+        ["decline an invite, kindly", "i'd love to, and i can't — the week is spoken for, and i'd rather miss it honestly than attend it halfway. thank you for thinking of me. ask me again." + SIGN],
+        ["a rainy tuesday", "the rain flattened the quad into one grey sheet and everyone walked like they owed the weather money. inside, the radiators ticked. somewhere a laptop chimed a deadline nobody wanted, and the kid in the white nike socks kept writing anyway." + SIGN]
+      ]
+    }
+  };
+  var DEFLECT = "out here i can only recite — pre-written lines, checked by the real one before they went up. the live twin, the one that listens and talks back, sits in the studio. try the buttons; or email the real one below, he answers those himself.";
+
+  var mode = 'desk';
+  var log = document.getElementById('log'),
+      openersEl = document.getElementById('openers'),
+      modeDesc = document.getElementById('modeDesc'),
+      form = document.getElementById('chatForm'),
+      input = document.getElementById('chatInput');
+
+  function addMsg(cls, who, text){
+    var m = document.createElement('div'); m.className = 'msg ' + cls;
+    var w = document.createElement('div'); w.className = 'who'; w.textContent = who;
+    var b = document.createElement('div'); b.className = 'body'; b.textContent = text;
+    m.appendChild(w); m.appendChild(b); log.appendChild(m);
+    log.scrollTop = log.scrollHeight;
+  }
+  function renderOpeners(){
+    openersEl.innerHTML = '';
+    MODES[mode].openers.forEach(function(o){
+      var btn = document.createElement('button');
+      btn.className = 'opener'; btn.type = 'button'; btn.textContent = o[0];
+      btn.addEventListener('click', function(){
+        addMsg('you','you', o[0]);
+        setTimeout(function(){ addMsg('twin','the twin', o[1]); }, 250);
+      });
+      openersEl.appendChild(btn);
+    });
+  }
+  renderOpeners();
+
+  document.querySelectorAll('.mode').forEach(function(tab){
+    tab.addEventListener('click', function(){
+      mode = tab.getAttribute('data-mode');
+      document.querySelectorAll('.mode').forEach(function(t){ t.setAttribute('aria-selected', t === tab ? 'true' : 'false'); });
+      modeDesc.textContent = MODES[mode].desc;
+      renderOpeners();
+    });
+  });
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    var q = input.value.trim();
+    if (!q) return;
+    input.value = '';
+    addMsg('you','you', q);
+    var lower = q.toLowerCase(), reply = null;
+    if (/jarvis|pitch|app|product/.test(lower)) reply = MODES.pitch.openers[0][1];
+    else if (/really (him|you)|actually|real\b/.test(lower)) reply = MODES.desk.openers[1][1];
+    else if (/who is|about atishay|about him/.test(lower)) reply = MODES.desk.openers[0][1];
+    else if (/what are you|understudy|twin/.test(lower)) reply = MODES.desk.openers[2][1];
+    setTimeout(function(){ addMsg('twin','the twin', reply || DEFLECT); }, 300);
+  });
+})();
+</script>
+</body>
+</html>
