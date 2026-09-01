@@ -165,7 +165,7 @@
       <div class="chat-log" id="log" aria-live="polite">
         <div class="msg twin">
           <div class="who">the twin</div>
-          <div class="body">on shift. fair warning: out here on the open web i can only recite — lines rehearsed from the archive. the version that talks back lives in the studio. the buttons are me at my best.</div>
+          <div class="body">on shift. the buttons are rehearsed lines, checked by the real one. type your own question and i'll answer it live — if the line to the studio is up.</div>
         </div>
       </div>
       <div class="chat-openers" id="openers"></div>
@@ -174,7 +174,7 @@
         <button type="submit">send</button>
       </form>
     </div>
-    <p class="fine">Rehearsed version — every reply was distilled from the archive and approved by the real one. Nothing you type here is sent or stored anywhere.</p>
+    <p class="fine">Button replies are rehearsed and free. Typed questions are answered live by the twin when its line is up; they are sent to it, not stored, and never used for anything else.</p>
   </section>
 
   <section class="col">
@@ -232,14 +232,19 @@
       ]
     }
   };
-  var DEFLECT = "out here i can only recite — pre-written lines, checked by the real one before they went up. the live twin, the one that listens and talks back, sits in the studio. try the buttons; or email the real one below, he answers those himself.";
+  var DEFLECT = "the line to the studio is down right now, so i can only recite — pre-written lines, checked by the real one. try the buttons; or email the real one below, he answers those himself.";
 
+  var WORKER = "https://understudy-twin.understudy-worker.workers.dev";
+  var live = null; // null = untested, true = studio line up, false = reciting only
   var mode = 'desk';
+  var histories = { desk: [], pitch: [], ghost: [] };
+  var busy = false;
   var log = document.getElementById('log'),
       openersEl = document.getElementById('openers'),
       modeDesc = document.getElementById('modeDesc'),
       form = document.getElementById('chatForm'),
-      input = document.getElementById('chatInput');
+      input = document.getElementById('chatInput'),
+      statusEl = document.querySelector('.status span:last-child');
 
   function addMsg(cls, who, text){
     var m = document.createElement('div'); m.className = 'msg ' + cls;
@@ -247,6 +252,13 @@
     var b = document.createElement('div'); b.className = 'body'; b.textContent = text;
     m.appendChild(w); m.appendChild(b); log.appendChild(m);
     log.scrollTop = log.scrollHeight;
+    return b;
+  }
+  function setStatus(txt){ if (statusEl) statusEl.textContent = txt; }
+  function remember(q, a){
+    var h = histories[mode];
+    h.push({role:'user', content:q}, {role:'assistant', content:a});
+    if (h.length > 12) histories[mode] = h.slice(-12);
   }
   function renderOpeners(){
     openersEl.innerHTML = '';
@@ -254,7 +266,9 @@
       var btn = document.createElement('button');
       btn.className = 'opener'; btn.type = 'button'; btn.textContent = o[0];
       btn.addEventListener('click', function(){
+        if (busy) return;
         addMsg('you','you', o[0]);
+        remember(o[0], o[1]);
         setTimeout(function(){ addMsg('twin','the twin', o[1]); }, 250);
       });
       openersEl.appendChild(btn);
@@ -271,18 +285,50 @@
     });
   });
 
-  form.addEventListener('submit', function(e){
-    e.preventDefault();
-    var q = input.value.trim();
-    if (!q) return;
-    input.value = '';
-    addMsg('you','you', q);
+  function cannedReply(q){
     var lower = q.toLowerCase(), reply = null;
     if (/jarvis|pitch|app|product/.test(lower)) reply = MODES.pitch.openers[0][1];
     else if (/really (him|you)|actually|real\b/.test(lower)) reply = MODES.desk.openers[1][1];
     else if (/who is|about atishay|about him/.test(lower)) reply = MODES.desk.openers[0][1];
     else if (/what are you|understudy|twin/.test(lower)) reply = MODES.desk.openers[2][1];
-    setTimeout(function(){ addMsg('twin','the twin', reply || DEFLECT); }, 300);
+    return reply || DEFLECT;
+  }
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    var q = input.value.trim();
+    if (!q || busy) return;
+    input.value = '';
+    addMsg('you','you', q);
+
+    if (live === false){
+      setTimeout(function(){ addMsg('twin','the twin', cannedReply(q)); }, 300);
+      return;
+    }
+
+    busy = true;
+    var body = addMsg('twin','the twin', '…');
+    var msgs = histories[mode].concat([{role:'user', content:q}]);
+    fetch(WORKER, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ mode: mode, messages: msgs })
+    }).then(function(r){
+      if (!r.ok) throw new Error('down');
+      return r.json();
+    }).then(function(data){
+      if (!data.text) throw new Error('down');
+      live = true; setStatus('on shift');
+      body.textContent = data.text;
+      remember(q, data.text);
+      log.scrollTop = log.scrollHeight;
+      busy = false;
+    }).catch(function(){
+      live = false; setStatus('reciting');
+      body.textContent = cannedReply(q);
+      log.scrollTop = log.scrollHeight;
+      busy = false;
+    });
   });
 })();
 </script>
